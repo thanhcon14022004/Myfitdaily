@@ -1,0 +1,773 @@
+import React, { useState } from 'react';
+import { 
+  Layers, 
+  Sparkles, 
+  Plus, 
+  Heart, 
+  Check, 
+  Trash2, 
+  Shirt, 
+  RotateCcw,
+  Footprints, 
+  Watch,
+  Wind,
+  Sliders,
+  Save,
+  User,
+  Ruler,
+  ChevronRight,
+  X
+} from 'lucide-react';
+import OutfitCard from '../components/OutfitCard';
+import VirtualMannequin from '../components/VirtualMannequin';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
+
+export default function OutfitStudioPage({ 
+  clothes, 
+  outfits, 
+  onSaveOutfit, 
+  onToggleFavorite, 
+  onDeleteOutfit,
+  onDeleteClothing,
+  onNavigate,
+  user
+}) {
+  const [deleteModalItem, setDeleteModalItem] = useState(null);
+
+  // Chế độ xem: 'mannequin' (Người ảo thử đồ 3D/2.5D) | 'flatlay' (Sàn phẳng)
+  const [studioMode, setStudioMode] = useState('mannequin');
+
+  // Flat-Lay & Try-On Garment Slots
+  const [selectedTop, setSelectedTop] = useState(clothes.find(c => c.categoryId === 1) || null);
+  const [selectedOuter, setSelectedOuter] = useState(clothes.find(c => c.categoryId === 4) || null);
+  const [selectedBottom, setSelectedBottom] = useState(clothes.find(c => c.categoryId === 2 || c.categoryId === 3) || null);
+  const [selectedShoes, setSelectedShoes] = useState(clothes.find(c => c.categoryId === 5) || null);
+  const [selectedAccessory, setSelectedAccessory] = useState(clothes.find(c => c.categoryId === 6) || null);
+
+  // Active drawer filter tab
+  const [drawerCategory, setDrawerCategory] = useState('Tops'); // 'Tops' | 'Outerwear' | 'Bottoms' | 'Shoes' | 'Accessories'
+
+  const [outfitName, setOutfitName] = useState('');
+  const [outfitOccasion, setOutfitOccasion] = useState('Casual');
+  const [outfitDescription, setOutfitDescription] = useState('');
+
+  // Lookbook filter
+  const [outfitFilter, setOutfitFilter] = useState('all');
+
+  const filteredOutfits = outfits.filter(o => {
+    if (outfitFilter === 'fav') return o.isFavorite;
+    if (outfitFilter === 'ai') return o.createdByAi;
+    return true;
+  });
+
+  const drawerItems = clothes.filter(c => {
+    if (drawerCategory === 'Tops') return c.categoryId === 1;
+    if (drawerCategory === 'Outerwear') return c.categoryId === 4;
+    if (drawerCategory === 'Bottoms') return c.categoryId === 2 || c.categoryId === 3;
+    if (drawerCategory === 'Shoes') return c.categoryId === 5;
+    if (drawerCategory === 'Accessories') return c.categoryId === 6;
+    return true;
+  });
+
+  const handleSelectItem = (item) => {
+    if (drawerCategory === 'Tops') setSelectedTop(item);
+    else if (drawerCategory === 'Outerwear') setSelectedOuter(item);
+    else if (drawerCategory === 'Bottoms') setSelectedBottom(item);
+    else if (drawerCategory === 'Shoes') setSelectedShoes(item);
+    else if (drawerCategory === 'Accessories') setSelectedAccessory(item);
+  };
+
+  const handleConfirmDeleteClothing = async (id) => {
+    if (onDeleteClothing) {
+      await onDeleteClothing(id);
+    }
+    if (selectedTop?.id === id) setSelectedTop(null);
+    if (selectedOuter?.id === id) setSelectedOuter(null);
+    if (selectedBottom?.id === id) setSelectedBottom(null);
+    if (selectedShoes?.id === id) setSelectedShoes(null);
+    if (selectedAccessory?.id === id) setSelectedAccessory(null);
+    setDeleteModalItem(null);
+  };
+
+  const handleSaveOutfit = (e) => {
+    e.preventDefault();
+    if (!outfitName.trim()) {
+      alert("Vui lòng đặt tên cho bộ phối đồ!");
+      return;
+    }
+
+    const itemIds = [
+      selectedTop?.id,
+      selectedOuter?.id,
+      selectedBottom?.id,
+      selectedShoes?.id,
+      selectedAccessory?.id
+    ].filter(Boolean);
+
+    if (itemIds.length === 0) {
+      alert("Vui lòng chọn ít nhất một món đồ vào sàn phối!");
+      return;
+    }
+
+    const newOutfit = {
+      id: Date.now(),
+      name: outfitName.trim(),
+      occasion: outfitOccasion,
+      season: 'AllSeason',
+      isFavorite: false,
+      createdByAi: false,
+      itemIds: itemIds,
+      description: outfitDescription.trim() || `Bộ phối đồ phong cách ${outfitOccasion} tạo tại Atelier Studio.`
+    };
+
+    onSaveOutfit(newOutfit);
+    setOutfitName('');
+    setOutfitDescription('');
+    alert("🎉 Đã lưu bộ phối đồ vào bộ sưu tập của bạn!");
+  };
+
+  return (
+    <div className="container" style={{ padding: '36px 24px 90px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <span className="badge badge-indigo">Virtual Atelier</span>
+          <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+            ✦ Sàn Diễn Phối Đồ Kỹ Thuật Số
+          </span>
+        </div>
+        <h2 style={{ fontSize: '2.4rem', fontWeight: 800 }}>
+          Atelier Studio <span className="gradient-text">& Mix-Match</span>
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem' }}>
+          Thử nghiệm kết hợp các món đồ theo bố cục Flat-Lay, kiểm tra độ hài hòa màu sắc trước khi diện ra phố.
+        </p>
+      </div>
+
+      {/* 2-Column Atelier Layout: Left = Flat-Lay Mannequin Canvas, Right = Wardrobe Drawer */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(360px, 1.3fr) minmax(320px, 1fr)',
+        gap: '32px',
+        marginBottom: '64px',
+      }}>
+        {/* Left Column: Visual Canvas */}
+        <div className="glass-card" style={{
+          padding: '30px',
+          border: '1px solid rgba(212, 175, 55, 0.35)',
+          background: 'radial-gradient(ellipse at top, rgba(212, 175, 55, 0.1) 0%, rgba(14, 18, 27, 0.95) 75%)',
+        }}>
+          {/* Canvas Mode Switcher & Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Layers size={18} color="#D4AF37" />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                {studioMode === 'mannequin' ? 'Phòng Thử Đồ Người Ảo' : 'Sàn Phối Đồ Flat-Lay'}
+              </h3>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 255, 255, 0.06)', padding: '4px', borderRadius: 'var(--radius-full)' }}>
+              <button
+                type="button"
+                onClick={() => setStudioMode('mannequin')}
+                style={{
+                  background: studioMode === 'mannequin' ? 'linear-gradient(135deg, #D4AF37, #C27D5E)' : 'transparent',
+                  color: studioMode === 'mannequin' ? '#080A0F' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '5px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
+              >
+                💃 Người Ảo (3D Fitting)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStudioMode('flatlay')}
+                style={{
+                  background: studioMode === 'flatlay' ? 'linear-gradient(135deg, #D4AF37, #C27D5E)' : 'transparent',
+                  color: studioMode === 'flatlay' ? '#080A0F' : 'var(--text-secondary)',
+                  border: 'none',
+                  padding: '5px 14px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
+              >
+                🖼️ Sàn Flat-Lay
+              </button>
+            </div>
+          </div>
+
+          {/* Missing body metrics warning banner if user hasn't set custom dimensions */}
+          {(!user?.height || !user?.weight) && onNavigate && (
+            <div style={{
+              background: 'rgba(212, 175, 55, 0.1)',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 14px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.76rem',
+              gap: '8px'
+            }}>
+              <span style={{ color: '#F3D98A' }}>
+                💡 Bạn đang xem mô hình người mẫu mặc định (165cm, 52kg). Hãy cập nhật số đo riêng để người ảo co giãn chuẩn vóc dáng của bạn!
+              </span>
+              <button
+                onClick={() => onNavigate('profile')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#FFF',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Cập nhật số đo →
+              </button>
+            </div>
+          )}
+
+          {/* MODE 1: VIRTUAL MANNEQUIN FITTING ROOM (3D/2.5D TRY-ON) */}
+          {studioMode === 'mannequin' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+              <VirtualMannequin
+                user={user}
+                top={selectedTop}
+                outer={selectedOuter}
+                bottom={selectedBottom}
+                shoes={selectedShoes}
+                accessory={selectedAccessory}
+              />
+
+              {/* Quick Slot Selection & Remove Strip under Mannequin */}
+              <div style={{
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))',
+                gap: '8px',
+                marginTop: '16px',
+                padding: '12px',
+                background: 'rgba(7, 10, 17, 0.75)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                {/* Top chip */}
+                <div style={{
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: drawerCategory === 'Tops' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: drawerCategory === 'Tops' ? '1px solid var(--primary)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }} onClick={() => setDrawerCategory('Tops')}>
+                  <span style={{ fontSize: '0.62rem', color: '#FDA4AF', fontWeight: 800 }}>ÁO (TOP)</span>
+                  <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                    {selectedTop ? selectedTop.name : '+ Chọn Áo'}
+                  </span>
+                  {selectedTop && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedTop(null); }}
+                      style={{ marginTop: '3px', background: 'none', border: 'none', color: '#EF4444', fontSize: '0.65rem', cursor: 'pointer' }}
+                    >
+                      ✕ Gỡ
+                    </button>
+                  )}
+                </div>
+
+                {/* Outer chip */}
+                <div style={{
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: drawerCategory === 'Outerwear' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: drawerCategory === 'Outerwear' ? '1px solid var(--primary)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }} onClick={() => setDrawerCategory('Outerwear')}>
+                  <span style={{ fontSize: '0.62rem', color: '#C084FC', fontWeight: 800 }}>KHOÁC</span>
+                  <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                    {selectedOuter ? selectedOuter.name : '+ Chọn Khoác'}
+                  </span>
+                  {selectedOuter && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedOuter(null); }}
+                      style={{ marginTop: '3px', background: 'none', border: 'none', color: '#EF4444', fontSize: '0.65rem', cursor: 'pointer' }}
+                    >
+                      ✕ Gỡ
+                    </button>
+                  )}
+                </div>
+
+                {/* Bottom chip */}
+                <div style={{
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: drawerCategory === 'Bottoms' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: drawerCategory === 'Bottoms' ? '1px solid var(--primary)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }} onClick={() => setDrawerCategory('Bottoms')}>
+                  <span style={{ fontSize: '0.62rem', color: '#818CF8', fontWeight: 800 }}>QUẦN/ĐẦM</span>
+                  <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                    {selectedBottom ? selectedBottom.name : '+ Chọn Đồ'}
+                  </span>
+                  {selectedBottom && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedBottom(null); }}
+                      style={{ marginTop: '3px', background: 'none', border: 'none', color: '#EF4444', fontSize: '0.65rem', cursor: 'pointer' }}
+                    >
+                      ✕ Gỡ
+                    </button>
+                  )}
+                </div>
+
+                {/* Shoes chip */}
+                <div style={{
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: drawerCategory === 'Shoes' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: drawerCategory === 'Shoes' ? '1px solid var(--primary)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }} onClick={() => setDrawerCategory('Shoes')}>
+                  <span style={{ fontSize: '0.62rem', color: '#34D399', fontWeight: 800 }}>GIÀY</span>
+                  <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                    {selectedShoes ? selectedShoes.name : '+ Chọn Giày'}
+                  </span>
+                  {selectedShoes && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedShoes(null); }}
+                      style={{ marginTop: '3px', background: 'none', border: 'none', color: '#EF4444', fontSize: '0.65rem', cursor: 'pointer' }}
+                    >
+                      ✕ Gỡ
+                    </button>
+                  )}
+                </div>
+
+                {/* Accessory chip */}
+                <div style={{
+                  padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)',
+                  background: drawerCategory === 'Accessories' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                  border: drawerCategory === 'Accessories' ? '1px solid var(--primary)' : '1px solid transparent',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }} onClick={() => setDrawerCategory('Accessories')}>
+                  <span style={{ fontSize: '0.62rem', color: '#FBBF24', fontWeight: 800 }}>PHỤ KIỆN</span>
+                  <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
+                    {selectedAccessory ? selectedAccessory.name : '+ Chọn Túi'}
+                  </span>
+                  {selectedAccessory && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => { e.stopPropagation(); setSelectedAccessory(null); }}
+                      style={{ marginTop: '3px', background: 'none', border: 'none', color: '#EF4444', fontSize: '0.65rem', cursor: 'pointer' }}
+                    >
+                      ✕ Gỡ
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 2: FLAT-LAY SLOTS GRID */}
+          {studioMode === 'flatlay' && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '14px',
+              marginBottom: '28px',
+            }}>
+              {/* Slot 1: Top */}
+              <div 
+                onClick={() => setDrawerCategory('Tops')}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.7)',
+                  border: drawerCategory === 'Tops' ? '2px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                }}
+              >
+                <span className="badge badge-rose" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>ÁO (TOP)</span>
+                {selectedTop ? (
+                  <div>
+                    <img src={selectedTop.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF' }}>{selectedTop.name}</div>
+                  </div>
+                ) : (
+                  <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    + Chọn Áo
+                  </div>
+                )}
+              </div>
+
+              {/* Slot 2: Outerwear */}
+              <div 
+                onClick={() => setDrawerCategory('Outerwear')}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.7)',
+                  border: drawerCategory === 'Outerwear' ? '2px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                }}
+              >
+                <span className="badge badge-purple" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>ÁO KHOÁC</span>
+                {selectedOuter ? (
+                  <div>
+                    <img src={selectedOuter.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF' }}>{selectedOuter.name}</div>
+                  </div>
+                ) : (
+                  <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    + Chọn Áo Khoác
+                  </div>
+                )}
+              </div>
+
+              {/* Slot 3: Bottom */}
+              <div 
+                onClick={() => setDrawerCategory('Bottoms')}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.7)',
+                  border: drawerCategory === 'Bottoms' ? '2px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                }}
+              >
+                <span className="badge badge-indigo" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>QUẦN / ĐẦM</span>
+                {selectedBottom ? (
+                  <div>
+                    <img src={selectedBottom.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF' }}>{selectedBottom.name}</div>
+                  </div>
+                ) : (
+                  <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    + Chọn Quần/Đầm
+                  </div>
+                )}
+              </div>
+
+              {/* Slot 4: Shoes */}
+              <div 
+                onClick={() => setDrawerCategory('Shoes')}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.7)',
+                  border: drawerCategory === 'Shoes' ? '2px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                }}
+              >
+                <span className="badge badge-emerald" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>GIÀY DÉP</span>
+                {selectedShoes ? (
+                  <div>
+                    <img src={selectedShoes.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF' }}>{selectedShoes.name}</div>
+                  </div>
+                ) : (
+                  <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    + Chọn Giày
+                  </div>
+                )}
+              </div>
+
+              {/* Slot 5: Accessories */}
+              <div 
+                onClick={() => setDrawerCategory('Accessories')}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.7)',
+                  border: drawerCategory === 'Accessories' ? '2px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                }}
+              >
+                <span className="badge badge-gold" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>PHỤ KIỆN</span>
+                {selectedAccessory ? (
+                  <div>
+                    <img src={selectedAccessory.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
+                    <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF' }}>{selectedAccessory.name}</div>
+                  </div>
+                ) : (
+                  <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                    + Chọn Túi / Kính
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Save Outfit Form */}
+          <form onSubmit={handleSaveOutfit} style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px', marginBottom: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                  Đặt Tên Bộ Phối Đồ *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Set Cafe Chiều Thu, Đi Làm Thứ 2..."
+                  value={outfitName}
+                  onChange={(e) => setOutfitName(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                  Dịp Mặc (Occasion)
+                </label>
+                <select
+                  value={outfitOccasion}
+                  onChange={(e) => setOutfitOccasion(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="Work">Đi Làm / Công Sở</option>
+                  <option value="Date">Hẹn Hò Lãng Mạn</option>
+                  <option value="Casual">Dạo Phố Cuối Tuần</option>
+                  <option value="Party">Dự Tiệc Tùng</option>
+                  <option value="Travel">Du Lịch Dã Ngoại</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                Ghi Chú Phong Cách
+              </label>
+              <input
+                type="text"
+                placeholder="Ví dụ: Phối cùng son đỏ, đồng hồ dây da nâu..."
+                value={outfitDescription}
+                onChange={(e) => setOutfitDescription(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ width: '100%', padding: '14px', fontSize: '0.96rem' }}
+            >
+              <Save size={18} />
+              <span>Lưu Bộ Outfit Này Vào Tủ Đồ</span>
+            </button>
+          </form>
+        </div>
+
+        {/* Right Column: Wardrobe Item Drawer */}
+        <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '4px' }}>
+              Khay Chọn Đồ Từ Tủ
+            </h4>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Nhấp vào món đồ để đưa trực tiếp vào sàn phối Flat-Lay bên trái
+            </p>
+          </div>
+
+          {/* Drawer Category Tabs */}
+          <div className="filter-pills" style={{ marginBottom: '18px' }}>
+            {[
+              { id: 'Tops', label: 'Áo' },
+              { id: 'Outerwear', label: 'Khoác' },
+              { id: 'Bottoms', label: 'Quần/Đầm' },
+              { id: 'Shoes', label: 'Giày' },
+              { id: 'Accessories', label: 'Phụ kiện' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setDrawerCategory(tab.id)}
+                className={`filter-pill ${drawerCategory === tab.id ? 'active' : ''}`}
+                style={{ padding: '7px 14px', fontSize: '0.82rem' }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Drawer Items Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '12px',
+            maxHeight: '480px',
+            overflowY: 'auto',
+            paddingRight: '4px',
+          }}>
+            {drawerItems.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleSelectItem(item)}
+                style={{
+                  background: 'rgba(7, 10, 17, 0.6)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)',
+                  position: 'relative',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.transform = 'scale(1.0)';
+                }}
+              >
+                {onDeleteClothing && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteModalItem(item);
+                    }}
+                    title="Xóa món đồ này khỏi tủ"
+                    style={{
+                      position: 'absolute',
+                      top: '6px',
+                      right: '6px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid rgba(244, 63, 94, 0.3)',
+                      color: '#FDA4AF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 3,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#E11D48';
+                      e.currentTarget.style.color = '#FFF';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(15, 23, 42, 0.85)';
+                      e.currentTarget.style.color = '#FDA4AF';
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+                <img src={item.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px' }} />
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item.name}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                  {item.color}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Lookbook Section */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Bộ Sưu Tập Lookbook Của Bạn</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+              Xem lại toàn bộ trang phục đã được sáng tạo và lưu trữ.
+            </p>
+          </div>
+
+          <div className="filter-pills">
+            <button
+              onClick={() => setOutfitFilter('all')}
+              className={`filter-pill ${outfitFilter === 'all' ? 'active' : ''}`}
+            >
+              Tất Cả ({outfits.length})
+            </button>
+            <button
+              onClick={() => setOutfitFilter('fav')}
+              className={`filter-pill ${outfitFilter === 'fav' ? 'active' : ''}`}
+            >
+              Yêu Thích ({outfits.filter(o => o.isFavorite).length})
+            </button>
+            <button
+              onClick={() => setOutfitFilter('ai')}
+              className={`filter-pill ${outfitFilter === 'ai' ? 'active' : ''}`}
+            >
+              AI Curated ({outfits.filter(o => o.createdByAi).length})
+            </button>
+          </div>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '24px',
+        }}>
+          {filteredOutfits.map((outfit) => (
+            <OutfitCard 
+              key={outfit.id} 
+              outfit={outfit} 
+              allItems={clothes}
+              onToggleFavorite={onToggleFavorite}
+              onDelete={onDeleteOutfit}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Delete Garment Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={!!deleteModalItem}
+        items={deleteModalItem ? [deleteModalItem] : []}
+        onClose={() => setDeleteModalItem(null)}
+        onConfirm={handleConfirmDeleteClothing}
+      />
+    </div>
+  );
+}

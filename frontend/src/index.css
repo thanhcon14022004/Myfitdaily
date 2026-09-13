@@ -1,0 +1,643 @@
+/* ==========================================================================
+   MYFITDAILY – QUIET LUXURY & OLD MONEY DESIGN SYSTEM
+   Editorial Fashion Tech UI/UX (Champagne Gold & Deep Obsidian Noir)
+   Typography: Playfair Display (Editorial Serif), Outfit (Modern Display), Plus Jakarta Sans (Body)
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Deep Obsidian Noir & Rich Charcoal */
+  --bg-dark: #080A0F;
+  --bg-surface: #0E121A;
+  --bg-surface-elevated: #141924;
+  --bg-card: rgba(14, 18, 27, 0.82);
+  --bg-card-hover: rgba(22, 28, 42, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.035);
+  
+  /* Quiet Luxury Brand Accents - Champagne Gold & Warm Cognac */
+  --primary: #D4AF37;
+  --primary-hover: #B89726;
+  --primary-light: #F3D98A;
+  --primary-glow: rgba(212, 175, 55, 0.35);
+  
+  --secondary: #C27D5E;
+  --secondary-light: #E6CCB2;
+  --secondary-glow: rgba(194, 125, 94, 0.28);
+
+  --accent-gold: #E5C158;
+  --accent-gold-light: #FDE68A;
+  --accent-gold-glow: rgba(229, 193, 88, 0.32);
+
+  --accent-pearl: #F5EBE0;
+  --accent-emerald: #10B981;
+  
+  /* Text Shades */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #080A0F;
+  
+  /* Micro Borders & Reflective Highlights */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(212, 175, 55, 0.28);
+  --border-primary: rgba(212, 175, 55, 0.45);
+  --border-gold: rgba(212, 175, 55, 0.45);
+  
+  /* Shadows & Glassmorphism */
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 35px var(--primary-glow);
+  --shadow-gold-glow: 0 0 35px var(--accent-gold-glow);
+  
+  /* Radii */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(212, 175, 55, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(194, 125, 94, 0.10) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(243, 217, 138, 0.05) 0px, transparent 60%),
+    radial-gradient(at 80% 100%, rgba(212, 175, 55, 0.08) 0px, transparent 55%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.font-editorial {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: var(--transition);
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color: var(--text-primary);
+  background: rgba(14, 18, 27, 0.75);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  outline: none;
+  transition: var(--transition);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  background: rgba(22, 28, 42, 0.95);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.6);
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* Typography Gradient Utilities - Champagne & Pearl */
+.gradient-text {
+  background: linear-gradient(135deg, #FFFFFF 15%, #F3D98A 55%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, #FFFDF0 0%, #F5EBE0 40%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-ai {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F3D98A 45%, #C27D5E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Luxury Glassmorphism Card */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent);
+  pointer-events: none;
+}
+
+.glass-card:hover {
+  border-color: var(--border-highlight);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-card-interactive {
+  cursor: pointer;
+}
+.glass-card-interactive:hover {
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 16px 45px rgba(212, 175, 55, 0.15);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #D4AF37 0%, #AA820A 100%);
+  color: #080A0F;
+  font-weight: 800;
+  padding: 13px 28px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-shadow: 0 6px 24px var(--primary-glow);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transition: 0.5s;
+}
+
+.btn-primary:hover::after {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.55);
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 13px 26px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  backdrop-filter: blur(12px);
+  transition: var(--transition);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-highlight);
+  transform: translateY(-2px);
+}
+
+.btn-ai {
+  background: linear-gradient(135deg, #F3D98A 0%, #D4AF37 50%, #C27D5E 100%);
+  color: #080A0F;
+  font-weight: 800;
+  padding: 14px 30px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 30px rgba(212, 175, 55, 0.35);
+  transition: var(--transition);
+  letter-spacing: 0.01em;
+}
+
+.btn-ai:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 38px rgba(212, 175, 55, 0.55);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-rose {
+  background: rgba(194, 125, 94, 0.16);
+  color: #E6CCB2;
+  border: 1px solid rgba(194, 125, 94, 0.38);
+}
+
+.badge-indigo {
+  background: rgba(245, 235, 224, 0.10);
+  color: #F5EBE0;
+  border: 1px solid rgba(245, 235, 224, 0.25);
+}
+
+.badge-gold {
+  background: rgba(212, 175, 55, 0.16);
+  color: #F3D98A;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.16);
+  color: #A7F3D0;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-purple {
+  background: rgba(229, 193, 88, 0.16);
+  color: #FDE68A;
+  border: 1px solid rgba(229, 193, 88, 0.35);
+}
+
+/* Floating Navigation Island */
+.nav-island {
+  position: sticky;
+  top: 16px;
+  z-index: 100;
+  margin: 0 auto;
+  max-width: 1280px;
+  padding: 0 20px;
+}
+
+.nav-inner {
+  background: rgba(10, 14, 22, 0.9);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+  transition: var(--transition);
+}
+
+/* Category Filter Pills */
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill {
+  padding: 9px 18px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: var(--transition);
+}
+
+.filter-pill:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-highlight);
+}
+
+.filter-pill.active {
+  color: #080A0F;
+  background: linear-gradient(135deg, #F3D98A 0%, #D4AF37 100%);
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px var(--primary-glow);
+  font-weight: 700;
+}
+
+.filter-count {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+/* Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+.animate-float {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(212, 175, 55, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+@keyframes radarScan {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.radar-scanner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #F3D98A, #D4AF37, transparent);
+  box-shadow: 0 0 15px #F3D98A;
+  animation: radarScan 2.5s infinite linear;
+}
+
+/* Shimmer Highlight */
+@keyframes shimmerAnim {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(90deg, #F8FAFC 0%, #F3D98A 40%, #F8FAFC 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerAnim 4s linear infinite;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .nav-island {
+    top: 10px;
+    padding: 0 12px;
+  }
+  .nav-inner {
+    padding: 8px 16px;
+  }
+  .desktop-nav {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 901px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+}
+
+/* AI Scanner Beam & Radar */
+@keyframes scanLaser {
+  0% {
+    top: 0%;
+    opacity: 0.9;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.9;
+  }
+}
+
+.scanner-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #F3D98A, #D4AF37, #FFF, #D4AF37, #F3D98A, transparent);
+  box-shadow: 0 0 15px #D4AF37, 0 0 30px #F3D98A;
+  animation: scanLaser 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  z-index: 10;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(212, 175, 55, 0.65);
+  }
+}
+
+.brand-badge-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   ChatGPT Layout & Sidebar Design
+   ========================================================================== */
+.chatgpt-app-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: #212121;
+}
+
+.chatgpt-main-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 0;
+  overflow-y: auto;
+  position: relative;
+  background-color: #212121;
+}
+
+/* Sidebar Hover & Interactive States */
+.chatgpt-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ECECEC !important;
+}
+
+.chatgpt-new-chat-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+
+.sidebar-project-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ECECEC !important;
+}
+
+.sidebar-chat-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ECECEC !important;
+}
+
+.sidebar-profile-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-popover-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.search-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar Scrollbar */
+.sidebar-scrollable-content::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scrollable-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+.sidebar-scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Mobile backdrop when sidebar is open */
+.chatgpt-sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .chatgpt-sidebar.open {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 999;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.85);
+  }
+  
+  .chatgpt-sidebar-overlay.active {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+}
+

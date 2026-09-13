@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 280" width="100%" height="100%">
+  <defs>
+    <!-- Denim wash gradient -->
+    <linearGradient id="denimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="30%" stop-color="#2563EB" />
+      <stop offset="70%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#172554" />
+    </linearGradient>
+    <!-- Thigh wash / whiskering -->
+    <linearGradient id="whiskerHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="rgba(191, 219, 254, 0.42)" />
+      <stop offset="100%" stop-color="rgba(191, 219, 254, 0)" />
+    </linearGradient>
+    <!-- Drop shadow -->
+    <filter id="jeansDrop" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(0,0,0,0.4)" />
+    </filter>
+  </defs>
+
+  <g filter="url(#jeansDrop)">
+    <!-- TWO CONTURED JEANS LEGS REACHING ANKLES -->
+    <path d="M 24,6 L 96,6 C 104,20 112,40 112,65 C 106,110 102,165 96,276 L 72,276 C 72,220 70,165 66,110 L 60,78 L 54,110 C 50,165 48,220 48,276 L 24,276 C 18,165 14,110 8,65 C 8,40 16,20 24,6 Z" fill="url(#denimGrad)" stroke="#1E3A8A" stroke-width="0.8" />
+
+    <!-- Vintage Thigh Fading (Vết mài thời trang hai bên đùi) -->
+    <ellipse cx="32" cy="72" rx="10" ry="20" fill="url(#whiskerHighlight)" />
+    <ellipse cx="88" cy="72" rx="10" ry="20" fill="url(#whiskerHighlight)" />
+    <!-- Knee Fading -->
+    <ellipse cx="36" cy="155" rx="7" ry="26" fill="url(#whiskerHighlight)" opacity="0.65" />
+    <ellipse cx="84" cy="155" rx="7" ry="26" fill="url(#whiskerHighlight)" opacity="0.65" />
+
+    <!-- Waistband Band -->
+    <path d="M 24,6 L 96,6 L 97,18 L 23,18 Z" fill="#1D4ED8" stroke="#F59E0B" stroke-width="0.6" stroke-dasharray="2,1.2" />
+
+    <!-- Belt Loops -->
+    <rect x="30" y="4" width="2.5" height="15" fill="#1E3A8A" stroke="#F59E0B" stroke-width="0.3" />
+    <rect x="48" y="4" width="2.5" height="15" fill="#1E3A8A" stroke="#F59E0B" stroke-width="0.3" />
+    <rect x="70" y="4" width="2.5" height="15" fill="#1E3A8A" stroke="#F59E0B" stroke-width="0.3" />
+    <rect x="88" y="4" width="2.5" height="15" fill="#1E3A8A" stroke="#F59E0B" stroke-width="0.3" />
+
+    <!-- Brass Shank Button -->
+    <circle cx="60" cy="12" r="2.6" fill="#D97706" stroke="#78350F" stroke-width="0.5" />
+    <circle cx="60" cy="12" r="1.1" fill="#FDE68A" />
+
+    <!-- J-Stitch Fly Curve -->
+    <path d="M 60,18 L 60,45 C 60,54 65,58 70,58" stroke="#F59E0B" stroke-width="0.8" stroke-dasharray="2,1.5" fill="none" />
+
+    <!-- Curved Front Pockets with Rivets -->
+    <path d="M 23,18 Q 32,32 46,26" stroke="#F59E0B" stroke-width="0.8" fill="none" />
+    <circle cx="46" cy="26" r="1.2" fill="#D97706" />
+    <path d="M 97,18 Q 88,32 74,26" stroke="#F59E0B" stroke-width="0.8" fill="none" />
+    <circle cx="74" cy="26" r="1.2" fill="#D97706" />
+
+    <!-- Inseam Golden Stitching -->
+    <path d="M 60,78 L 48,276" stroke="#F59E0B" stroke-width="0.5" stroke-dasharray="2.5,1.5" />
+    <path d="M 60,78 L 72,276" stroke="#F59E0B" stroke-width="0.5" stroke-dasharray="2.5,1.5" />
+
+    <!-- Outseam Stitching -->
+    <path d="M 8,65 C 14,110 18,165 24,276" stroke="#F59E0B" stroke-width="0.4" stroke-dasharray="2.5,1.5" fill="none" />
+    <path d="M 112,65 C 106,110 102,165 96,276" stroke="#F59E0B" stroke-width="0.4" stroke-dasharray="2.5,1.5" fill="none" />
+
+    <!-- Ankle Hem Cuffs -->
+    <line x1="24" y1="272" x2="48" y2="272" stroke="#F59E0B" stroke-width="0.6" stroke-dasharray="2,1" />
+    <line x1="72" y1="272" x2="96" y2="272" stroke="#F59E0B" stroke-width="0.6" stroke-dasharray="2,1" />
+  </g>
+</svg>

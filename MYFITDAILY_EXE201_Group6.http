@@ -1,0 +1,6 @@
+@MYFITDAILY_EXE201_Group6_HostAddress = http://localhost:5240
+
+GET {{MYFITDAILY_EXE201_Group6_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
