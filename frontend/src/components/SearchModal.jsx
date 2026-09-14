@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Shirt, Layers, MessageSquare, ArrowRight, Folder } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function SearchModal({
   isOpen,
@@ -10,6 +11,7 @@ export default function SearchModal({
   onNavigate,
   onSelectChat
 }) {
+  const { text } = useLanguage();
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const inputRef = useRef(null);
@@ -72,13 +74,14 @@ export default function SearchModal({
         style={{
           width: '100%',
           maxWidth: '560px',
-          background: '#1F1F1F',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: 'var(--bg-modal)',
+          border: '1px solid var(--border-medium)',
           borderRadius: '14px',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8)',
+          boxShadow: 'var(--shadow-lg)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
+          transition: 'background 0.3s ease, border-color 0.3s ease'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -88,13 +91,13 @@ export default function SearchModal({
           alignItems: 'center',
           gap: '10px',
           padding: '14px 18px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: '1px solid var(--border-subtle)',
         }}>
-          <Search size={18} color="#8E8E8E" />
+          <Search size={18} color="var(--text-muted)" />
           <input
             ref={inputRef}
             type="text"
-            placeholder="Tìm kiếm trang phục, outfit, hoặc đoạn chat..."
+            placeholder={text("Tìm kiếm trang phục, outfit, hoặc đoạn chat...", "Search wardrobe, outfits, or chat sessions...")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             style={{
@@ -102,7 +105,7 @@ export default function SearchModal({
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: '#ECECEC',
+              color: 'var(--text-primary)',
               fontSize: '0.95rem',
               padding: 0,
             }}
@@ -110,7 +113,7 @@ export default function SearchModal({
           {query && (
             <button
               onClick={() => setQuery('')}
-              style={{ background: 'none', border: 'none', color: '#8E8E8E', cursor: 'pointer', padding: '2px' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px' }}
             >
               <X size={16} />
             </button>
@@ -118,9 +121,9 @@ export default function SearchModal({
           <span style={{
             fontSize: '0.68rem',
             padding: '2px 6px',
-            background: 'rgba(255, 255, 255, 0.08)',
+            background: 'var(--hover-bg)',
             borderRadius: '4px',
-            color: '#8E8E8E'
+            color: 'var(--text-muted)'
           }}>
             ESC
           </span>
@@ -131,14 +134,14 @@ export default function SearchModal({
           display: 'flex',
           gap: '6px',
           padding: '8px 16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-          background: '#181818'
+          borderBottom: '1px solid var(--border-subtle)',
+          background: 'var(--hover-bg-subtle)'
         }}>
           {[
-            { id: 'all', label: 'Tất cả' },
-            { id: 'wardrobe', label: `Tủ đồ (${filteredClothes.length})` },
+            { id: 'all', label: text('Tất cả', 'All') },
+            { id: 'wardrobe', label: `${text('Tủ đồ', 'Closet')} (${filteredClothes.length})` },
             { id: 'outfits', label: `Outfits (${filteredOutfits.length})` },
-            { id: 'chats', label: 'Đoạn chat' },
+            { id: 'chats', label: text('Đoạn chat', 'Chats') },
           ].map(f => (
             <button
               key={f.id}
@@ -149,8 +152,8 @@ export default function SearchModal({
                 fontSize: '0.74rem',
                 border: 'none',
                 cursor: 'pointer',
-                background: filterType === f.id ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                color: filterType === f.id ? '#FFF' : '#8E8E8E',
+                background: filterType === f.id ? 'var(--hover-bg)' : 'transparent',
+                color: filterType === f.id ? 'var(--text-primary)' : 'var(--text-muted)',
               }}
             >
               {f.label}
@@ -164,7 +167,7 @@ export default function SearchModal({
           {(filterType === 'all' || filterType === 'chats') && sessionResults.length > 0 && (
             <div style={{ marginBottom: '10px' }}>
               <div style={{ fontSize: '0.72rem', color: '#71717A', padding: '4px 8px', fontWeight: 600 }}>
-                Lịch sử đoạn chat
+                {text('Lịch sử đoạn chat', 'Chat History')}
               </div>
               {sessionResults.map((session) => (
                 <div
@@ -185,11 +188,11 @@ export default function SearchModal({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MessageSquare size={15} color="#8E8E8E" />
-                    <span style={{ fontSize: '0.86rem', color: '#ECECEC' }}>{session.title}</span>
+                    <MessageSquare size={15} color="var(--text-muted)" />
+                    <span style={{ fontSize: '0.86rem', color: 'var(--text-primary)' }}>{session.title}</span>
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#D4AF37', background: 'rgba(212, 175, 55, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
-                    Đoạn chat
+                  <span style={{ fontSize: '0.7rem', color: 'var(--primary)', background: 'var(--primary-glow)', padding: '2px 6px', borderRadius: '4px' }}>
+                    {text('Đoạn chat', 'Chat')}
                   </span>
                 </div>
               ))}
@@ -199,8 +202,8 @@ export default function SearchModal({
           {/* Clothes Results */}
           {(filterType === 'all' || filterType === 'wardrobe') && filteredClothes.length > 0 && (
             <div style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '0.72rem', color: '#71717A', padding: '4px 8px', fontWeight: 600 }}>
-                Món đồ trong tủ
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', padding: '4px 8px', fontWeight: 600 }}>
+                {text('Món đồ trong tủ', 'Wardrobe Items')}
               </div>
               {filteredClothes.map((item) => (
                 <div
@@ -225,10 +228,10 @@ export default function SearchModal({
                     style={{ width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover' }} 
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.84rem', color: '#ECECEC' }}>{item.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#71717A' }}>{item.categoryName || item.brand || 'Món đồ'}</div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{item.name}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{item.categoryName || item.brand || text('Món đồ', 'Item')}</div>
                   </div>
-                  <ArrowRight size={14} color="#71717A" />
+                  <ArrowRight size={14} color="var(--text-muted)" />
                 </div>
               ))}
             </div>
@@ -237,8 +240,8 @@ export default function SearchModal({
           {/* Outfits Results */}
           {(filterType === 'all' || filterType === 'outfits') && filteredOutfits.length > 0 && (
             <div>
-              <div style={{ fontSize: '0.72rem', color: '#71717A', padding: '4px 8px', fontWeight: 600 }}>
-                Bộ phối đồ (Outfits)
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', padding: '4px 8px', fontWeight: 600 }}>
+                {text('Bộ phối đồ (Outfits)', 'Outfits & Looks')}
               </div>
               {filteredOutfits.map((item) => (
                 <div
@@ -257,12 +260,12 @@ export default function SearchModal({
                     cursor: 'pointer',
                   }}
                 >
-                  <Layers size={16} color="#D4AF37" />
+                  <Layers size={16} color="var(--primary)" />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.84rem', color: '#ECECEC' }}>{item.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#71717A' }}>{item.style || 'Phối đồ'}</div>
+                    <div style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{item.name}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{item.style || text('Phối đồ', 'Outfit')}</div>
                   </div>
-                  <ArrowRight size={14} color="#71717A" />
+                  <ArrowRight size={14} color="var(--text-muted)" />
                 </div>
               ))}
             </div>

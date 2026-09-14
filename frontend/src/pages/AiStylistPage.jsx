@@ -2,23 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, 
   Send, 
-  Bookmark,
-  User,
-  RotateCcw,
-  Sliders,
-  Flame,
-  CheckCircle,
-  ExternalLink,
-  Layers,
-  ChevronRight,
-  X,
-  Ruler,
-  ShoppingBag,
-  Info
+  Bookmark, 
+  User, 
+  RotateCcw, 
+  Sliders, 
+  Flame, 
+  CheckCircle, 
+  ExternalLink, 
+  Layers, 
+  ChevronRight, 
+  X, 
+  Ruler, 
+  ShoppingBag, 
+  Info,
+  RefreshCw,
+  CloudSun,
+  MapPin,
+  ChevronDown,
+  Check,
+  Search
 } from 'lucide-react';
 
 import { apiRequest } from '../api/apiClient';
 import VirtualMannequin from '../components/VirtualMannequin';
+import { useLanguage } from '../context/LanguageContext';
+import { getLiveWeather, ALL_LOCATIONS, setManualCity, clearManualCity } from '../services/weatherService';
 
 export default function AiStylistPage({ 
   clothes = [], 
@@ -32,6 +40,7 @@ export default function AiStylistPage({
   activeChatPrompt = null,
   resetChatSignal = 0
 }) {
+  const { text, isEnglish } = useLanguage();
   // Thông số cơ thể người dùng
   const hasBodyMetrics = user?.height > 0 && user?.weight > 0;
 
@@ -46,27 +55,80 @@ export default function AiStylistPage({
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
 
+  // Live Weather State (Tự động nhận diện khu vực và thời tiết theo thời gian thực)
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [locationSearch, setLocationSearch] = useState('');
+  const cityPickerRef = useRef(null);
+
+  const fetchWeather = async (force = false) => {
+    setWeatherLoading(true);
+    try {
+      const data = await getLiveWeather(force);
+      setWeather(data);
+    } catch (err) {
+      console.error('Failed to load live weather:', err);
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather(false);
+  }, []);
+
+  // Đóng city picker khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (cityPickerRef.current && !cityPickerRef.current.contains(e.target)) {
+        setShowCityPicker(false);
+      }
+    };
+    if (showCityPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCityPicker]);
+
   // Khởi tạo tin nhắn chào mừng thời thượng của AI Stylist
   const getInitialAiMessage = () => {
-    const ageGroupLabel = !user?.age || user.age <= 24 ? 'Gen Z' : user.age <= 34 ? 'Millennials' : user.age <= 49 ? 'Chững chạc' : 'Trung niên';
     return {
       id: 1,
       sender: 'ai',
-      text: `Xin chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist & Cố Vấn Thời Trang Cá Nhân** của bạn tại MYFITDAILY ✨.\n\n` +
-            `👤 **Hồ sơ vóc dáng cá nhân:** Chiều cao **${user?.height || 168}cm**, Cân nặng **${user?.weight || 58}kg**` +
-            (user?.age ? `, **${user.age} tuổi** (${ageGroupLabel})` : '') +
-            (user?.bodyShape ? `, Dáng người **${user.bodyShape}**` : '') +
-            (user?.chest && user?.waist && user?.hips ? ` (Số đo 3 vòng: ${user.chest}-${user.waist}-${user.hips}cm)` : '') +
-            `.\n\n🔥 **Trí tuệ xu hướng Sàn TMĐT (TikTok Shop, Shopee, Zara, Uniqlo, Taobao):** Đã kết nối với tủ đồ gồm **${clothes.length} món trang phục** của bạn.\n\n` +
-            `Hôm nay bạn đang chuẩn bị đi đâu (hẹn hò, đi làm, dự đám cưới, cafe cuối tuần, dạo phố...), hay muốn tôi tư vấn phối món đồ nào trong tủ? Hãy nhắn cho tôi nhé!`,
+      text: isEnglish
+        ? `Hello ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'there'}! I am your **AI Wardrobe & Outfit Stylist** at MYFITDAILY ✨.\n\n` +
+          `👗 **Current Wardrobe:** Connected with **${clothes.length} garments** (Tops, Bottoms, Dresses, Outerwear, Shoes & Accessories) from your personal closet.\n` +
+          (user?.height && user?.weight ? `📏 **Silhouette Guide:** Recorded body profile (${user.height}cm • ${user.weight}kg${user.bodyShape ? ` • ${user.bodyShape} shape` : ''}) to prioritize flattering cuts and proportions.\n\n` : '\n') +
+          `Here is how I can style you today:\n` +
+          `• ✦ **Complete Outfits by Occasion:** Work & smart casual, romantic date night, wedding guest, weekend cafe, traveling...\n` +
+          `• ✦ **Mix & Match Any Garment:** Click on any shirt, jeans, or blazer from the wardrobe slider below for immediate outfit ideas!\n` +
+          `• ✦ **Color Rules & Layering:** The 60-30-10 color principle, tone-sur-tone harmony, and chic blazer layering.\n\n` +
+          `Type your request or pick a wardrobe item below to start!`
+        : `Xin chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist Cá Nhân Chuyên Sâu Về Quần Áo & Phối Đồ** của bạn tại MYFITDAILY ✨.\n\n` +
+          `👗 **Tủ đồ hiện tại:** Đã kết nối với **${clothes.length} món trang phục** (Áo, Quần, Đầm, Áo khoác, Giày & Phụ kiện) trong tủ đồ cá nhân của bạn.\n` +
+          (user?.height && user?.weight ? `📏 **Tối ưu form dáng:** Đã ghi nhận thông số vóc dáng (${user.height}cm • ${user.weight}kg${user.bodyShape ? ` • dáng ${user.bodyShape}` : ''}) để ưu tiên chọn phom quần áo tôn chiều cao và che khuyết điểm.\n\n` : '\n') +
+          `Tôi có thể hỗ trợ bạn ngay hôm nay:\n` +
+          `• ✦ **Gợi ý trọn bộ outfit theo dịp:** Đi làm công sở, hẹn hò lãng mạn, dự đám cưới, cafe dạo phố cuối tuần...\n` +
+          `• ✦ **Mix & Match món đồ bất kỳ:** Click chọn một chiếc áo, quần hoặc váy trong thanh tủ đồ bên dưới để tôi gợi ý cách phối ngay!\n` +
+          `• ✦ **Nguyên tắc phối màu & chất liệu:** Quy tắc 60-30-10, phối tone-sur-tone, cách phối layer sành điệu.\n\n` +
+          `Hãy nhập yêu cầu hoặc click chọn một món đồ trong tủ bên dưới để bắt đầu nhé!`,
       isFashionRelated: true,
       accompanyingOutfits: [],
-      suggestedFollowUpQuestions: [
-        "Gợi ý outfit đi đám cưới sang trọng từ tủ đồ",
-        "Set đồ đi hẹn hò lãng mạn cuối tuần",
-        "Phối đồ đi làm công sở thanh lịch tôn dáng",
-        "Xu hướng thời trang nào đang hot trên TikTok Shop cho tuổi của tôi?",
-        "Cách phối đồ phong cách Quiet Luxury tối giản"
+      suggestedFollowUpQuestions: isEnglish ? [
+        "What should I wear for today's weather?",
+        "Style an outfit with a white button-up shirt",
+        "How to mix wide-leg vintage jeans",
+        "Elegant office outfit from my closet",
+        "Romantic weekend date outfit"
+      ] : [
+        "Thời tiết hôm nay ở khu vực của tôi nên mặc gì?",
+        "Trời đang mưa phối đồ thế nào để không bẩn gấu quần?",
+        "Phối đồ với áo sơ mi trắng",
+        "Cách mix quần jeans ống suông tôn dáng",
+        "Gợi ý outfit công sở thanh lịch từ tủ đồ"
       ]
     };
   };
@@ -86,7 +148,7 @@ export default function AiStylistPage({
     } else if (!activeSession) {
       setChatMessages([getInitialAiMessage()]);
     }
-  }, [activeSession?.id]);
+  }, [activeSession?.id, isEnglish]);
 
   // Auto scroll xuống tin nhắn mới nhất
   useEffect(() => {
@@ -161,7 +223,10 @@ export default function AiStylistPage({
         body: JSON.stringify({
           message: messageToSend,
           history: history,
-          wardrobeItemIds: clothes?.map(c => c.id) || []
+          wardrobeItemIds: clothes?.map(c => c.id) || [],
+          userLocation: weather?.city || '',
+          temperature: weather?.temperature != null ? weather.temperature : null,
+          weatherCondition: weather?.conditionText || ''
         })
       });
 
@@ -198,15 +263,27 @@ export default function AiStylistPage({
           items: clothes.slice(0, 3)
         };
 
+        const isWeatherQuery = /thời tiết|thoi tiet|mưa|mua|nắng|nang|nhiệt độ|nhiet do|lạnh|lanh|nóng|nong|weather|rain|sun|hot|cold/i.test(messageToSend);
+        let fallbackText = `Dựa trên câu hỏi "${messageToSend}", thông số vóc dáng và xu hướng sàn TMĐT hiện nay, tôi đã tuyển chọn set đồ tối ưu nhất từ tủ đồ của bạn!\n\n` +
+              `✨ **Bản phối:** Áo phom gọn gàng sơ vin cùng quần cạp cao giúp "hack" thêm 5cm chiều dài đôi chân, kết hợp cùng giày thanh lịch. Mô hình người ảo bên phải đã lập tức mặc thử set đồ này để bạn ngắm nhìn trực quan!`;
+
+        if (isWeatherQuery && weather) {
+          fallbackText = `📍 **Thời tiết thực tế tại ${weather.city}:** Hiện tại khoảng **${weather.temperature}°C**, ${weather.conditionText.toLowerCase()}.\n\n` +
+            (weather.temperature >= 28 
+              ? `☀️ **Tư vấn phong cách trời nóng:** Với nền nhiệt ${weather.temperature}°C, bạn nên ưu tiên chất liệu cotton thoáng khí, sơ mi đũi mát mẻ hoặc áo thun phom rộng kết hợp quần ống suông nhẹ để giải nhiệt tối đa!`
+              : weather.temperature <= 22
+              ? `🧥 **Tư vấn phong cách trời se lạnh:** Với ${weather.temperature}°C, hãy chọn phối layer cùng áo khoác cardigan dệt kim hoặc blazer thanh lịch để vừa ấm áp vừa sang trọng!`
+              : `🌤️ **Tư vấn phong cách lý tưởng:** Thời tiết ${weather.temperature}°C rất đẹp, cực kỳ thích hợp cho các set đồ Smart Casual năng động từ tủ đồ của bạn!`);
+        }
+
         const fallbackMsg = {
           id: Date.now() + 1,
           sender: 'ai',
-          text: `Dựa trên câu hỏi "${messageToSend}", thông số vóc dáng và xu hướng sàn TMĐT hiện nay, tôi đã tuyển chọn set đồ tối ưu nhất từ tủ đồ của bạn!\n\n` +
-                `✨ **Bản phối:** Áo phom gọn gàng sơ vin cùng quần cạp cao giúp "hack" thêm 5cm chiều dài đôi chân, kết hợp cùng giày thanh lịch. Mô hình người ảo bên phải đã lập tức mặc thử set đồ này để bạn ngắm nhìn trực quan!`,
+          text: fallbackText,
           isFashionRelated: true,
           accompanyingOutfits: [fallbackSet],
           suggestedFollowUpQuestions: [
-            "Cách chọn màu sắc tôn da khi đi tiệc buổi tối",
+            "Thời tiết này mang giày gì phù hợp nhất?",
             "Gợi ý phụ kiện phối kèm cho set đồ này",
             "Mẹo diện đồ che bắp tay to hoặc bụng dưới"
           ]
@@ -275,14 +352,14 @@ export default function AiStylistPage({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span className="badge badge-rose" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
               <Sparkles size={13} />
-              <span>Cố Vấn Thời Trang Cá Nhân AI</span>
+              <span>{text('Chuyên Gia Phối Đồ & Quần Áo AI', 'AI Fashion & Wardrobe Stylist')}</span>
             </span>
             <span style={{ fontSize: '0.8rem', color: '#F3D98A', fontWeight: 600 }}>
-              ✦ Am hiểu xu hướng TMĐT Shopee • TikTok Shop • Zara
+              {text('✦ Phối đồ từ tủ cá nhân & Bắt trọn xu hướng TMĐT', '✦ Style from personal closet & trending fashion')}
             </span>
           </div>
           <h2 style={{ fontSize: '2.1rem', fontWeight: 800, color: '#FFF' }}>
-            AI Stylist & Thử Đồ Người Ảo
+            {text('AI Stylist Studio & Tủ Đồ Quần Áo', 'AI Stylist Studio & Wardrobe')}
           </h2>
         </div>
 
@@ -290,11 +367,11 @@ export default function AiStylistPage({
           <button
             onClick={() => onNavigate && onNavigate('profile')}
             className="btn-secondary"
-            title="Đến trang Hồ Sơ Cá Nhân để xem và cập nhật vóc dáng"
+            title={text('Đến trang Hồ Sơ Cá Nhân để xem và cập nhật vóc dáng', 'Open Profile to view and update body metrics')}
             style={{ padding: '9px 18px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <Ruler size={15} color="#D4AF37" />
-            <span>Hồ Sơ Vóc Dáng ({user?.height || 165}cm • {user?.weight || 52}kg)</span>
+            <span>{text('Hồ Sơ Vóc Dáng', 'Body Profile')} ({user?.height || 165}cm • {user?.weight || 52}kg)</span>
           </button>
 
           <button
@@ -303,7 +380,7 @@ export default function AiStylistPage({
             style={{ padding: '9px 18px', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <ShoppingBag size={15} />
-            <span>Tủ Đồ ({clothes.length} món)</span>
+            <span>{text('Tủ Đồ', 'Wardrobe')} ({clothes.length} {text('món', 'items')})</span>
           </button>
         </div>
       </div>
@@ -332,58 +409,328 @@ export default function AiStylistPage({
         >
           {/* Chat Stream Header */}
           <div style={{
-            padding: '14px 20px',
-            background: 'rgba(10, 15, 28, 0.85)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '12px 18px',
+            background: 'var(--card-bg)',
+            borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '38px',
-                height: '38px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 0 15px rgba(225, 29, 72, 0.4)',
-                color: '#FFF'
+                color: '#FFF',
+                flexShrink: 0
               }}>
-                <Sparkles size={20} />
+                <Sparkles size={18} />
               </div>
               <div>
-                <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#FFF' }}>
+                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   {activeSession?.title ? activeSession.title : 'MYFITDAILY Stylist AI'}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: '#10B981', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981' }} />
-                  Đang trực tuyến • Sẵn sàng tư vấn mọi phong cách
+                  <span>{text('Đang trực tuyến • Sẵn sàng tư vấn', 'Online • Ready to style')}</span>
                 </div>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                if (onNewChat) onNewChat();
-                else setChatMessages([getInitialAiMessage()]);
-              }}
-              title="Bắt đầu đoạn chat mới"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '0.78rem'
-              }}
-            >
-              <RotateCcw size={14} />
-              <span>Đoạn chat mới</span>
-            </button>
+            {/* Live Weather Widget & Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {weather ? (
+                <div ref={cityPickerRef} style={{ position: 'relative' }}>
+                  <div 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '5px 12px',
+                      background: 'var(--hover-bg)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '20px',
+                      fontSize: '0.78rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem', lineHeight: 1 }}>{weather.conditionIcon}</span>
+                    
+                    {/* Clickable City Name with Chevron */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCityPicker(prev => !prev);
+                      }}
+                      title={text('Nhấn để đổi thành phố / khu vực', 'Click to change city / region')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        padding: '0 2px',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '0.78rem'
+                      }}
+                    >
+                      <span>📍 {weather.city}</span>
+                      <ChevronDown size={11} style={{ opacity: 0.7 }} />
+                    </button>
+
+                    <span style={{ color: 'var(--text-muted)' }}>•</span>
+                    
+                    {/* Temperature & Condition Button (Click to ask AI) */}
+                    <button
+                      onClick={() => {
+                        handleSendMessage(
+                          isEnglish 
+                            ? `The weather in ${weather.city} is currently ${weather.temperature}°C (${weather.conditionTextEn}). Suggest an outfit that is stylish and weather-appropriate!`
+                            : `Thời tiết hiện tại ở ${weather.city} là ${weather.temperature}°C (${weather.conditionText}). Hãy tư vấn cho tôi một bộ outfit vừa thời thượng vừa phù hợp với thời tiết này!`
+                        );
+                      }}
+                      title={text('Click để AI gợi ý trang phục theo thời tiết này', 'Click to ask AI for outfit tailored to this weather')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.78rem'
+                      }}
+                    >
+                      <span style={{ fontWeight: 800, color: '#D4AF37' }}>
+                        {weather.temperature}°C
+                      </span>
+                      <span style={{ color: 'var(--text-secondary)' }}>
+                        {isEnglish ? weather.conditionTextEn : weather.conditionText}
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fetchWeather(true);
+                      }}
+                      title={text('Cập nhật lại thời tiết', 'Refresh weather')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: '2px 4px',
+                        cursor: 'pointer',
+                        color: 'var(--text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        borderRadius: '4px',
+                        marginLeft: '2px'
+                      }}
+                    >
+                      <RefreshCw size={12} className={weatherLoading ? "spin-animation" : ""} />
+                    </button>
+                  </div>
+
+                  {/* Dropdown Menu chọn thành phố / quận huyện */}
+                  {showCityPicker && (
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        left: 0,
+                        zIndex: 999,
+                        background: 'var(--bg-modal)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        padding: '10px',
+                        width: '280px',
+                        boxShadow: '0 12px 36px rgba(0,0,0,0.5)',
+                        backdropFilter: 'blur(16px)'
+                      }}
+                    >
+                      {/* Auto-detect button */}
+                      <button
+                        onClick={() => {
+                          clearManualCity();
+                          setShowCityPicker(false);
+                          setLocationSearch('');
+                          fetchWeather(true);
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'rgba(225, 29, 72, 0.1)',
+                          border: '1px solid rgba(225, 29, 72, 0.25)',
+                          color: 'var(--primary)',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          marginBottom: '8px'
+                        }}
+                      >
+                        <MapPin size={13} />
+                        <span>{text('🎯 Tự động định vị GPS (Theo Quận/Huyện)', '🎯 Auto-detect GPS (District Level)')}</span>
+                      </button>
+
+                      {/* District / City Search Input */}
+                      <div style={{ position: 'relative', marginBottom: '8px' }}>
+                        <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input 
+                          type="text"
+                          value={locationSearch}
+                          onChange={(e) => setLocationSearch(e.target.value)}
+                          placeholder={text("Gõ tên quận, huyện (Cầu Giấy, Đông Anh...)", "Search district (Cau Giay, Dong Anh...)")}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px 6px 28px',
+                            background: 'var(--hover-bg)',
+                            border: '1px solid var(--border-subtle)',
+                            borderRadius: '6px',
+                            fontSize: '0.74rem',
+                            color: 'var(--text-primary)',
+                            outline: 'none'
+                          }}
+                        />
+                      </div>
+
+                      {/* Quick District Chips */}
+                      {!locationSearch && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                          {['Thạch Thất', 'Cầu Giấy', 'Hà Đông', 'Đông Anh', 'Đống Đa', 'Quận 1'].map(dName => {
+                            const isCurrent = weather.city.includes(dName);
+                            return (
+                              <button
+                                key={dName}
+                                onClick={() => {
+                                  const found = ALL_LOCATIONS.find(l => l.shortName === dName || l.name.includes(dName));
+                                  if (found) {
+                                    setManualCity(found.name);
+                                    setShowCityPicker(false);
+                                    fetchWeather(true);
+                                  }
+                                }}
+                                style={{
+                                  padding: '3px 8px',
+                                  fontSize: '0.68rem',
+                                  borderRadius: '12px',
+                                  background: isCurrent ? 'var(--primary)' : 'rgba(255, 255, 255, 0.08)',
+                                  color: isCurrent ? '#FFF' : 'var(--text-secondary)',
+                                  border: isCurrent ? '1px solid var(--primary)' : '1px solid var(--border-subtle)',
+                                  cursor: 'pointer',
+                                  fontWeight: isCurrent ? 700 : 500
+                                }}
+                              >
+                                {dName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)', padding: '2px 6px 6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        {locationSearch ? text('Kết quả tìm kiếm:', 'Search Results:') : text('Chọn Quận / Huyện / Tỉnh thành:', 'Select District / Province:')}
+                      </div>
+
+                      <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        {ALL_LOCATIONS
+                          .filter(l => {
+                            if (!locationSearch.trim()) return true;
+                            const q = locationSearch.toLowerCase();
+                            return l.name.toLowerCase().includes(q) || l.shortName.toLowerCase().includes(q) || l.group.toLowerCase().includes(q);
+                          })
+                          .map((c) => {
+                            const isSelected = weather.city === c.name || weather.city.includes(c.shortName);
+                            return (
+                              <button
+                                key={c.name}
+                                onClick={() => {
+                                  setManualCity(c.name);
+                                  setShowCityPicker(false);
+                                  setLocationSearch('');
+                                  fetchWeather(true);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '6px 10px',
+                                  border: 'none',
+                                  background: isSelected ? 'var(--hover-bg)' : 'transparent',
+                                  color: isSelected ? '#D4AF37' : 'var(--text-primary)',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.78rem',
+                                  fontWeight: isSelected ? 700 : 500,
+                                  textAlign: 'left'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span>{c.name}</span>
+                                  <span style={{ fontSize: '0.62rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>
+                                    {c.group}
+                                  </span>
+                                </div>
+                                {isSelected && <Check size={13} color="#D4AF37" />}
+                              </button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : weatherLoading ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 12px',
+                  background: 'var(--hover-bg)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '20px',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-muted)'
+                }}>
+                  <RefreshCw size={12} className="spin-animation" />
+                  <span>{text('Đang xác định thời tiết...', 'Detecting weather...')}</span>
+                </div>
+              ) : null}
+
+              <button
+                onClick={() => {
+                  if (onNewChat) onNewChat();
+                  else setChatMessages([getInitialAiMessage()]);
+                }}
+                title={text('Bắt đầu đoạn chat mới', 'New chat')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.78rem'
+                }}
+              >
+                <RotateCcw size={14} />
+                <span>{text('Đoạn chat mới', 'New chat')}</span>
+              </button>
+            </div>
           </div>
 
           {/* Chat Messages List */}
@@ -620,10 +967,95 @@ export default function AiStylistPage({
                   gap: '8px'
                 }}>
                   <span className="spinner" style={{ width: '14px', height: '14px' }} />
-                  <span>AI đang phân tích tỉ lệ vóc dáng, tủ đồ và xu hướng TMĐT...</span>
+                  <span>{text('AI đang phân tích tỉ lệ vóc dáng, tủ đồ và xu hướng TMĐT...', 'AI is analyzing your wardrobe items and styling formulas...')}</span>
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Wardrobe Quick-Select Carousel: Chọn đồ trong tủ để AI phối */}
+          <div style={{
+            padding: '10px 16px',
+            background: 'rgba(10, 15, 28, 0.95)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', color: '#F3D98A', fontWeight: 700 }}>
+                <ShoppingBag size={13} color="#D4AF37" />
+                <span>{text('Chọn món đồ trong tủ để AI phối đồ:', 'Select an item from your wardrobe to style:')}</span>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                {clothes.length > 0 ? `${clothes.length} ${text('món đồ', 'items')}` : text('Gợi ý đồ mẫu', 'Sample items')}
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              overflowX: 'auto',
+              paddingBottom: '4px',
+              scrollbarWidth: 'thin'
+            }}>
+              {(clothes.length > 0 ? clothes : [
+                { id: 1, name: 'Áo Sơ Mi Lụa Trắng', categoryName: 'Tops', color: 'Trắng', imageUrl: '/assets/clothes/shirt_white.svg' },
+                { id: 2, name: 'Áo Thun Cotton Đen', categoryName: 'Tops', color: 'Đen', imageUrl: '/assets/clothes/tshirt_black.svg' },
+                { id: 4, name: 'Quần Jeans Ống Suông Vintage', categoryName: 'Bottoms', color: 'Xanh Denim', imageUrl: '/assets/clothes/jeans_blue.svg' },
+                { id: 5, name: 'Quần Tây Xếp Ly Đen', categoryName: 'Bottoms', color: 'Đen', imageUrl: '/assets/clothes/pants_black.svg' },
+                { id: 7, name: 'Đầm Lụa Midi Slip Dress', categoryName: 'Dresses', color: 'Hồng Nhạt', imageUrl: '/assets/clothes/dress_silk.svg' },
+                { id: 8, name: 'Áo Blazer Dạ Nâu Cacao', categoryName: 'Outerwear', color: 'Nâu', imageUrl: '/assets/clothes/blazer_brown.svg' },
+                { id: 10, name: 'Sneaker Trắng Retro Classic', categoryName: 'Shoes', color: 'Trắng', imageUrl: '/assets/clothes/shoes_sneaker.svg' },
+                { id: 11, name: 'Giày Loafer Da Bóng', categoryName: 'Shoes', color: 'Đen', imageUrl: '/assets/clothes/shoes_loafer.svg' }
+              ]).map((cItem, cIdx) => (
+                <button
+                  key={cIdx}
+                  onClick={() => handleSendMessage(
+                    isEnglish
+                      ? `Give me the best styling tips and outfit combinations with "${cItem.name}" (${cItem.categoryName}, ${cItem.color || 'neutral'}) from my wardrobe`
+                      : `Gợi ý các cách phối đồ đẹp, tôn dáng nhất với "${cItem.name}" (màu ${cItem.color || 'trung tính'}, ${cItem.categoryName || 'trang phục'}) từ tủ đồ của tôi`
+                  )}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '5px 10px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#FFF',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(212, 175, 55, 0.15)';
+                    e.currentTarget.style.borderColor = 'var(--primary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  title={`Click để yêu cầu AI phối đồ với ${cItem.name}`}
+                >
+                  <img
+                    src={cItem.imageUrl}
+                    alt={cItem.name}
+                    style={{
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '4px',
+                      objectFit: 'cover',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: '#FFF' }}>{cItem.name}</span>
+                    <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)' }}>{cItem.categoryName} • {cItem.color}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Quick Prompt Bar */}
@@ -636,14 +1068,23 @@ export default function AiStylistPage({
             overflowX: 'auto',
             whiteSpace: 'nowrap',
           }}>
-            {[
-              "Hôm nay đi đám cưới mặc gì sang?",
-              "Gợi ý outfit đi date lãng mạn",
-              "Set đồ công sở thanh lịch",
-              "Phối đồ cafe dạo phố Gen Z",
-              "Xu hướng thời trang TikTok Shop hot nhất",
-              "Mẹo phối đồ che bắp tay & tôn eo"
-            ].map((p, idx) => (
+            {(isEnglish ? [
+              "Style with white button-up shirt",
+              "How to mix wide-leg jeans",
+              "Chic office outfit from wardrobe",
+              "Layering tips with wool blazer",
+              "Color harmony rules for outfits",
+              "Weekend street style idea",
+              "Garment tips to look taller"
+            ] : [
+              "Phối đồ với áo sơ mi trắng",
+              "Cách mix quần jeans ống suông",
+              "Set đồ công sở thanh lịch từ tủ",
+              "Phối layer áo blazer dạ",
+              "Quy tắc phối màu quần áo chuẩn gu",
+              "Gợi ý outfit dạo phố cuối tuần",
+              "Mẹo chọn form quần áo hack chân dài"
+            ]).map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSendMessage(p)}
@@ -658,7 +1099,7 @@ export default function AiStylistPage({
                   flexShrink: 0
                 }}
               >
-                {p}
+                ✦ {p}
               </button>
             ))}
           </div>
@@ -679,7 +1120,10 @@ export default function AiStylistPage({
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Nhập câu hỏi tự nhiên (ví dụ: 'Tôi đi đám cưới bạn tối nay thì mặc gì đẹp?')..."
+              placeholder={text(
+                "Nhập câu hỏi tự nhiên (ví dụ: 'Tôi đi đám cưới bạn tối nay thì mặc gì đẹp?')...",
+                "Ask naturally (e.g. 'What should I wear to an evening wedding party?')..."
+              )}
               style={{
                 flex: 1,
                 height: '46px',
@@ -733,20 +1177,20 @@ export default function AiStylistPage({
             <div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                 <span className="badge badge-gold" style={{ fontSize: '0.68rem', fontWeight: 800 }}>
-                  💃 MÔ HÌNH NGƯỜI ẢO 2.5D
+                  💃 {text('MÔ HÌNH NGƯỜI ẢO 2.5D', '2.5D VIRTUAL MODEL')}
                 </span>
                 <span style={{ fontSize: '0.74rem', color: '#10B981', fontWeight: 600 }}>
                   ● Live Fitting
                 </span>
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFF' }}>
-                Thử Đồ Theo Vóc Dáng Của Bạn
+                {text('Thử Đồ Theo Vóc Dáng Của Bạn', 'Virtual Try-On Fitting')}
               </h3>
             </div>
 
             <button
               onClick={() => onNavigate && onNavigate('profile')}
-              title="Cập nhật thông tin trong Hồ Sơ Cá Nhân"
+              title={text("Cập nhật thông tin trong Hồ Sơ Cá Nhân", "Update information in Personal Profile")}
               style={{
                 background: 'rgba(212, 175, 55, 0.1)',
                 border: '1px solid rgba(212, 175, 55, 0.3)',
@@ -763,7 +1207,7 @@ export default function AiStylistPage({
               }}
             >
               <User size={13} color="#D4AF37" />
-              <span>Chỉnh sửa hồ sơ →</span>
+              <span>{text('Chỉnh sửa hồ sơ →', 'Edit Profile →')}</span>
             </button>
           </div>
 

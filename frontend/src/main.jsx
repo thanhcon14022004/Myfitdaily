@@ -2,6 +2,8 @@ import React, { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { LanguageProvider } from './context/LanguageContext.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -47,26 +49,21 @@ class ErrorBoundary extends React.Component {
             </p>
             {this.state.error?.message && (
               <div style={{
-                background: 'rgba(251, 113, 133, 0.1)',
-                border: '1px solid rgba(251, 113, 133, 0.3)',
-                color: '#FDA4AF',
-                padding: '8px 12px',
+                background: 'rgba(0,0,0,0.4)',
+                padding: '10px',
                 borderRadius: '8px',
-                fontSize: '0.78rem',
                 fontFamily: 'monospace',
+                fontSize: '0.78rem',
+                color: '#FDA4AF',
                 marginBottom: '18px',
-                wordBreak: 'break-word',
                 textAlign: 'left'
               }}>
                 {this.state.error.message}
               </div>
             )}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
-                onClick={() => {
-                  this.setState({ hasError: false, error: null });
-                  window.location.reload();
-                }}
+                onClick={() => window.location.reload()}
                 className="btn-primary"
                 style={{ padding: '10px 24px', fontSize: '0.9rem' }}
               >
@@ -74,6 +71,7 @@ class ErrorBoundary extends React.Component {
               </button>
               <button
                 onClick={() => {
+                  localStorage.clear();
                   window.location.href = '/';
                 }}
                 className="btn-secondary"
@@ -93,7 +91,11 @@ class ErrorBoundary extends React.Component {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <LanguageProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

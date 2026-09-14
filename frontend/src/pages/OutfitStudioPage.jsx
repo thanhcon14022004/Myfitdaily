@@ -21,6 +21,7 @@ import {
 import OutfitCard from '../components/OutfitCard';
 import VirtualMannequin from '../components/VirtualMannequin';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function OutfitStudioPage({ 
   clothes, 
@@ -32,6 +33,7 @@ export default function OutfitStudioPage({
   onNavigate,
   user
 }) {
+  const { text, isEnglish } = useLanguage();
   const [deleteModalItem, setDeleteModalItem] = useState(null);
 
   // Chế độ xem: 'mannequin' (Người ảo thử đồ 3D/2.5D) | 'flatlay' (Sàn phẳng)
@@ -133,14 +135,17 @@ export default function OutfitStudioPage({
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
           <span className="badge badge-indigo">Virtual Atelier</span>
           <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-            ✦ Sàn Diễn Phối Đồ Kỹ Thuật Số
+            {text('✦ Sàn Diễn Phối Đồ Kỹ Thuật Số', '✦ Digital Styling Runway')}
           </span>
         </div>
         <h2 style={{ fontSize: '2.4rem', fontWeight: 800 }}>
-          Atelier Studio <span className="gradient-text">& Mix-Match</span>
+          {text('Atelier Studio', 'Atelier Studio')} <span className="gradient-text">& Mix-Match</span>
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem' }}>
-          Thử nghiệm kết hợp các món đồ theo bố cục Flat-Lay, kiểm tra độ hài hòa màu sắc trước khi diện ra phố.
+          {text(
+            'Thử nghiệm kết hợp các món đồ theo bố cục Flat-Lay, kiểm tra độ hài hòa màu sắc trước khi diện ra phố.',
+            'Experiment combining garments on the Flat-Lay canvas, verify color harmony before heading out.'
+          )}
         </p>
       </div>
 
@@ -162,7 +167,9 @@ export default function OutfitStudioPage({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Layers size={18} color="#D4AF37" />
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-                {studioMode === 'mannequin' ? 'Phòng Thử Đồ Người Ảo' : 'Sàn Phối Đồ Flat-Lay'}
+                {studioMode === 'mannequin' 
+                  ? text('Phòng Thử Đồ Người Ảo', 'Virtual Fitting Room') 
+                  : text('Sàn Phối Đồ Flat-Lay', 'Flat-Lay Studio Canvas')}
               </h3>
             </div>
 
@@ -182,7 +189,7 @@ export default function OutfitStudioPage({
                   transition: 'var(--transition)'
                 }}
               >
-                💃 Người Ảo (3D Fitting)
+                💃 {text('Người Ảo (3D Fitting)', 'Virtual Model (3D)')}
               </button>
 
               <button
@@ -200,7 +207,7 @@ export default function OutfitStudioPage({
                   transition: 'var(--transition)'
                 }}
               >
-                🖼️ Sàn Flat-Lay
+                🖼️ {text('Sàn Flat-Lay', 'Flat-Lay Canvas')}
               </button>
             </div>
           </div>
@@ -546,11 +553,11 @@ export default function OutfitStudioPage({
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px', marginBottom: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
-                  Đặt Tên Bộ Phối Đồ *
+                  {text('Đặt Tên Bộ Phối Đồ *', 'Outfit Name *')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Set Cafe Chiều Thu, Đi Làm Thứ 2..."
+                  placeholder={text('Ví dụ: Set Cafe Chiều Thu, Đi Làm Thứ 2...', 'e.g., Autumn Coffee Look, Monday Office...')}
                   value={outfitName}
                   onChange={(e) => setOutfitName(e.target.value)}
                   style={{ width: '100%' }}
@@ -560,29 +567,29 @@ export default function OutfitStudioPage({
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
-                  Dịp Mặc (Occasion)
+                  {text('Dịp Mặc (Occasion)', 'Occasion')}
                 </label>
                 <select
                   value={outfitOccasion}
                   onChange={(e) => setOutfitOccasion(e.target.value)}
                   style={{ width: '100%' }}
                 >
-                  <option value="Work">Đi Làm / Công Sở</option>
-                  <option value="Date">Hẹn Hò Lãng Mạn</option>
-                  <option value="Casual">Dạo Phố Cuối Tuần</option>
-                  <option value="Party">Dự Tiệc Tùng</option>
-                  <option value="Travel">Du Lịch Dã Ngoại</option>
+                  <option value="Work">{text('Đi Làm / Công Sở', 'Work / Office')}</option>
+                  <option value="Date">{text('Hẹn Hò Lãng Mạn', 'Romantic Date')}</option>
+                  <option value="Casual">{text('Dạo Phố Cuối Tuần', 'Weekend Casual')}</option>
+                  <option value="Party">{text('Dự Tiệc Tùng', 'Party / Evening')}</option>
+                  <option value="Travel">{text('Du Lịch Dã Ngoại', 'Travel & Outdoor')}</option>
                 </select>
               </div>
             </div>
 
             <div style={{ marginBottom: '18px' }}>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
-                Ghi Chú Phong Cách
+                {text('Ghi Chú Phong Cách', 'Style Notes')}
               </label>
               <input
                 type="text"
-                placeholder="Ví dụ: Phối cùng son đỏ, đồng hồ dây da nâu..."
+                placeholder={text('Ví dụ: Phối cùng son đỏ, đồng hồ dây da nâu...', 'e.g., Pair with red lipstick, leather watch...')}
                 value={outfitDescription}
                 onChange={(e) => setOutfitDescription(e.target.value)}
                 style={{ width: '100%' }}
@@ -595,7 +602,7 @@ export default function OutfitStudioPage({
               style={{ width: '100%', padding: '14px', fontSize: '0.96rem' }}
             >
               <Save size={18} />
-              <span>Lưu Bộ Outfit Này Vào Tủ Đồ</span>
+              <span>{text('Lưu Bộ Outfit Này Vào Tủ Đồ', 'Save Outfit to Wardrobe')}</span>
             </button>
           </form>
         </div>
@@ -604,21 +611,21 @@ export default function OutfitStudioPage({
         <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ marginBottom: '16px' }}>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '4px' }}>
-              Khay Chọn Đồ Từ Tủ
+              {text('Khay Chọn Đồ Từ Tủ', 'Wardrobe Item Selector')}
             </h4>
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              Nhấp vào món đồ để đưa trực tiếp vào sàn phối Flat-Lay bên trái
+              {text('Nhấp vào món đồ để đưa trực tiếp vào sàn phối Flat-Lay bên trái', 'Click on an item to place it onto the canvas on the left')}
             </p>
           </div>
 
           {/* Drawer Category Tabs */}
           <div className="filter-pills" style={{ marginBottom: '18px' }}>
             {[
-              { id: 'Tops', label: 'Áo' },
-              { id: 'Outerwear', label: 'Khoác' },
-              { id: 'Bottoms', label: 'Quần/Đầm' },
-              { id: 'Shoes', label: 'Giày' },
-              { id: 'Accessories', label: 'Phụ kiện' },
+              { id: 'Tops', label: text('Áo', 'Tops') },
+              { id: 'Outerwear', label: text('Khoác', 'Outerwear') },
+              { id: 'Bottoms', label: text('Quần/Đầm', 'Bottoms/Dresses') },
+              { id: 'Shoes', label: text('Giày', 'Shoes') },
+              { id: 'Accessories', label: text('Phụ kiện', 'Accessories') },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -716,9 +723,11 @@ export default function OutfitStudioPage({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>Bộ Sưu Tập Lookbook Của Bạn</h3>
+            <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>
+              {text('Bộ Sưu Tập Lookbook Của Bạn', 'Your Lookbook Collection')}
+            </h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-              Xem lại toàn bộ trang phục đã được sáng tạo và lưu trữ.
+              {text('Xem lại toàn bộ trang phục đã được sáng tạo và lưu trữ.', 'Review all created and saved outfit combinations.')}
             </p>
           </div>
 
@@ -727,13 +736,13 @@ export default function OutfitStudioPage({
               onClick={() => setOutfitFilter('all')}
               className={`filter-pill ${outfitFilter === 'all' ? 'active' : ''}`}
             >
-              Tất Cả ({outfits.length})
+              {text('Tất Cả', 'All')} ({outfits.length})
             </button>
             <button
               onClick={() => setOutfitFilter('fav')}
               className={`filter-pill ${outfitFilter === 'fav' ? 'active' : ''}`}
             >
-              Yêu Thích ({outfits.filter(o => o.isFavorite).length})
+              {text('Yêu Thích', 'Favorites')} ({outfits.filter(o => o.isFavorite).length})
             </button>
             <button
               onClick={() => setOutfitFilter('ai')}

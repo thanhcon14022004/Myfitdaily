@@ -1,5 +1,6 @@
 import React from 'react';
 import { PanelLeftOpen } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function TopBar({
   isSidebarOpen,
@@ -8,6 +9,7 @@ export default function TopBar({
   setCurrentTab,
   user
 }) {
+  const { t, text } = useLanguage();
   return (
     <header style={{
       height: '52px',
@@ -16,13 +18,14 @@ export default function TopBar({
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '0 16px',
-      background: 'rgba(8, 10, 15, 0.65)',
+      background: 'var(--bg-topbar)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+      borderBottom: '1px solid var(--border-subtle)',
       position: 'sticky',
       top: 0,
       zIndex: 40,
+      transition: 'background 0.3s ease, border-color 0.3s ease',
     }}>
       {/* Left Area: Sidebar Toggle (visible if sidebar closed or on mobile) & Brand Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -30,7 +33,7 @@ export default function TopBar({
           <button
             onClick={onToggleSidebar}
             className="chatgpt-icon-btn"
-            title="Mở thanh bên"
+            title={text("Mở thanh bên", "Open sidebar")}
             style={{
               width: '34px',
               height: '34px',
@@ -38,9 +41,9 @@ export default function TopBar({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#B4B4B4',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              color: 'var(--text-secondary)',
+              background: 'var(--hover-bg)',
+              border: '1px solid var(--border-subtle)',
               cursor: 'pointer',
             }}
           >
@@ -53,21 +56,21 @@ export default function TopBar({
           <span style={{
             fontSize: '0.88rem',
             fontWeight: 700,
-            color: '#ECECEC',
+            color: 'var(--text-primary)',
             fontFamily: "'Outfit', sans-serif",
             letterSpacing: '-0.01em'
           }}>
             MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span>
           </span>
-          <span style={{ color: 'rgba(255, 255, 255, 0.2)', fontSize: '0.8rem' }}>/</span>
-          <span style={{ fontSize: '0.82rem', color: '#A1A1AA', fontWeight: 500 }}>
-            {currentTab === 'ai-stylist' && 'AI Stylist'}
-            {currentTab === 'dashboard' && 'Bàn làm việc'}
-            {currentTab === 'wardrobe' && 'Tủ đồ số'}
-            {currentTab === 'outfits' && 'Atelier phối đồ'}
-            {currentTab === 'profile' && 'Hồ sơ cá nhân'}
-            {currentTab === 'premium' && 'Hội viên VIP'}
-            {currentTab === 'landing' && 'Khám phá'}
+          <span style={{ color: 'var(--border-medium)', fontSize: '0.8rem' }}>/</span>
+          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            {currentTab === 'ai-stylist' && t('topbar_ai_stylist')}
+            {currentTab === 'dashboard' && t('topbar_dashboard')}
+            {currentTab === 'wardrobe' && t('topbar_wardrobe')}
+            {currentTab === 'outfits' && t('topbar_outfits')}
+            {currentTab === 'profile' && t('topbar_profile')}
+            {currentTab === 'premium' && t('topbar_premium')}
+            {currentTab === 'landing' && t('topbar_landing')}
           </span>
         </div>
       </div>
@@ -86,7 +89,7 @@ export default function TopBar({
             cursor: 'pointer',
           }}
           onClick={() => setCurrentTab('profile')}
-          title="Không gian làm việc: Trường học"
+          title={text("Không gian làm việc: Cá nhân", "Workspace: Personal")}
         >
           <div style={{
             width: '20px',
@@ -100,10 +103,10 @@ export default function TopBar({
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            H
+            {user?.fullName ? user.fullName[0].toUpperCase() : 'H'}
           </div>
           <span style={{ fontSize: '0.75rem', color: '#D1D5DB', fontWeight: 500 }} className="hide-mobile">
-            Trường học
+            {text('Cá nhân', 'Personal')}
           </span>
         </div>
       </div>

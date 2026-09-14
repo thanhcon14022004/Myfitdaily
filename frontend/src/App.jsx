@@ -4,6 +4,7 @@ import TopBar from './components/TopBar';
 import SearchModal from './components/SearchModal';
 import AuthModal from './components/AuthModal';
 import AddClothingModal from './components/AddClothingModal';
+import SettingsModal from './components/SettingsModal';
 
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
@@ -19,8 +20,10 @@ import {
   INITIAL_OUTFITS 
 } from './data/initialWardrobe';
 import { INITIAL_CHAT_SESSIONS } from './data/initialChatSessions';
+import { useLanguage } from './context/LanguageContext';
 
 export default function App() {
+  const { text } = useLanguage();
   // Navigation State: 'landing' | 'dashboard' | 'wardrobe' | 'outfits' | 'ai-stylist' | 'profile' | 'premium'
   const [currentTab, setCurrentTab] = useState('landing');
 
@@ -54,6 +57,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Clothing & Outfits state: User's own uploaded clothes (Starts empty for new users)
   const [clothes, setClothes] = useState(() => {
@@ -192,7 +196,7 @@ export default function App() {
   };
 
   const handleDeleteOutfit = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa bộ phối đồ này?")) {
+    if (window.confirm(text("Bạn có chắc chắn muốn xóa bộ phối đồ này?", "Are you sure you want to delete this outfit?"))) {
       setOutfits(outfits.filter(o => o.id !== id));
     }
   };
@@ -205,7 +209,10 @@ export default function App() {
     const updated = { ...user, subscriptionType: 'Premium' };
     setUser(updated);
     localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
-    alert("🎉 Chúc mừng bạn đã nâng cấp thành công gói MYFITDAILY VIP Premium!");
+    alert(text(
+      "🎉 Chúc mừng bạn đã nâng cấp thành công gói MYFITDAILY VIP Premium!",
+      "🎉 Congratulations! You have successfully upgraded to MYFITDAILY VIP Premium!"
+    ));
   };
 
   const handleToggleSidebar = () => {
@@ -285,6 +292,7 @@ export default function App() {
         onLogout={handleLogout}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         onNewChat={handleNewChat}
         chatSessions={chatSessions}
         activeSessionId={selectedChatId}
@@ -392,10 +400,11 @@ export default function App() {
         {/* Footer (hidden on ai-stylist page so chat fits full screen without page scrolling) */}
         {currentTab !== 'ai-stylist' && (
           <footer style={{
-            background: 'rgba(9, 13, 22, 0.95)',
+            background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
             padding: '28px 0 20px',
             textAlign: 'center',
+            transition: 'background 0.3s ease, border-color 0.3s ease'
           }}>
             <div className="container">
               <div style={{
@@ -410,10 +419,16 @@ export default function App() {
                 MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span>
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                Nền tảng Tủ Đồ Số & Trợ Lý Phối Đồ AI Cho Giới Trẻ Việt Nam – PRN232 EXE201 Group 6
+                {text(
+                  'Nền tảng Tủ Đồ Số & Trợ Lý Phối Đồ AI Cho Giới Trẻ Việt Nam – PRN232 EXE201 Group 6',
+                  'Digital Wardrobe & AI Stylist Platform – PRN232 EXE201 Group 6'
+                )}
               </p>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                © {new Date().getFullYear()} MYFITDAILY. Đã đăng ký bản quyền. Được xây dựng với React & ASP.NET Core 8.
+                {text(
+                  `© ${new Date().getFullYear()} MYFITDAILY. Đã đăng ký bản quyền. Được xây dựng với React & ASP.NET Core 8.`,
+                  `© ${new Date().getFullYear()} MYFITDAILY. All rights reserved. Built with React & ASP.NET Core 8.`
+                )}
               </div>
             </div>
           </footer>
@@ -441,6 +456,11 @@ export default function App() {
         chatSessions={chatSessions}
         onNavigate={setCurrentTab}
         onSelectChat={handleSelectChat}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
       />
     </div>
   );

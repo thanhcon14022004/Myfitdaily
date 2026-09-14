@@ -1,7 +1,9 @@
 import React from 'react';
 import { Heart, Trash2, Sparkles, Layers, Tag } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelete }) {
+  const { text } = useLanguage();
   // Find clothing items in this outfit
   const items = (outfit.itemIds || [])
     .map(id => allItems.find(item => item.id === id))
@@ -44,10 +46,10 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
             </div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>
-                {outfit.occasion || 'Thường ngày'}
+                {outfit.occasion || text('Thường ngày', 'Daily')}
               </span>
               <span className="badge badge-gold" style={{ fontSize: '0.72rem' }}>
-                {outfit.season || 'Tất cả mùa'}
+                {outfit.season || text('Tất cả mùa', 'All Seasons')}
               </span>
             </div>
           </div>
@@ -56,7 +58,7 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
             <button
               onClick={() => onToggleFavorite(outfit.id)}
               id={`btn-fav-outfit-${outfit.id}`}
-              title={outfit.isFavorite ? "Bỏ yêu thích" : "Yêu thích"}
+              title={outfit.isFavorite ? text("Bỏ yêu thích", "Unfavorite") : text("Yêu thích", "Favorite")}
               style={{
                 width: '36px',
                 height: '36px',
@@ -77,7 +79,7 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
               <button
                 onClick={() => onDelete(outfit.id)}
                 id={`btn-del-outfit-${outfit.id}`}
-                title="Xóa bộ phối này"
+                title={text("Xóa bộ phối này", "Delete this outfit")}
                 style={{
                   width: '36px',
                   height: '36px',
@@ -175,9 +177,9 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Layers size={13} color="#D4AF37" />
-          <span>{items.length} món kết hợp</span>
+          <span>{items.length} {text('món kết hợp', 'items combined')}</span>
         </div>
-        <span style={{ color: '#10B981', fontWeight: 600 }}>Tỷ lệ phối chuẩn</span>
+        <span style={{ color: '#10B981', fontWeight: 600 }}>{text('Tỷ lệ phối chuẩn', 'Harmonious Match')}</span>
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function WardrobePage({ 
   clothes = [], 
@@ -25,6 +26,8 @@ export default function WardrobePage({
   onBulkDeleteClothes,
   onNavigate 
 }) {
+  const { text, isEnglish } = useLanguage();
+
   // Đồng bộ hàm xóa đơn lẻ bất kể tên prop nào được truyền vào
   const deleteSingleHandler = onDeleteClothing || onDeleteItem;
 
@@ -44,16 +47,16 @@ export default function WardrobePage({
   });
 
   const colorOptions = [
-    { label: "Tất Cả", value: "all" },
-    { label: "Trắng", value: "Trắng", hex: "#FFFFFF" },
-    { label: "Đen", value: "Đen", hex: "#0F172A" },
-    { label: "Xanh Denim", value: "Xanh", hex: "#38BDF8" },
-    { label: "Nâu", value: "Nâu", hex: "#A16207" },
-    { label: "Hồng", value: "Hồng", hex: "#F472B6" },
+    { label: text("Tất Cả", "All"), value: "all" },
+    { label: text("Trắng", "White"), value: "Trắng", hex: "#FFFFFF" },
+    { label: text("Đen", "Black"), value: "Đen", hex: "#0F172A" },
+    { label: text("Xanh Denim", "Denim Blue"), value: "Xanh", hex: "#38BDF8" },
+    { label: text("Nâu", "Brown"), value: "Nâu", hex: "#A16207" },
+    { label: text("Hồng", "Pink"), value: "Hồng", hex: "#F472B6" },
   ];
 
   const styles = [
-    { label: "Tất Cả", value: "all" },
+    { label: text("Tất Cả", "All"), value: "all" },
     { label: "Minimalist", value: "Minimalist" },
     { label: "Casual", value: "Casual" },
     { label: "Formal", value: "Formal" },
@@ -165,12 +168,14 @@ export default function WardrobePage({
       }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span className="badge badge-rose">Kho Lưu Trữ Kỹ Thuật Số</span>
+            <span className="badge badge-rose">{text('Kho Lưu Trữ Kỹ Thuật Số', 'Digital Archive')}</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              ✦ {clothes.length} món đồ sẵn sàng
+              ✦ {clothes.length} {text('món đồ sẵn sàng', 'items ready')}
             </span>
           </div>
-          <h2 style={{ fontSize: '2.4rem', fontWeight: 800 }}>Tủ Đồ Số Cá Nhân</h2>
+          <h2 style={{ fontSize: '2.4rem', fontWeight: 800 }}>
+            {text('Tủ Đồ Số Cá Nhân', 'My Digital Wardrobe')}
+          </h2>
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -203,12 +208,12 @@ export default function WardrobePage({
               {isSelectionMode ? (
                 <>
                   <X size={16} />
-                  <span>Thoát Dọn Dẹp</span>
+                  <span>{text('Thoát Dọn Dẹp', 'Exit Clean Mode')}</span>
                 </>
               ) : (
                 <>
                   <Trash2 size={16} />
-                  <span>Dọn Dẹp Tủ Đồ</span>
+                  <span>{text('Dọn Dẹp Tủ Đồ', 'Clean Up Wardrobe')}</span>
                 </>
               )}
             </button>
@@ -220,7 +225,7 @@ export default function WardrobePage({
             style={{ padding: '11px 22px', fontSize: '0.88rem' }}
           >
             <Sparkles size={16} />
-            <span>Nhờ AI Phối Đồ</span>
+            <span>{text('Nhờ AI Phối Đồ', 'Ask AI to Style')}</span>
           </button>
 
           <button
@@ -230,7 +235,7 @@ export default function WardrobePage({
             style={{ padding: '11px 22px', fontSize: '0.88rem' }}
           >
             <Plus size={16} />
-            <span>Thêm Món Đồ</span>
+            <span>{text('Thêm Món Đồ', 'Add Clothing')}</span>
           </button>
         </div>
       </div>
@@ -254,10 +259,10 @@ export default function WardrobePage({
             <Trash2 size={20} color="#F43F5E" />
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#FFF' }}>
-                Chế độ Dọn Dẹp Tủ Đồ đang bật
+                {text('Chế độ Dọn Dẹp Tủ Đồ đang bật', 'Wardrobe Cleanup Mode Active')}
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                Nhấp vào từng món đồ bạn không còn mặc hoặc không cần thiết để đánh dấu xóa.
+                {text('Nhấp vào từng món đồ bạn không còn mặc hoặc không cần thiết để đánh dấu xóa.', 'Click on any items you no longer wear to mark for deletion.')}
               </div>
             </div>
           </div>
@@ -268,7 +273,7 @@ export default function WardrobePage({
               className="btn-secondary"
               style={{ padding: '7px 14px', fontSize: '0.78rem', height: 'auto' }}
             >
-              Chọn tất cả ({filteredClothes.length})
+              {text('Chọn tất cả', 'Select All')} ({filteredClothes.length})
             </button>
             {selectedIds.length > 0 && (
               <button
@@ -276,7 +281,7 @@ export default function WardrobePage({
                 className="btn-secondary"
                 style={{ padding: '7px 14px', fontSize: '0.78rem', height: 'auto' }}
               >
-                Bỏ chọn
+                {text('Bỏ chọn', 'Deselect All')}
               </button>
             )}
             <button
@@ -284,7 +289,7 @@ export default function WardrobePage({
               className="btn-secondary"
               style={{ padding: '7px 14px', fontSize: '0.78rem', height: 'auto', color: 'var(--text-muted)' }}
             >
-              Hủy
+              {text('Hủy', 'Cancel')}
             </button>
           </div>
         </div>
@@ -313,7 +318,10 @@ export default function WardrobePage({
             />
             <input 
               type="text"
-              placeholder="Tìm kiếm theo tên áo, hãng thời trang (Zara, Nike...), size hoặc màu sắc..."
+              placeholder={text(
+                'Tìm kiếm theo tên áo, hãng thời trang (Zara, Nike...), size hoặc màu sắc...',
+                'Search by item name, brand (Zara, Nike...), size or color...'
+              )}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -342,7 +350,7 @@ export default function WardrobePage({
               }}
             >
               {styles.map(s => (
-                <option key={s.value} value={s.value}>Phong cách: {s.label}</option>
+                <option key={s.value} value={s.value}>{text('Phong cách: ', 'Style: ')}{s.label}</option>
               ))}
             </select>
           </div>
@@ -360,7 +368,7 @@ export default function WardrobePage({
               style={{ height: '46px', padding: '0 18px', fontSize: '0.84rem' }}
             >
               <RotateCcw size={14} />
-              <span>Xóa bộ lọc</span>
+              <span>{text('Xóa bộ lọc', 'Clear Filters')}</span>
             </button>
           )}
         </div>
@@ -371,7 +379,7 @@ export default function WardrobePage({
             onClick={() => setSelectedCategory('all')}
             className={`filter-pill ${selectedCategory === 'all' ? 'active' : ''}`}
           >
-            <span>Tất Cả Món Đồ</span>
+            <span>{text('Tất Cả Món Đồ', 'All Items')}</span>
             <span className="filter-count">{clothes.length}</span>
           </button>
 
@@ -394,7 +402,7 @@ export default function WardrobePage({
         {/* Row 3: Color dots filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-            Lọc theo màu:
+            {text('Lọc theo màu:', 'Filter by color:')}
           </span>
           {colorOptions.map((col) => (
             <button
@@ -454,10 +462,13 @@ export default function WardrobePage({
             <Plus size={36} color="#D4AF37" />
           </div>
           <h3 style={{ fontSize: '1.7rem', fontWeight: 800, marginBottom: '12px', color: '#FFF' }}>
-            Tủ Đồ Của Bạn Đang Trống
+            {text('Tủ Đồ Của Bạn Đang Trống', 'Your Wardrobe Is Empty')}
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.96rem', lineHeight: 1.65, marginBottom: '32px' }}>
-            Chào mừng bạn đến với MYFITDAILY! Bạn chưa tải lên món đồ nào. Hãy bắt đầu số hóa tủ đồ của bạn bằng cách tự chụp ảnh hoặc tải lên áo, quần, váy, blazer, giày dép... để AI Stylist phối đồ chuẩn xác nhất từ trang phục thực tế của bạn!
+            {text(
+              'Chào mừng bạn đến với MYFITDAILY! Bạn chưa tải lên món đồ nào. Hãy bắt đầu số hóa tủ đồ của bạn bằng cách tự chụp ảnh hoặc tải lên áo, quần, váy, blazer, giày dép... để AI Stylist phối đồ chuẩn xác nhất từ trang phục thực tế của bạn!',
+              'Welcome to MYFITDAILY! You have not uploaded any clothes yet. Start digitizing your wardrobe by uploading or taking photos of your shirts, pants, dresses, blazers, and shoes so the AI Stylist can coordinate real outfits for you!'
+            )}
           </p>
           <button
             onClick={onOpenAddModal}
@@ -465,7 +476,7 @@ export default function WardrobePage({
             style={{ padding: '14px 36px', fontSize: '1rem' }}
           >
             <Plus size={18} />
-            <span>Tải Lên Món Đồ Đầu Tiên Của Bạn</span>
+            <span>{text('Tải Lên Món Đồ Đầu Tiên Của Bạn', 'Upload Your First Clothing Item')}</span>
           </button>
         </div>
       ) : filteredClothes.length > 0 ? (
@@ -488,15 +499,17 @@ export default function WardrobePage({
       ) : (
         <div className="glass-card" style={{ padding: '60px 24px', textAlign: 'center' }}>
           <Shirt size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>Không tìm thấy món đồ phù hợp</h3>
+          <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>
+            {text('Không tìm thấy món đồ phù hợp', 'No matching items found')}
+          </h3>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '440px', margin: '0 auto 20px' }}>
-            Không có trang phục nào khớp với từ khóa tìm kiếm hoặc bộ lọc hiện tại của bạn.
+            {text('Không có trang phục nào khớp với từ khóa tìm kiếm hoặc bộ lọc hiện tại của bạn.', 'No clothes matched your search keywords or current active filters.')}
           </p>
           <button
             onClick={() => { setSelectedCategory('all'); setSearchQuery(''); setSelectedStyle('all'); setSelectedColor('all'); }}
             className="btn-primary"
           >
-            Hiển Thị Tất Cả Món Đồ
+            {text('Hiển Thị Tất Cả Món Đồ', 'Show All Items')}
           </button>
         </div>
       )}

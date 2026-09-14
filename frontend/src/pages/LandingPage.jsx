@@ -14,37 +14,49 @@ import {
   Clock,
   HeartHandshake
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
+  const { text, isEnglish } = useLanguage();
+
   const highlights = [
     {
       icon: Shirt,
-      title: "Số Hóa Tủ Đồ Thông Minh",
-      desc: "Chụp ảnh hoặc chọn danh mục. Quản lý toàn bộ áo, quần, váy đầm, giày dép bạn đang sở hữu một cách khoa học trên một màn hình.",
+      title: text("Số Hóa Tủ Đồ Thông Minh", "Smart Digital Wardrobe"),
+      desc: text(
+        "Chụp ảnh hoặc chọn danh mục. Quản lý toàn bộ áo, quần, váy đầm, giày dép bạn đang sở hữu một cách khoa học trên một màn hình.",
+        "Photograph or select categories. Scientifically organize all your shirts, pants, dresses, and shoes on a single screen."
+      ),
       badge: "Digital Closet 4.0",
       color: "#FB7185"
     },
     {
       icon: Layers,
-      title: "Atelier Phối Đồ Flat-Lay Ảo",
-      desc: "Tự do mix & match trang phục trực quan dạng layout tạp chí phẳng mà không cần mất công mặc thử đồ lộn xộn trong phòng.",
+      title: text("Atelier Phối Đồ Flat-Lay Ảo", "Virtual Flat-Lay Atelier"),
+      desc: text(
+        "Tự do mix & match trang phục trực quan dạng layout tạp chí phẳng mà không cần mất công mặc thử đồ lộn xộn trong phòng.",
+        "Freely mix & match garments on a magazine-style visual flat-lay canvas without messy room try-ons."
+      ),
       badge: "Lookbook Studio",
       color: "#818CF8"
     },
     {
       icon: Sparkles,
-      title: "Trợ Lý AI Stylist Riêng Biệt",
-      desc: "AI tự động phân tích thời tiết địa phương, dịp sắp tới (đi làm, hẹn hò, tiệc tùng) và chọn đúng những món đồ sẵn có của bạn.",
+      title: text("Trợ Lý AI Stylist Riêng Biệt", "Personal AI Stylist"),
+      desc: text(
+        "AI tự động phân tích thời tiết địa phương, dịp sắp tới (đi làm, hẹn hò, tiệc tùng) và chọn đúng những món đồ sẵn có của bạn.",
+        "AI analyzes local weather, upcoming occasions (work, date, party) and coordinates outfits from your actual clothes."
+      ),
       badge: "AI Powered",
       color: "#FBBF24"
     },
   ];
 
   const stats = [
-    { value: "15,000+", label: "Món Đồ Đã Số Hóa", sub: "Tủ đồ người Việt" },
-    { value: "98.5%", label: "Tỷ Lệ Vàng Màu Sắc", sub: "Thuật toán Color Theory" },
-    { value: "30 Giây", label: "Chuẩn Bị Buổi Sáng", sub: "Tiết kiệm 25 phút mỗi ngày" },
-    { value: "4.9 / 5★", label: "Độ Hài Lòng", sub: "Fashion Community" },
+    { value: "15,000+", label: text("Món Đồ Đã Số Hóa", "Digitized Items"), sub: text("Tủ đồ người dùng", "User wardrobes") },
+    { value: "98.5%", label: text("Tỷ Lệ Vàng Màu Sắc", "Color Harmony Ratio"), sub: text("Thuật toán Color Theory", "Color Theory engine") },
+    { value: "30 " + text("Giây", "Sec"), label: text("Chuẩn Bị Buổi Sáng", "Morning Prep Time"), sub: text("Tiết kiệm 25 phút mỗi ngày", "Save 25 mins daily") },
+    { value: "4.9 / 5★", label: text("Độ Hài Lòng", "Satisfaction"), sub: "Fashion Community" },
   ];
 
   return (
@@ -73,7 +85,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)',
           }}>
             <Sparkles size={16} color="#D4AF37" />
-            <span>Nền Tảng Tủ Đồ Số & Trợ Lý Thời Trang AI Độc Quyền Cho Người Việt</span>
+            <span>{text('Nền Tảng Tủ Đồ Số & Trợ Lý Thời Trang AI Cho Giới Trẻ', 'Digital Wardrobe Platform & AI Fashion Stylist')}</span>
           </div>
 
           {/* Main Editorial Headline */}
@@ -85,7 +97,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             margin: '0 auto 24px',
             letterSpacing: '-0.035em',
           }}>
-            Tái Khám Phá Tủ Đồ Của Bạn Với{' '}
+            {text('Tái Khám Phá Tủ Đồ Của Bạn Với ', 'Rediscover Your Wardrobe With ')}
             <span className="gradient-text">MYFITDAILY</span>
           </h1>
 
@@ -96,8 +108,11 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             margin: '0 auto 38px',
             lineHeight: 1.65,
           }}>
-            Chấm dứt hoàn toàn nỗi lo <strong style={{ color: '#FFF' }}>"Hôm nay mặc gì?"</strong>. 
-            MYFITDAILY giúp bạn quản lý khoa học, tái kết hợp những món đồ bạn đang sở hữu và nhận gợi ý chuẩn stylist quốc tế trong tích tắc.
+            {text('Chấm dứt hoàn toàn nỗi lo', 'End the daily stress of')} <strong style={{ color: '#FFF' }}>{text('"Hôm nay mặc gì?"', '"What should I wear today?"')}</strong>. 
+            {text(
+              ' MYFITDAILY giúp bạn quản lý khoa học, tái kết hợp những món đồ bạn đang sở hữu và nhận gợi ý chuẩn stylist quốc tế trong tích tắc.',
+              ' MYFITDAILY helps you organize, mix-and-match clothes you already own, and receive international styling suggestions in seconds.'
+            )}
           </p>
 
           {/* CTA Buttons */}
@@ -114,7 +129,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
               className="btn-primary"
               style={{ padding: '16px 36px', fontSize: '1.05rem' }}
             >
-              <span>Trải Nghiệm Chế Độ Demo Ngay</span>
+              <span>{text('Trải Nghiệm Chế Độ Demo Ngay', 'Try Demo Mode Now')}</span>
               <ArrowRight size={18} />
             </button>
 
@@ -125,7 +140,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
               style={{ padding: '16px 32px', fontSize: '1.05rem' }}
             >
               <Shirt size={18} color="#F3D98A" />
-              <span>Khám Phá Tủ Đồ Mẫu</span>
+              <span>{text('Khám Phá Tủ Đồ Mẫu', 'Explore Sample Wardrobe')}</span>
             </button>
           </div>
 
@@ -153,14 +168,14 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 gap: '12px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="badge badge-rose">✦ AI LOOKBOOK HÔM NAY</span>
+                  <span className="badge badge-rose">{text('✦ AI LOOKBOOK HÔM NAY', "✦ TODAY'S AI LOOKBOOK")}</span>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Hà Nội & TP.HCM: Nắng ấm 28°C • Phong cách Minimalist
+                    {text('Hà Nội & TP.HCM: Nắng ấm 28°C • Phong cách Minimalist', 'Sunny 28°C • Minimalist Quiet Luxury')}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <span className="badge badge-gold">Harmony: 98.5%</span>
-                  <span className="badge badge-emerald">Tỷ Lệ Vàng</span>
+                  <span className="badge badge-emerald">{text('Tỷ Lệ Vàng', 'Golden Ratio')}</span>
                 </div>
               </div>
 
@@ -171,10 +186,10 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 gap: '16px',
               }}>
                 {[
-                  { name: "Áo Sơ Mi Lụa Oversized", cat: "Tops", color: "Trắng Nhã Nhặn", img: "/assets/clothes/shirt_white.svg" },
-                  { name: "Áo Blazer Dạ Nâu Cacao", cat: "Outerwear", color: "Nâu Đất", img: "/assets/clothes/blazer_brown.svg" },
-                  { name: "Quần Tây Xếp Ly Đen Tinh Tế", cat: "Bottoms", color: "Đen Tối Giản", img: "/assets/clothes/pants_black.svg" },
-                  { name: "Giày Loafer Da Khóa Ngựa", cat: "Shoes", color: "Đen Bóng", img: "/assets/clothes/shoes_loafer.svg" },
+                  { name: text("Áo Sơ Mi Lụa Oversized", "Oversized Silk Shirt"), cat: "Tops", color: text("Trắng Nhã Nhặn", "Elegant White"), img: "/assets/clothes/shirt_white.svg" },
+                  { name: text("Áo Blazer Dạ Nâu Cacao", "Cocoa Wool Blazer"), cat: "Outerwear", color: text("Nâu Đất", "Earthy Brown"), img: "/assets/clothes/blazer_brown.svg" },
+                  { name: text("Quần Tây Xếp Ly Đen Tinh Tế", "Pleated Trousers"), cat: "Bottoms", color: text("Đen Tối Giản", "Minimalist Black"), img: "/assets/clothes/pants_black.svg" },
+                  { name: text("Giày Loafer Da Khóa Ngựa", "Horsebit Leather Loafers"), cat: "Shoes", color: text("Đen Bóng", "Glossy Black"), img: "/assets/clothes/shoes_loafer.svg" },
                 ].map((item, i) => (
                   <div 
                     key={i}
@@ -256,13 +271,16 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
         <div className="container">
           <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 48px' }}>
             <span className="badge badge-indigo" style={{ marginBottom: '12px' }}>
-              Quy Trình Thời Trang Chuẩn Quốc Tế
+              {text('Quy Trình Thời Trang Chuẩn Quốc Tế', 'International Fashion Standard')}
             </span>
             <h2 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '14px' }}>
-              Ba Trụ Cột Nâng Tầm Phong Cách Của Bạn
+              {text('Ba Trụ Cột Nâng Tầm Phong Cách Của Bạn', 'Three Pillars Elevating Your Style')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-              Tích hợp hoàn hảo giữa công nghệ số hóa hiện đại và triết lý thời trang bền vững.
+              {text(
+                'Tích hợp hoàn hảo giữa công nghệ số hóa hiện đại và triết lý thời trang bền vững.',
+                'Seamless fusion of smart digitization and sustainable wardrobe aesthetics.'
+              )}
             </p>
           </div>
 
@@ -332,8 +350,12 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             background: 'linear-gradient(135deg, rgba(14, 18, 27, 0.95), rgba(8, 10, 15, 0.95))',
           }}>
             <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-              <span className="badge badge-gold" style={{ marginBottom: '10px' }}>Sự Thay Đổi Đột Phá</span>
-              <h2 style={{ fontSize: '2.2rem', fontWeight: 800 }}>Tủ Đồ Trước & Sau Khi Có MYFITDAILY</h2>
+              <span className="badge badge-gold" style={{ marginBottom: '10px' }}>
+                {text('Sự Thay Đổi Đột Phá', 'Breakthrough Transformation')}
+              </span>
+              <h2 style={{ fontSize: '2.2rem', fontWeight: 800 }}>
+                {text('Tủ Đồ Trước & Sau Khi Có MYFITDAILY', 'Your Wardrobe: Before & After MYFITDAILY')}
+              </h2>
             </div>
 
             <div style={{
@@ -349,12 +371,18 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 padding: '24px',
               }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#F87171', marginBottom: '16px' }}>
-                  ❌ Trước khi sử dụng
+                  {text('❌ Trước khi sử dụng', '❌ Before MYFITDAILY')}
                 </div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>• Mua sắm theo cảm tính, nhiều món chỉ mặc đúng 1 lần rồi cất tủ.</li>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>• Mất 20-30 phút mỗi sáng lục lọi tủ đồ và vẫn cảm thấy "không có gì để mặc".</li>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>• Phối đồ lặp đi lặp lại một vài cách an toàn, thiếu sự sáng tạo.</li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    • {text('Mua sắm theo cảm tính, nhiều món chỉ mặc đúng 1 lần rồi cất tủ.', 'Impulse shopping; many garments worn once and forgotten in closet.')}
+                  </li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    • {text('Mất 20-30 phút mỗi sáng lục lọi tủ đồ và vẫn cảm thấy "không có gì để mặc".', 'Wasting 20-30 mins every morning rummaging through clothes with "nothing to wear".')}
+                  </li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                    • {text('Phối đồ lặp đi lặp lại một vài cách an toàn, thiếu sự sáng tạo.', 'Repeating the same safe combinations, lacking fresh styling creativity.')}
+                  </li>
                 </ul>
               </div>
 
@@ -366,12 +394,18 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 padding: '24px',
               }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#34D399', marginBottom: '16px' }}>
-                  ✨ Với MYFITDAILY
+                  {text('✨ Với MYFITDAILY', '✨ With MYFITDAILY')}
                 </div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>• Nắm rõ 100% món đồ đang sở hữu ngay trên màn hình điện thoại.</li>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>• AI Stylist gợi ý bộ phối hoàn chỉnh trong 5 giây theo đúng thời tiết và dịp đi.</li>
-                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>• Tái sử dụng và mix đồ cũ thành nhiều phong cách mới mẻ, tự tin rạng ngời.</li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                    • {text('Nắm rõ 100% món đồ đang sở hữu ngay trên màn hình điện thoại.', '100% visibility over every item you own right on your screen.')}
+                  </li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                    • {text('AI Stylist gợi ý bộ phối hoàn chỉnh trong 5 giây theo đúng thời tiết và dịp đi.', 'AI Stylist curates complete looks in 5 seconds matched with weather and occasions.')}
+                  </li>
+                  <li style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                    • {text('Tái sử dụng và mix đồ cũ thành nhiều phong cách mới mẻ, tự tin rạng ngời.', 'Restyle existing clothes into fresh, sophisticated looks with effortless confidence.')}
+                  </li>
                 </ul>
               </div>
             </div>

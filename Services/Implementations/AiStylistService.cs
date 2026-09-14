@@ -37,47 +37,56 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
         public async Task<ApiResponse<AiRecommendResponseDto>> GenerateOutfitRecommendationAsync(int? userId, AiRecommendRequestDto request)
         {
-            // 0. Lấy thông tin người dùng và kiểm tra điều kiện bắt buộc thông số thể trạng
+            // 0. Lấy thông tin người dùng và hồ sơ vóc dáng (dùng để tối ưu form trang phục, không bắt buộc)
             User? user = null;
             if (userId.HasValue)
             {
                 user = await _context.Users.FindAsync(userId.Value);
             }
 
-            // ⚠️ QUY TẮC CỐT LÕI: NẾU CHƯA CÓ TỈ TRỌNG / CHIỀU CAO / CÂN NẶNG -> AI CHƯA PHỐI ĐỒ
-            if (user == null || !user.Height.HasValue || !user.Weight.HasValue || user.Height.Value <= 0 || user.Weight.Value <= 0)
+            int userAge = user?.Age ?? 24;
+            string ecomTrendSummary = _trendService.GetTrendSummaryForAiPrompt(userAge);
+            string? bodyProfileSummary = null;
+
+            if (user != null && user.Height.HasValue && user.Weight.HasValue && user.Height.Value > 0 && user.Weight.Value > 0)
             {
-                var noMetricsResponse = new AiRecommendResponseDto
-                {
-                    RequiresBodyMetrics = true,
-                    BodyMetricsWarning = "Bạn chưa hoàn tất thông số chiều cao và cân nặng trong hồ sơ cá nhân.",
-                    OutfitName = "Yêu cầu thông số cơ thể",
-                    Occasion = request.Occasion,
-                    Season = request.Weather,
-                    StylistNotes = "⚠️ **AI Stylist chưa thể gợi ý trang phục lúc này vì bạn chưa cập nhật thông số cơ thể!**\n\n" +
-                                   "Để AI Stylist có thể phân tích tỉ lệ vóc dáng, tính toán dáng người và phối các bộ outfit 'hack dáng', che khuyết điểm chuẩn xác nhất cho riêng bạn, bạn **bắt buộc** cần hoàn tất thông tin **Chiều cao**, **Cân nặng** và **Số đo 3 vòng** trong mục **Hồ Sơ (Profile)** trước nhé! ✨\n\n" +
-                                   "👉 Hãy chuyển sang mục Hồ Sơ để cập nhật ngay.",
-                    HarmonyScore = "0%",
-                    ContrastLevel = "Chưa có thông số",
-                    CreatedByAi = true
-                };
-                return ApiResponse<AiRecommendResponseDto>.Ok(noMetricsResponse, "Vui lòng cập nhật đầy đủ chiều cao và cân nặng trong Hồ sơ để AI gợi ý trang phục.");
+                double? whr = (user.Waist.HasValue && user.Hips.HasValue && user.Hips.Value > 0) ? Math.Round(user.Waist.Value / user.Hips.Value, 2) : null;
+                double? bmi = Math.Round(user.Weight.Value / Math.Pow(user.Height.Value / 100.0, 2), 1);
+
+                bodyProfileSummary = $"Chiều cao: {user.Height}cm, Cân nặng: {user.Weight}kg (BMI: {bmi})" +
+                    (!string.IsNullOrWhiteSpace(user.Gender) ? $", Giới tính: {user.Gender}" : "") +
+                    (user.Age.HasValue ? $", Tuổi: {user.Age.Value} ({_trendService.DetermineAgeGroup(user.Age.Value)})" : "") +
+                    (!string.IsNullOrWhiteSpace(user.BodyShape) ? $", Dáng người: {user.BodyShape}" : "") +
+                    (user.Chest.HasValue && user.Waist.HasValue && user.Hips.HasValue ? $", Số đo 3 vòng: V1={user.Chest}cm, V2={user.Waist}cm, V3={user.Hips}cm (Tỉ lệ WHR Eo/Hông: {whr})" : "");
             }
-
-            string ecomTrendSummary = _trendService.GetTrendSummaryForAiPrompt(user.Age);
-            double? whr = (user.Waist.HasValue && user.Hips.HasValue && user.Hips.Value > 0) ? Math.Round(user.Waist.Value / user.Hips.Value, 2) : null;
-            double? bmi = (user.Height.HasValue && user.Height.Value > 0 && user.Weight.HasValue) ? Math.Round(user.Weight.Value / Math.Pow(user.Height.Value / 100.0, 2), 1) : null;
-
-            string bodyProfileSummary = $"Chiều cao: {user.Height}cm, Cân nặng: {user.Weight}kg (BMI: {bmi})" +
-                (!string.IsNullOrWhiteSpace(user.Gender) ? $", Giới tính: {user.Gender}" : "") +
-                (user.Age.HasValue ? $", Tuổi: {user.Age.Value} ({_trendService.DetermineAgeGroup(user.Age.Value)})" : "") +
-                (!string.IsNullOrWhiteSpace(user.BodyShape) ? $", Dáng người: {user.BodyShape}" : "") +
-                (user.Chest.HasValue && user.Waist.HasValue && user.Hips.HasValue ? $", Số đo 3 vòng: V1={user.Chest}cm, V2={user.Waist}cm, V3={user.Hips}cm (Tỉ lệ WHR Eo/Hông: {whr})" : "");
 
             List<RecommendedClothingDto> userWardrobe = new();
 
-            // 1. Lấy quần áo từ Database nếu người dùng đã đăng nhập
-            if (userId.HasValue)
+            // 1. Lấy quần áo từ Database nếu có AvailableItemIds hoặc người dùng đã đăng nhập
+            if (request.AvailableItemIds != null && request.AvailableItemIds.Any())
+            {
+                var specificItems = await _context.ClothingItems
+                    .Include(c => c.Category)
+                    .Where(c => request.AvailableItemIds.Contains(c.Id))
+                    .Select(c => new RecommendedClothingDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        CategoryName = c.Category != null ? c.Category.Name : "Tops",
+                        Color = c.Color,
+                        Style = c.Style,
+                        Season = c.Season,
+                        ImageUrl = c.ImageUrl
+                    })
+                    .ToListAsync();
+
+                if (specificItems.Any())
+                {
+                    userWardrobe = specificItems;
+                }
+            }
+
+            if (!userWardrobe.Any() && userId.HasValue)
             {
                 var dbItems = await _context.ClothingItems
                     .Include(c => c.Category)
@@ -240,25 +249,29 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
         {
             var top = items.FirstOrDefault(i => i.CategoryName.Equals("Tops", StringComparison.OrdinalIgnoreCase));
             var bottom = items.FirstOrDefault(i => i.CategoryName.Equals("Bottoms", StringComparison.OrdinalIgnoreCase) || i.CategoryName.Equals("Dresses", StringComparison.OrdinalIgnoreCase));
+            var outer = items.FirstOrDefault(i => i.CategoryName.Equals("Outerwear", StringComparison.OrdinalIgnoreCase));
             var shoes = items.FirstOrDefault(i => i.CategoryName.Equals("Shoes", StringComparison.OrdinalIgnoreCase));
+            var acc = items.FirstOrDefault(i => i.CategoryName.Equals("Accessories", StringComparison.OrdinalIgnoreCase));
 
             string bodyHighlight = "";
-            if (user != null && user.Height.HasValue && user.Weight.HasValue)
+            if (user != null && user.Height.HasValue && user.Weight.HasValue && user.Height.Value > 0 && user.Weight.Value > 0)
             {
-                string shapeText = !string.IsNullOrWhiteSpace(user.BodyShape) ? $"dáng {user.BodyShape}" : "thể trạng cân đối";
-                string measurements = (user.Chest.HasValue && user.Waist.HasValue && user.Hips.HasValue)
-                    ? $", số đo 3 vòng {user.Chest}-{user.Waist}-{user.Hips}cm"
-                    : "";
-                bodyHighlight = $"✦ *Tối ưu vóc dáng & Người ảo:* Bộ phối được thiết kế chuẩn xác theo tỷ lệ cơ thể ({user.Height}cm, {user.Weight}kg, {shapeText}{measurements}), giúp tạo hiệu ứng kéo dài chân, thắt đáy lưng ong và cân bằng hài hòa giữa vai - hông. ";
+                string shapeText = !string.IsNullOrWhiteSpace(user.BodyShape) ? $"dáng {user.BodyShape}" : "vóc dáng cân đối";
+                bodyHighlight = $"✦ *Tối ưu vóc dáng:* Bộ phối được chọn form dáng chuẩn theo vóc dáng ({user.Height}cm, {user.Weight}kg, {shapeText}), tạo hiệu ứng tỷ lệ 1/3 - 2/3 kéo dài chân và tôn trọn nét thanh lịch. ";
             }
 
             string prefix = isWardrobeEmpty 
-                ? "💡 *Hiện tại chưa có đồ trong tủ của bạn: AI Stylist đã thiết kế bộ phối mẫu này để bạn tham khảo hoặc thêm vào tủ đồ.* "
-                : "✦ *Trích xuất trực tiếp từ các món đồ trong tủ cá nhân của bạn.* ";
+                ? "💡 *Tủ đồ hiện tại chưa có trang phục: AI Stylist đã thiết kế bản phối mẫu chuẩn gu này để bạn tham khảo hoặc lưu vào tủ đồ.* "
+                : "✦ *Phối đồ trực tiếp từ các món trang phục trong tủ đồ của bạn.* ";
 
-            return $"{prefix}{bodyHighlight}Bộ outfit được thiết kế đặc biệt cho dịp {GetOccasionLabel(request.Occasion)} trong điều kiện thời tiết {GetWeatherLabel(request.Weather)}. " +
-                   $"Điểm nhấn chính là sự tương phản cân đối giữa gam màu {top?.Color ?? "nhã nhặn"} của phần trên và {bottom?.Color ?? "tối giản"} của phần dưới. " +
-                   $"Đôi {shoes?.Name ?? "giày phù hợp"} đem lại vẻ ngoài hoàn chỉnh, vừa tôn dáng vừa giúp bạn tự tin di chuyển mà không làm mất đi sự tinh tế.";
+            string layerHighlight = outer != null ? $" Điểm nhấn layer thời thượng với chiếc {outer.Name} khoác ngoài tạo phom vai đứng dứt khoát." : "";
+            string accHighlight = acc != null ? $" Đi kèm {acc.Name} làm phụ kiện hoàn thiện tổng thể." : "";
+
+            return $"{prefix}{bodyHighlight}Bộ outfit được thiết kế tối ưu cho dịp {GetOccasionLabel(request.Occasion)} ({GetWeatherLabel(request.Weather)}):\n" +
+                   $"• **Thân trên (Top):** {top?.Name ?? "Áo phom chuẩn"} (màu {top?.Color ?? "nhã nhặn"}), tạo cảm giác thanh thoát và sáng khuôn mặt.\n" +
+                   $"• **Thân dưới (Bottom):** {bottom?.Name ?? "Quần/Chân váy tôn dáng"} (màu {bottom?.Color ?? "hài hòa"}), cân đối tỷ lệ phần thân dưới.\n" +
+                   $"• **Giày & Phụ kiện:** Kết hợp cùng {shoes?.Name ?? "giày phù hợp"} để bước đi tự tin, êm ái.{layerHighlight}{accHighlight}\n" +
+                   $"💡 *Stylist Tip:* Sơ vin nhẹ (French-tuck) hoặc cởi 1 nút cổ để tạo độ bay tự nhiên cho trang phục.";
         }
 
         private static string GetOccasionLabel(string occasion) => occasion.ToLower() switch
@@ -305,15 +318,16 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 var simplifiedPool = pool.Select(p => new { p.Id, p.Name, p.CategoryName, p.Color, p.Style, p.Season });
                 var clothesJson = JsonSerializer.Serialize(simplifiedPool);
 
-                var promptText = $"Bạn là chuyên gia tư vấn thời trang AI cao cấp của MYFITDAILY tại Việt Nam. " +
-                                 $"Hãy phối một bộ trang phục từ tủ đồ sau cho người dùng: " +
-                                 $"Dịp: '{request.Occasion}', Thời tiết: '{request.Weather}', Phong cách: '{request.Style}', Tông màu: '{request.ColorTone}'. " +
-                                 (!string.IsNullOrWhiteSpace(bodyInfo) ? $"Thông tin thể trạng và độ tuổi người dùng: {bodyInfo}. Hãy ưu tiên phối đồ giúp tôn dáng, hack chiều cao cho vóc dáng này. " : "") +
-                                 (!string.IsNullOrWhiteSpace(ecomTrendInfo) ? $"KIẾN THỨC XU HƯỚNG SÀN TMĐT (TikTok Shop, Shopee, Zara, Uniqlo, Taobao): {ecomTrendInfo}. Hãy phối đồ đón đầu xu hướng hot-trend của độ tuổi này! " : "") +
-                                 $"Danh sách món đồ trong tủ: {clothesJson}. " +
-                                 $"Hãy chọn từ 3 đến 5 món đồ phù hợp nhất (ít nhất có 1 Top, 1 Bottom/Dress, 1 Shoes). " +
-                                 $"BẮT BUỘC trả về ĐÚNG định dạng JSON sau: " +
-                                 $"{{\"outfitName\": \"tên bộ phối\", \"selectedItemIds\": [id1, id2, id3], \"stylistNotes\": \"lời khuyên thời trang chuyên nghiệp bằng tiếng Việt kèm mẹo hack dáng và điểm nhấn xu hướng TMĐT\", \"harmonyScore\": \"98%\", \"contrastLevel\": \"Tỷ Lệ Vàng (Optimal)\"}}";
+                var promptText = $"Bạn là Chuyên gia Stylist AI chuyên sâu về QUẦN ÁO và PHỐI ĐỒ (Wardrobe & Outfit Stylist) của MYFITDAILY tại Việt Nam.\n" +
+                                 $"Nhiệm vụ cốt lõi: Phối một bộ outfit hoàn hảo từ danh sách quần áo thực tế sau:\n" +
+                                 $"Dịp: '{request.Occasion}', Thời tiết: '{request.Weather}', Phong cách: '{request.Style}', Tông màu: '{request.ColorTone}'.\n" +
+                                 (!string.IsNullOrWhiteSpace(bodyInfo) ? $"Thông tin vóc dáng (để chọn form quần áo tôn dáng): {bodyInfo}.\n" : "") +
+                                 (!string.IsNullOrWhiteSpace(ecomTrendInfo) ? $"Xu hướng thời trang TMĐT tham khảo: {ecomTrendInfo}.\n" : "") +
+                                 $"Danh sách quần áo trong tủ: {clothesJson}.\n" +
+                                 $"Hãy chọn từ 3 đến 5 món đồ phối hợp ăn ý nhất (bắt buộc có ít nhất: 1 Top, 1 Bottom/Dress, 1 Shoes, có thể thêm Outerwear hoặc Accessory).\n" +
+                                 $"Trong stylistNotes: Tập trung phân tích chuyên sâu về QUẦN ÁO (phối màu sắc, kết hợp chất liệu, kỹ thuật sơ vin/layer, điểm nhấn phụ kiện).\n" +
+                                 $"BẮT BUỘC trả về ĐÚNG định dạng JSON sau:\n" +
+                                 $"{{\"outfitName\": \"tên bộ phối chuẩn gu\", \"selectedItemIds\": [id1, id2, id3], \"stylistNotes\": \"lời khuyên phối quần áo chi tiết và mẹo mặc đẹp\", \"harmonyScore\": \"98%\", \"contrastLevel\": \"Tỷ Lệ Vàng (Optimal)\"}}";
 
                 var payload = new
                 {
@@ -408,40 +422,52 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 return ApiResponse<AiChatResponseDto>.Ok(refusalResponse, "AI Stylist chỉ tập trung chuyên sâu vào thời trang và phối đồ.");
             }
 
-            // 2. ⚠️ QUY TẮC CỐT LÕI: NẾU CHƯA CÓ TỈ TRỌNG / SỐ ĐO CƠ THỂ -> AI CHƯA TRẢ LỜI
+            // 2. Lấy thông tin người dùng và hồ sơ vóc dáng (dùng để tối ưu form trang phục, không bắt buộc)
             User? user = null;
             if (userId.HasValue)
             {
                 user = await _context.Users.FindAsync(userId.Value);
             }
 
-            if (user == null || !user.Height.HasValue || !user.Weight.HasValue || user.Height.Value <= 0 || user.Weight.Value <= 0)
+            int userAge = user?.Age ?? 24;
+            string ecomTrendSummary = _trendService.GetTrendSummaryForAiPrompt(userAge);
+            string? bodyProfileSummary = null;
+
+            if (user != null && user.Height.HasValue && user.Weight.HasValue && user.Height.Value > 0 && user.Weight.Value > 0)
             {
-                var noMetricsResponse = new AiChatResponseDto
-                {
-                    RequiresBodyMetrics = true,
-                    BodyMetricsWarning = "Bạn chưa cập nhật thông số chiều cao và trọng lượng cơ thể.",
-                    Reply = "⚠️ **AI Stylist chưa thể phản hồi lúc này vì bạn chưa cập nhật thông số cơ thể!**\n\n" +
-                            "Để AI Stylist có thể phân tích chính xác tỉ lệ vóc dáng, tính toán số đo và thiết kế outfit chuẩn xác nhất giúp tôn dáng và che khuyết điểm cho riêng bạn, bạn **bắt buộc** cần hoàn tất thông tin **Chiều cao**, **Cân nặng** và **Số đo 3 vòng** trong mục **Hồ Sơ (Profile)** trước nhé! ✨\n\n" +
-                            "👉 Hãy chuyển sang tab **Hồ Sơ** trên thanh menu để cập nhật ngay chỉ mất 30 giây.",
-                    SuggestedFollowUpQuestions = new List<string>
-                    {
-                        "Cập nhật số đo chiều cao & cân nặng trong Hồ sơ",
-                        "Xem hướng dẫn xác định dáng người chuẩn thời trang"
-                    }
-                };
-                return ApiResponse<AiChatResponseDto>.Ok(noMetricsResponse, "Vui lòng cập nhật chiều cao và cân nặng trong hồ sơ để bắt đầu trò chuyện với AI Stylist.");
+                bodyProfileSummary = $"Chiều cao: {user.Height}cm, Cân nặng: {user.Weight}kg" +
+                    (user.Age.HasValue ? $", Tuổi: {user.Age.Value} ({_trendService.DetermineAgeGroup(user.Age.Value)})" : "") +
+                    (!string.IsNullOrWhiteSpace(user.BodyShape) ? $", Dáng người: {user.BodyShape}" : "") +
+                    (user.Chest.HasValue && user.Waist.HasValue && user.Hips.HasValue ? $", Số đo 3 vòng: {user.Chest}-{user.Waist}-{user.Hips}cm" : "");
             }
 
-            string ecomTrendSummary = _trendService.GetTrendSummaryForAiPrompt(user.Age);
-            string bodyProfileSummary = $"Chiều cao: {user.Height}cm, Cân nặng: {user.Weight}kg" +
-                (user.Age.HasValue ? $", Tuổi: {user.Age.Value} ({_trendService.DetermineAgeGroup(user.Age.Value)})" : "") +
-                (!string.IsNullOrWhiteSpace(user.BodyShape) ? $", Dáng người: {user.BodyShape}" : "") +
-                (user.Chest.HasValue && user.Waist.HasValue && user.Hips.HasValue ? $", Số đo 3 vòng: {user.Chest}-{user.Waist}-{user.Hips}cm" : "");
-
-            // 3. Lấy tủ đồ của người dùng
+            // 3. Lấy tủ đồ của người dùng (từ request hoặc database)
             List<RecommendedClothingDto> userWardrobe = new();
-            if (userId.HasValue)
+
+            if (request.WardrobeItemIds != null && request.WardrobeItemIds.Any())
+            {
+                var specificItems = await _context.ClothingItems
+                    .Include(c => c.Category)
+                    .Where(c => request.WardrobeItemIds.Contains(c.Id))
+                    .Select(c => new RecommendedClothingDto
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        CategoryName = c.Category != null ? c.Category.Name : "Tops",
+                        Color = c.Color,
+                        Style = c.Style,
+                        Season = c.Season,
+                        ImageUrl = c.ImageUrl
+                    })
+                    .ToListAsync();
+
+                if (specificItems.Any())
+                {
+                    userWardrobe = specificItems;
+                }
+            }
+
+            if (!userWardrobe.Any() && userId.HasValue)
             {
                 var dbItems = await _context.ClothingItems
                     .Include(c => c.Category)
@@ -468,7 +494,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             var geminiApiKey = _configuration["Ai:GeminiApiKey"];
             if (!string.IsNullOrWhiteSpace(geminiApiKey))
             {
-                var geminiChatResult = await CallGeminiChatAsync(geminiApiKey, userMsg, request.History, pool, bodyProfileSummary, ecomTrendSummary);
+                var geminiChatResult = await CallGeminiChatAsync(geminiApiKey, userMsg, request.History, pool, bodyProfileSummary, ecomTrendSummary, request.UserLocation, request.Temperature, request.WeatherCondition);
                 if (geminiChatResult != null)
                 {
                     geminiChatResult.IsWardrobeEmpty = isWardrobeEmpty;
@@ -482,7 +508,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             }
 
             // 5. Thuật toán Fashion Expert Stylist Chat Engine (Phân tích ngữ cảnh thời trang thông minh)
-            var expertResponse = GenerateFashionExpertChatReply(userMsg, pool, isWardrobeEmpty, user, _trendService);
+            var expertResponse = GenerateFashionExpertChatReply(userMsg, pool, isWardrobeEmpty, user, _trendService, request.UserLocation, request.Temperature, request.WeatherCondition);
             expertResponse.IsWardrobeEmpty = isWardrobeEmpty;
             if (isWardrobeEmpty)
             {
@@ -506,8 +532,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 "bau cu", "thoi su", "tin tuc", "bong da", "ty so", "cau thu", "world cup", "chung khoan", 
                 "bitcoin", "crypto", "tien te", "ngan hang", "chua benh", "thuoc", "khang sinh", "bac si", 
                 "trieu chung", "covid", "ung thu", "nau an", "cong thuc", "lam banh", "dich thuat", "dich bai", 
-                "game", "lol", "lien quan", "gia vang", "xang dau", "lai suat", "bat dong san", "xe may", "o to",
-                "do f", "do c", "nhiet do", "du bao", "bao nhieu do"
+                "game", "lol", "lien quan", "gia vang", "xang dau", "lai suat", "bat dong san", "xe may", "o to"
             };
 
             foreach (var kw in offTopicKeywords)
@@ -525,7 +550,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 }
             }
 
-            // 3. Danh sách từ khóa bắt buộc chứng minh câu hỏi thuộc lĩnh vực thời trang / trang phục / outfit
+            // 3. Danh sách từ khóa bắt buộc chứng minh câu hỏi thuộc lĩnh vực thời trang / trang phục / quần áo / outfit
             string[] fashionKeywords = new[]
             {
                 "mac", "ao", "quan", "vay", "dam", "giay", "dep", "tui", "phoi", "outfit", "style", "phong cach",
@@ -535,7 +560,9 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 "hoodie", "cardigan", "chan vay", "polo", "croptop", "corset", "boots", "sandal", "mu", "non", "kinh",
                 "that lung", "dong ho", "cotton", "linen", "lua", "da", "denim", "oversize", "slim", "vintage", "retro",
                 "streetwear", "minimalism", "old money", "casual", "formal", "sang", "thanh lich", "ca tinh",
-                "mix", "match", "set do", "tong mau"
+                "mix", "match", "set do", "tong mau", "bo do", "mon do", "do", "item", "wardrobe", "layer", "tuck",
+                "mau sac", "mau", "chat vai", "form", "ong suong", "ong rong", "cap cao", "chat lieu",
+                "thoi tiet", "mua", "nang", "nhiet do", "lanh", "nong", "se lanh", "khi hau", "gio", "do c", "do f", "am u", "nhiet do bao nhieu", "mua hay nang"
             };
 
             bool hasFashionContext = fashionKeywords.Any(fk => cleanText.Contains(fk));
@@ -569,7 +596,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 .Replace('đ', 'd').Replace('Đ', 'D');
         }
 
-        private static async Task<AiChatResponseDto?> CallGeminiChatAsync(string apiKey, string message, List<ChatMessageItemDto>? history, List<RecommendedClothingDto> pool, string? bodyInfo = null, string? ecomTrendInfo = null)
+        private static async Task<AiChatResponseDto?> CallGeminiChatAsync(string apiKey, string message, List<ChatMessageItemDto>? history, List<RecommendedClothingDto> pool, string? bodyInfo = null, string? ecomTrendInfo = null, string? userLocation = null, double? temperature = null, string? weatherCondition = null)
         {
             try
             {
@@ -579,16 +606,28 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 var simplifiedPool = pool.Select(p => new { p.Id, p.Name, p.CategoryName, p.Color, p.Style }).Take(12);
                 var wardrobeJson = JsonSerializer.Serialize(simplifiedPool);
 
-                var systemPrompt = "Bạn là Chuyên gia Thời trang và Stylist Cá Nhân AI cao cấp của MYFITDAILY tại Việt Nam.\n" +
-                                   "QUY TẮC BẤT DI BẤT DỊCH (STRICT FASHION GUARDRAILS):\n" +
-                                   "1. Bạn TUYỆT ĐỐI CHỈ ĐƯỢC PHÉP trả lời các câu hỏi liên quan đến THỜI TRANG, PHỐI ĐỒ (OUTFITS), PHONG CÁCH ĂN MẶC, TỶ LỆ MÀU SẮC, CHỌN QUẦN ÁO/GIÀY DÉP/PHỤ KIỆN VÀ TỦ ĐỒ CÁ NHÂN.\n" +
-                                   "2. NẾU người dùng hỏi BẤT KỲ chủ đề nào ngoài lề thời trang (như lập trình, toán, chính trị, y tế, thời sự...), BẮT BUỘC phải từ chối lịch sự: bạn là Trợ lý Thời trang MYFITDAILY và chỉ hỗ trợ về trang phục, tuyệt đối không trả lời nội dung ngoài lề.\n" +
-                                   "3. Khi tư vấn thời trang: Hãy nói giọng điệu chuyên nghiệp, thanh lịch, am hiểu xu hướng Việt Nam, đưa ra lời khuyên cụ thể, tinh tế.\n" +
-                                   (!string.IsNullOrWhiteSpace(bodyInfo) ? $"4. Thông tin vóc dáng, tỉ lệ cơ thể & độ tuổi người dùng: {bodyInfo}. Hãy liên tục đối chiếu với chiều cao, cân nặng, độ tuổi và dáng người này để đưa ra lời khuyên chọn form dáng, độ dài trang phục và mẹo 'hack dáng' chuẩn xác nhất.\n" : "") +
-                                   (!string.IsNullOrWhiteSpace(ecomTrendInfo) ? $"5. KIẾN THỨC XU HƯỚNG THỜI TRANG THƯƠNG MẠI ĐIỆN TỬ THEO ĐỘ TUỔI (TikTok Shop, Shopee, Taobao, Zara, Uniqlo):\n{ecomTrendInfo}\nBẮT BUỘC bạn phải nắm bắt và áp dụng kiến thức xu hướng TMĐT này để tư vấn những món đồ, cách phối đang thịnh hành nhất cho độ tuổi của người dùng!\n" : "") +
-                                   $"Danh sách các món đồ hiện có trong tủ của người dùng: {wardrobeJson}.\n" +
+                string weatherPromptContext = "";
+                if (!string.IsNullOrWhiteSpace(userLocation) || temperature.HasValue || !string.IsNullOrWhiteSpace(weatherCondition))
+                {
+                    string locStr = !string.IsNullOrWhiteSpace(userLocation) ? userLocation : "khu vực người dùng";
+                    string tempStr = temperature.HasValue ? $"{temperature.Value:0.#}°C" : "thích hợp";
+                    string condStr = !string.IsNullOrWhiteSpace(weatherCondition) ? weatherCondition : "bình thường";
+                    weatherPromptContext = $"DỮ LIỆU THỜI TIẾT THỰC TẾ: Tại {locStr}, thời tiết hiện tại: {tempStr}, {condStr}. Nếu câu hỏi của người dùng có liên quan đến thời tiết, hãy đề cập trực tiếp địa điểm ({locStr}), nhiệt độ ({tempStr}) và tình trạng mưa/nắng ({condStr}), sau đó tư vấn trang phục phù hợp nhất (ví dụ: trời mưa tránh quần trắng dễ bẩn, trời nắng ưu tiên cotton/linen thoáng mát, trời lạnh phối layer ấm áp)!\n";
+                }
+
+                var systemPrompt = "Bạn là Chuyên gia Thời trang và Stylist Cá Nhân AI chuyên sâu về QUẦN ÁO và PHỐI ĐỒ (Wardrobe & Outfit Stylist) của MYFITDAILY tại Việt Nam.\n" +
+                                   "TRỌNG TÂM CỐT LÕI (FASHION & CLOTHING FOCUS):\n" +
+                                   "1. Tập trung 100% vào QUẦN ÁO, TRANG PHỤC, TỦ ĐỒ (WARDROBE), VÀ NGHỆ THUẬT PHỐI ĐỒ (MIX & MATCH).\n" +
+                                   "2. Khi trả lời, luôn phân tích cụ thể chi tiết từng món đồ: Áo (Tops), Quần/Váy (Bottoms/Dresses), Áo khoác (Outerwear), Giày dép (Shoes), Phụ kiện (Accessories).\n" +
+                                   "3. Hướng dẫn cụ thể: nguyên tắc phối màu (bánh xe màu, tone-sur-tone, tương phản), chất liệu (cotton, lụa, denim, linen, dạ...), phom dáng (tỷ lệ 1/3 - 2/3, cân bằng rộng - ôm), và kỹ thuật mặc đẹp (cách sơ vin, cởi cúc, xắn tay, layer).\n" +
+                                   "4. Nếu trong tủ đồ người dùng có món đồ phù hợp, hãy nhắc tên chính xác món đồ đó để hướng dẫn người dùng mặc ngay.\n" +
+                                   "5. Tuyệt đối không trả lời các chủ đề ngoài lề thời trang. Không lan man về chỉ số y tế hay cân nặng; chỉ dùng thông tin thể trạng (nếu có) để gợi ý form quần áo tôn dáng.\n" +
+                                   weatherPromptContext +
+                                   (!string.IsNullOrWhiteSpace(bodyInfo) ? $"Thông tin vóc dáng người dùng (tham khảo để gợi ý form quần áo): {bodyInfo}.\n" : "") +
+                                   (!string.IsNullOrWhiteSpace(ecomTrendInfo) ? $"Xu hướng thời trang TMĐT tham khảo: {ecomTrendInfo}.\n" : "") +
+                                   $"Danh sách các món quần áo hiện có trong tủ của người dùng: {wardrobeJson}.\n" +
                                    "BẮT BUỘC trả về ĐÚNG định dạng JSON sau:\n" +
-                                   "{\"reply\": \"nội dung trả lời chi tiết bằng tiếng Việt\", \"isFashionRelated\": true, \"suggestedItemIds\": [id1, id2], \"followUps\": [\"câu hỏi gợi ý 1\", \"câu hỏi gợi ý 2\"]}";
+                                   "{\"reply\": \"nội dung tư vấn chi tiết về quần áo và cách phối bằng tiếng Việt\", \"isFashionRelated\": true, \"suggestedItemIds\": [id1, id2], \"followUps\": [\"câu hỏi gợi ý 1\", \"câu hỏi gợi ý 2\"]}";
 
                 var contents = new List<object>
                 {
@@ -667,40 +706,219 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             }
         }
 
-        private static AiChatResponseDto GenerateFashionExpertChatReply(string message, List<RecommendedClothingDto> pool, bool isWardrobeEmpty, User? user = null, IFashionEcommerceTrendService? trendService = null)
+        private static AiChatResponseDto GenerateFashionExpertChatReply(string message, List<RecommendedClothingDto> pool, bool isWardrobeEmpty, User? user = null, IFashionEcommerceTrendService? trendService = null, string? userLocation = null, double? temperature = null, string? weatherCondition = null)
         {
             var clean = RemoveDiacritics(message).ToLower();
             string reply;
             List<RecommendedClothingDto> suggestedItems = new();
             List<string> followUps = new();
 
-            if (clean.Contains("hen ho") || clean.Contains("date") || clean.Contains("nguoi yeu"))
+            // 0. Phân tích Thời Tiết Thực Tế & Phối Đồ Chuẩn Khí Hậu (Live Local Weather Styling)
+            bool isWeatherQuery = clean.Contains("thoi tiet") || clean.Contains("mua") || clean.Contains("nang") || clean.Contains("nhiet do") || clean.Contains("lanh") || clean.Contains("nong") || clean.Contains("se lanh") || clean.Contains("gio") || clean.Contains("khi hau") || clean.Contains("do c") || clean.Contains("do f") || clean.Contains("bao nhieu do") || clean.Contains("mua hay nang");
+
+            if (isWeatherQuery || (clean.Contains("hom nay") && (temperature.HasValue || !string.IsNullOrWhiteSpace(weatherCondition))))
             {
-                reply = "Cho buổi hẹn hò lãng mạn, sự tinh tế và cuốn hút tự nhiên là chìa khóa vàng ✨.\n\n" +
-                        "✦ **Nếu bạn thích phong cách thanh lịch & quyến rũ:** Hãy diện một chiếc Đầm Lụa Midi thướt tha kết hợp Giày Loafer hoặc gót thấp nhã nhặn. Sự mềm mại của chất liệu lụa sẽ tạo nét quyến rũ không phô trương.\n" +
-                        "✦ **Nếu bạn chuộng phong cách hiện đại & năng động:** Phối Áo Sơ Mi Lụa Trắng sơ vin cùng Quần Tây Xếp Ly hoặc Chân Váy Midi, khoác hờ Blazer màu be hoặc nâu cacao để tạo khí chất thời thượng.\n\n" +
-                        "💡 *Stylist Tip:* Hãy chọn phụ kiện nhỏ gọn như Túi Baguette kẹp nách và trang sức ánh vàng (gold) để tôn sáng làn da và thu hút ánh nhìn đối phương.";
+                string loc = !string.IsNullOrWhiteSpace(userLocation) ? userLocation : "khu vực của bạn";
+                string tempStr = temperature.HasValue ? $"{temperature.Value:0.#}°C" : "khoảng 28°C";
+                string cond = !string.IsNullOrWhiteSpace(weatherCondition) ? weatherCondition : "thời tiết mát mẻ";
+
+                bool isRain = (weatherCondition?.Contains("mưa", StringComparison.OrdinalIgnoreCase) == true) || clean.Contains("mua");
+                bool isCold = (temperature.HasValue && temperature.Value < 23) || clean.Contains("lanh") || clean.Contains("se lanh");
+
+                if (isRain)
+                {
+                    reply = $"📍 **Dự Báo & Tư Vấn Thời Trang Ngày Mưa tại {loc}:**\n" +
+                            $"Hiện tại tại {loc} đang có **{cond}**, nhiệt độ ghi nhận là **{tempStr}** 🌧️.\n\n" +
+                            "Để vừa mặc đẹp chuẩn thời trang, vừa khô ráo tiện lợi khi trời mưa, Stylist gợi ý bạn công thức sau:\n" +
+                            "✦ **Thân trên (Top):** Áo thun cotton hoặc sơ mi phom đứng thoáng khí, mau khô. Khoác thêm một chiếc **Áo khoác gió (Windbreaker) hoặc Blazer mỏng kháng nước** để che chắn giọt mưa bất chợt.\n" +
+                            "✦ **Thân dưới (Bottom):** Chọn **Quần Jeans ống đứng tối màu hoặc Quần Tây cropped lửng** (gấu quần cao trên mắt cá 2-3cm). ⚠️ *Tuyệt đối tránh quần âu trắng, kem hoặc quần ống rộng quét đất vì sẽ rất dễ bị bắn bùn bẩn!*\n" +
+                            "✦ **Giày & Phụ kiện:** Ưu tiên **Giày Sneaker da bít mũi hoặc Loafer da bóng đế cao su bám đường** chống trơn trượt. Đừng quên mang theo ô/dù mini và túi xách chất liệu chống thấm nước.\n\n" +
+                            "💡 *Stylist Tip:* Khi di chuyển ngoài trời mưa, bạn có thể xắn nhẹ gấu quần 1 nấc (French Roll) để tạo phong cách trẻ trung năng động và giữ gấu quần luôn sạch sẽ.";
+
+                    suggestedItems = FilterPool(pool, "outerwear", "blazer", "jean", "loafer", "sneaker");
+                    followUps.Add($"Gợi ý giày phối đẹp ngày mưa ở {loc}");
+                    followUps.Add("Chất liệu vải nào chống thấm nước tốt nhất?");
+                    followUps.Add("Cách mix áo khoác gió thời thượng");
+                }
+                else if (isCold)
+                {
+                    reply = $"📍 **Dự Báo & Tư Vấn Thời Trang Ngày Lạnh tại {loc}:**\n" +
+                            $"Hiện tại tại {loc} thời tiết đang **{cond}**, nhiệt độ hạ xuống **{tempStr}** se lạnh 🍂.\n\n" +
+                            "Thời tiết mát mẻ là cơ hội lý tưởng nhất để bạn trổ tài phối đồ nhiều tầng (Layering) cực thời thượng:\n" +
+                            "✦ **Công thức Layer 3 lớp:** Áo thun/giữ nhiệt bên trong + Áo Sơ Mi hoặc Áo Len dệt kim mỏng ở giữa + Áo Blazer Dạ hoặc Trench Coat khoác ngoài.\n" +
+                            "✦ **Thân dưới (Bottom):** Quần Jeans dày dặn hoặc Quần Tây xếp ly chất dạ đứng phom, vừa giữ ấm tốt vừa tạo cảm giác vóc dáng cao ráo, thanh lịch.\n" +
+                            "✦ **Giày & Phụ kiện:** Boots cổ ngắn (Ankle boots), Chelsea boots hoặc Sneaker da đế dày đi kèm tất cổ cao đồng màu.\n\n" +
+                            "💡 *Stylist Tip:* Hãy để lộ nhẹ cổ áo sơ mi hoặc cổ tay áo lớp bên trong ra ngoài áo khoác để tạo điểm nhấn tương phản màu sắc hút mắt.";
+
+                    suggestedItems = FilterPool(pool, "outerwear", "blazer", "so mi", "tay", "jean");
+                    followUps.Add("Quy tắc phối đồ nhiều lớp (Layering) không bị cộm");
+                    followUps.Add("Gợi ý áo len mỏng phối cùng sơ mi");
+                    followUps.Add("Nên chọn khăn quàng cổ màu gì?");
+                }
+                else
+                {
+                    reply = $"📍 **Dự Báo & Tư Vấn Thời Trang Ngày Nắng tại {loc}:**\n" +
+                            $"Hiện tại tại {loc} thời tiết đang **{cond}**, nhiệt độ khoảng **{tempStr}** ☀️.\n\n" +
+                            "Với thời tiết nắng ấm/oi ả, ưu tiên số 1 là **sự thoáng khí, nhẹ nhàng và giải phóng nhiệt độ cơ thể**:\n" +
+                            "✦ **Thân trên (Top):** Áo Sơ Mi Cộc Tay hoặc Áo Thun Boxy Fit từ chất liệu **Linen (Đũi), Cotton 100% hoặc sợi AIRism** thấm hút mồ hôi tối đa.\n" +
+                            "✦ **Thân dưới (Bottom):** Quần Tây ống suông mỏng nhẹ hoặc Quần Short ống rộng tone màu sáng (Trắng ngà, Be cát, Xanh baby pastel) để phản xạ ánh nắng mặt trời.\n" +
+                            "✦ **Giày & Phụ kiện:** Sneaker vải canvas trắng, Loafer đục lỗ thoáng khí hoặc Sandal da tối giản. Điểm thêm chiếc **kính râm retro chống tia UV** và mũ lưỡi trai để bảo vệ mắt và da.\n\n" +
+                            "💡 *Stylist Tip:* Tránh mặc đồ đen bó sát toàn thân dưới trời nắng gắt vì màu đen hấp thụ nhiệt rất mạnh. Hãy chọn bảng màu nhã nhặn như Trắng, Be, Xanh pastel.";
+
+                    suggestedItems = FilterPool(pool, "thun", "so mi", "jean", "sneaker", "casual");
+                    followUps.Add("Chất liệu Linen và Cotton loại nào mát hơn?");
+                    followUps.Add($"Gợi ý outfit dạo phố cafe nắng đẹp tại {loc}");
+                    followUps.Add("Cách chọn kính râm hợp với khuôn mặt");
+                }
+            }
+            // 1. Phối đồ với Áo sơ mi (Shirts)
+            else if (clean.Contains("so mi") || clean.Contains("ao so mi") || clean.Contains("shirt"))
+            {
+                reply = "Áo sơ mi là món đồ 'xương sống' (Capsule Wardrobe) không thể thiếu để kiến tạo các set đồ từ thanh lịch công sở tới phóng khoáng dạo phố 👔.\n\n" +
+                        "✦ **Combo 1 - Công sở thanh lịch & Quyền lực:** Sơ vin sơ mi lụa trắng hoặc xanh pastel vào Quần Tây Xếp Ly Cạp Cao, khoác thêm chiếc Blazer dạ và xỏ chân vào Giày Loafer bóng. Set đồ này tạo tỷ lệ 1/3 - 2/3 hoàn hảo giúp chân dài miên man.\n" +
+                        "✦ **Combo 2 - Smart Casual / Cafe cuối tuần:** Mở 1-2 nút cổ tạo khoảng hở xương quai xanh thanh thoát, xắn tay áo kiểu French-cuff ngang khuỷu tay, kết hợp cùng Quần Jeans Ống Suông Vintage và Sneaker trắng Retro.\n" +
+                        "✦ **Combo 3 - Layer Phóng khoáng (Overshirt):** Mặc sơ mi oversized buông vạt như một chiếc áo khoác nhẹ bên ngoài áo thun basic hoặc croptop ôm sát, phối với quần short ống rộng hoặc chân váy chữ A.\n\n" +
+                        "💡 *Stylist Tip:* Để sơ vin không bị cộm phồng, hãy áp dụng kỹ thuật 'French Tuck' (chỉ sơ vin nhẹ phần vạt trước, buông vạt sau tự nhiên).";
+
+                suggestedItems = FilterPool(pool, "so mi", "blazer", "tay", "jean", "loafer");
+                followUps.Add("Cách ủi và bảo quản sơ mi lụa luôn phẳng phiu");
+                followUps.Add("Nên chọn sơ mi cổ đức hay sơ mi cổ tàu?");
+                followUps.Add("Gợi ý phụ kiện đi kèm áo sơ mi trắng");
+            }
+            // 2. Phối đồ với Quần Jeans (Jeans & Denim)
+            else if (clean.Contains("jean") || clean.Contains("jeans") || clean.Contains("quan bo") || clean.Contains("denim"))
+            {
+                reply = "Quần Jeans là biểu tượng của sự trẻ trung, phong trần và linh hoạt bậc nhất trong thế giới trang phục 👖.\n\n" +
+                        "✦ **Quần Jeans Ống Suông (Straight-leg) + Áo Thun Boxy Fit:** Bản phối kinh điển mang đậm hơi thở Streetwear năng động. Thắt thêm thắt lưng da bản nhỏ để tạo điểm thắt eo rõ rệt.\n" +
+                        "✦ **Quần Jeans Cạp Cao + Áo Blazer Oversized:** Cân bằng hoàn hảo giữa nét trang trọng của áo vest và sự bụi bặm của quần bò. Rất thích hợp diện đi làm ngày thứ Sáu hoặc cafe gặp gỡ đối tác trẻ.\n" +
+                        "✦ **Quần Jeans Ống Rộng (Wide-leg) + Áo Ôm Sát (Slim-fit / Croptop):** Ứng dụng quy tắc vàng 'Trên ôm - Dưới suông' (Tight top, Loose bottom), giúp khoe trọn vòng eo thon gọn và kéo dài đôi chân tối đa.\n\n" +
+                        "💡 *Stylist Tip:* Chiều dài gấu quần jeans lý tưởng nhất nên chạm nhẹ vào thân trên của giày (Break nhẹ), tránh để gấu quần bị chùng quá nhiều nếp gấp gây cảm giác người thấp đi.";
+
+                suggestedItems = FilterPool(pool, "jean", "jeans", "thun", "blazer", "sneaker");
+                followUps.Add("Cách chọn độ dài gấu quần jeans chuẩn theo chiều cao");
+                followUps.Add("Nên chọn jeans màu xanh vintage hay đen than chì?");
+                followUps.Add("Gợi ý giày phối đẹp nhất với quần jeans ống suông");
+            }
+            // 3. Phối đồ với Quần Tây & Quần Kaki (Trousers & Pants)
+            else if (clean.Contains("quan tay") || clean.Contains("kaki") || clean.Contains("trouser") || clean.Contains("pant"))
+            {
+                reply = "Quần Tây Xếp Ly Ống Suông là chìa khóa định hình phong thái chững chạc, hiện đại và chuẩn gu Quiet Luxury 🎩.\n\n" +
+                        "✦ **Bản phối Classic:** Quần Tây Đen/Xám Than phối cùng Áo Sơ Mi Form Chuẩn và Giày Loafer da bóng lộn. Phom quần có đường xếp ly sắc sảo sẽ tạo hiệu ứng đường thẳng thị giác kéo dài chân.\n" +
+                        "✦ **Bản phối Trẻ trung & Thời thượng:** Quần Tây xếp ly tone Nâu Cacao hoặc Be cát phối cùng Áo Thun Trơn Ôm Vừa và Giày Sneaker Trắng Đế Bằng. Set đồ vừa lịch lãm vừa gần gũi, thoải mái.\n" +
+                        "✦ **Phối Layer Monochromatic (Đơn sắc):** Mặc quần tây cùng tone màu với áo khoác ngoài (ví dụ set suit xám lông chuột hoặc xanh navy), tạo khối màu đồng nhất giúp vóc dáng trông thanh mảnh và cao ráo hơn hẳn.\n\n" +
+                        "💡 *Stylist Tip:* Hãy chọn quần có cạp cao trên rốn từ 2-3cm để tạo tỷ lệ thân dưới dài gấp đôi thân trên.";
+
+                suggestedItems = FilterPool(pool, "tay", "quan", "so mi", "loafer", "blazer");
+                followUps.Add("Cách chọn size cạp quần tây chuẩn số đo vòng 2");
+                followUps.Add("Gợi ý màu quần tây dễ phối đồ nhất");
+                followUps.Add("Nên đi tất cổ cao hay tất lười khi mặc quần tây?");
+            }
+            // 4. Phối đồ với Áo Thun (T-Shirts & Croptops)
+            else if (clean.Contains("thun") || clean.Contains("t-shirt") || clean.Contains("tee") || clean.Contains("croptop") || clean.Contains("polo"))
+            {
+                reply = "Áo thun tưởng chừng đơn giản nhưng lại là món đồ biến hóa phong cách đa dạng nhất trong tủ đồ 👕.\n\n" +
+                        "✦ **Áo Thun Cotton Form Boxy + Quần Jeans Suông:** Form áo rộng vừa vặn, cầu vai vuông vức che khuyết điểm bắp tay to cực tốt. Phối cùng sneaker retro cho diện mạo trẻ trung, khỏe khoắn.\n" +
+                        "✦ **Áo Thun Trơn Basic + Quần Tây + Blazer:** Công thức 'thần thánh' của dân văn phòng hiện đại. Giúp giải phóng sự gò bó của sơ mi cổ đức mà vẫn giữ trọn vẻ chỉn chu, chuyên nghiệp.\n" +
+                        "✦ **Áo Polo Pique + Quần Kaki / Chino:** Phong thái Preppy thanh lịch, đậm chất quý ông thể thao cổ điển. Rất hợp cho các buổi gặp mặt cuối tuần hoặc đi dạo phố.\n\n" +
+                        "💡 *Stylist Tip:* Luôn ưu tiên áo thun có chất liệu Cotton 100% định lượng từ 220-250gsm hoặc sợi dệt AIRism để giữ phom cổ áo không bị bai dão sau nhiều lần giặt.";
+
+                suggestedItems = FilterPool(pool, "thun", "jean", "tay", "sneaker", "casual");
+                followUps.Add("Cách giữ cổ áo thun không bị dão khi giặt");
+                followUps.Add("Phối áo thun đen với quần màu gì đẹp nhất?");
+                followUps.Add("Cách sơ vin áo thun hack dáng");
+            }
+            // 5. Phối đồ với Áo Blazer / Vest / Suit
+            else if (clean.Contains("blazer") || clean.Contains("vest") || clean.Contains("suit"))
+            {
+                reply = "Áo Blazer là món đồ 'đinh' giúp nâng tầm mọi bộ trang phục bình thường trở nên sang trọng và sắc sảo ngay tức khắc ✨.\n\n" +
+                        "✦ **Blazer Oversized + Quần Jeans Suông + Áo Thun Trắng:** Bản phối kinh điển mang đậm phong cách Chic Parisienne – nửa trang trọng, nửa phóng khoáng.\n" +
+                        "✦ **Blazer + Quần Tây Đồng Bộ (Ton-sur-Ton):** Phong thái nữ tổng tài / doanh nhân hiện đại, đường cắt sắc sảo tạo phom vai thẳng tắp và uy quyền.\n" +
+                        "✦ **Blazer Dạ / Tweed + Đầm Lụa Slip Dress:** Sự tương phản đỉnh cao giữa cấu trúc cứng cáp của áo khoác dạ và nét thướt tha mềm mại của lụa satin tạo sức hút quyến rũ không thể rời mắt.\n\n" +
+                        "💡 *Stylist Tip:* Chú ý đệm vai blazer không nên rộng vượt quá 1.5 - 2cm so với bờ vai thật để tránh cảm giác bị 'nuốt chửng' vóc dáng.";
+
+                suggestedItems = FilterPool(pool, "blazer", "outerwear", "tay", "jean", "loafer");
+                followUps.Add("Cách chọn size blazer chuẩn theo số đo cầu vai");
+                followUps.Add("Màu blazer nào dễ mix đồ nhất trong tủ?");
+                followUps.Add("Phối phụ kiện nào với áo blazer dạ?");
+            }
+            // 6. Phối đồ với Đầm & Chân Váy (Dresses & Skirts)
+            else if (clean.Contains("dam") || clean.Contains("vay") || clean.Contains("chan vay") || clean.Contains("dress") || clean.Contains("skirt"))
+            {
+                reply = "Đầm và chân váy là vũ khí tôn vinh nét nữ tính, thanh thoát và duyên dáng của phái đẹp 👗.\n\n" +
+                        "✦ **Đầm Lụa Midi Cổ Yếm / Hai Dây:** Phom dáng thướt tha ôm nhẹ theo đường cong cơ thể. Khoác hờ chiếc Cardigan dệt kim mỏng hoặc Blazer cộc tay khi trời se lạnh.\n" +
+                        "✦ **Chân Váy Chữ A (A-line Skirt) + Áo Sơ Mi / Thun ôm:** Thiết kế ôm gọn vòng eo và xòe nhẹ xuống hông giúp giấu nhẹm khuyết điểm đùi to, tạo cảm giác đôi chân thon thả.\n" +
+                        "✦ **Chân Váy Xếp Ly Dài + Áo Len Dáng Rộng (Oversized Knit):** Phong cách Mori Girl lãng mạn, thanh tao, cực kỳ ăn ảnh khi check-in quán cafe mùa thu đông.\n\n" +
+                        "💡 *Stylist Tip:* Chiều dài đầm/váy đẹp nhất là ngang bắp chuối (Midi) hoặc trên đầu gối 5cm, tránh chọn váy cắt ngang đúng đầu gối vì sẽ làm chân bị phân khúc ngắn lại.";
+
+                suggestedItems = FilterPool(pool, "dam", "dresses", "vay", "accessories", "shoes");
+                followUps.Add("Chọn giày nào hợp với chân váy midi xếp ly?");
+                followUps.Add("Mẹo mặc đầm lụa không bị lộ viền nội y");
+                followUps.Add("Gợi ý áo khoác mặc cùng đầm hai dây");
+            }
+            // 7. Quy tắc Phối Màu Quần Áo (Color Theory & Palette)
+            else if (clean.Contains("phoi mau") || clean.Contains("mau sac") || clean.Contains("bang mau") || clean.Contains("banh xe mau") || clean.Contains("tong mau"))
+            {
+                reply = "Nghệ thuật phối màu quần áo là chìa khóa vàng giúp bạn trông đắt giá mà không cần trang phục đắt tiền 🎨.\n\n" +
+                        "✦ **1. Quy tắc 60 - 30 - 10:**\n" +
+                        "  • **60% Màu chủ đạo:** Thường là quần/váy và áo khoác ngoài (màu trung tính: Đen, Trắng, Be, Nâu, Xanh Navy).\n" +
+                        "  • **30% Màu bổ trợ:** Áo trong hoặc sơ mi (màu sáng, pastel hoặc màu tương đồng).\n" +
+                        "  • **10% Màu điểm nhấn:** Giày, túi xách, khăn quàng hoặc thắt lưng (màu nổi bật tạo ấn tượng).\n\n" +
+                        "✦ **2. Phối Màu Đơn Sắc (Monochromatic / Ton-sur-Ton):**\n" +
+                        "  Mặc cả cây trang phục cùng một gam màu nhưng khác nhau về sắc độ đậm/nhạt và chất liệu (ví dụ: Áo len be nhạt + Quần tây nâu cát + Blazer nâu đậm). Tạo chiều sâu thị giác cực kỳ sang trọng.\n\n" +
+                        "✦ **3. Phối Màu Tương Phản Cân Bằng (High Contrast):**\n" +
+                        "  Trắng + Đen Obsidian, Be kem + Nâu Cacao, hoặc Xanh Denim + Trắng ngà – những cặp màu tương phản kinh điển không bao giờ lỗi mốt.\n\n" +
+                        "💡 *Stylist Tip:* Giữ tổng số màu trên một set đồ không vượt quá 3 màu để luôn đảm bảo sự tinh tế, thanh tao.";
+
+                suggestedItems = pool.Take(4).ToList();
+                followUps.Add("Gợi ý bảng màu quần áo tôn da ngăm bánh mật");
+                followUps.Add("Cách phối đồ tone màu đất ấm áp");
+                followUps.Add("Mẹo diện đồ màu trắng kem sang trọng không lo bẩn");
+            }
+            // 8. Tư vấn Tủ Đồ Cá Nhân & Khám phá đồ trong tủ (Wardrobe Mix)
+            else if (clean.Contains("tu do") || clean.Contains("trong tu") || clean.Contains("co san") || clean.Contains("mon do") || clean.Contains("phoi tu do"))
+            {
+                reply = "Tủ đồ cá nhân chính là kho tàng sáng tạo vô tận của riêng bạn ✨.\n\n" +
+                        $"✦ **Tủ đồ hiện tại của bạn:** Đang kết nối với **{pool.Count} món trang phục** (Áo, Quần, Đầm, Áo khoác, Giày & Phụ kiện).\n\n" +
+                        "✦ **Công thức phối nhanh từ tủ đồ hôm nay:**\n" +
+                        "  1. **Set 1 - Thanh lịch đa năng:** Lấy chiếc Áo Sơ Mi hoặc Áo Thun form chuẩn phối cùng Quần Tây/Jeans, hoàn thiện bằng đôi Giày Loafer hoặc Sneaker sẵn có.\n" +
+                        "  2. **Set 2 - Biến tấu Layer:** Khoác thêm chiếc Áo Blazer hoặc Áo khoác nhẹ bên ngoài để nâng cấp diện mạo trong tích tắc.\n\n" +
+                        "👉 *Bạn có thể click trực tiếp vào một món đồ trong thanh chọn tủ đồ bên dưới, tôi sẽ thiết kế ngay 3 bản phối độc bản với món đồ đó!*";
+
+                suggestedItems = pool.Take(4).ToList();
+                followUps.Add("Phối đồ đi làm từ tủ của tôi");
+                followUps.Add("Cách tái sử dụng quần áo cũ thành outfit mới");
+                followUps.Add("Gợi ý set đồ dạo phố cuối tuần từ tủ đồ");
+            }
+            // 9. Dịp Hẹn Hò (Date Night)
+            else if (clean.Contains("hen ho") || clean.Contains("date") || clean.Contains("nguoi yeu"))
+            {
+                reply = "Cho buổi hẹn hò lãng mạn, sự tinh tế, thanh lịch và cuốn hút tự nhiên là chìa khóa vàng ✨.\n\n" +
+                        "✦ **Nếu chuộng phong cách quyến rũ & thanh tao:** Đầm Lụa Midi thướt tha kết hợp Giày Loafer hoặc cao gót mũi nhọn nhã nhặn. Chất lụa bóng mờ nhẹ tạo vẻ đẹp mê hoặc dưới ánh đèn nến.\n" +
+                        "✦ **Nếu chuộng phong cách hiện đại & ngọt ngào:** Phối Áo Sơ Mi Lụa Trắng sơ vin Quần Tây Xếp Ly cạp cao hoặc Chân Váy Midi, khoác hờ Blazer màu be hoặc nâu cacao tạo khí chất thời thượng.\n\n" +
+                        "💡 *Stylist Tip:* Chọn phụ kiện nhỏ gọn như Túi Baguette kẹp nách và trang sức ánh vàng (gold) thanh mảnh để tôn sáng làn da và thu hút ánh nhìn đối phương.";
 
                 suggestedItems = FilterPool(pool, "dam", "vay", "so mi", "loafer", "dresses", "shoes");
                 followUps.Add("Buổi hẹn hò diễn ra ở quán cafe hay nhà hàng sang trọng?");
                 followUps.Add("Gợi ý phụ kiện đi kèm cho set đồ hẹn hò");
                 followUps.Add("Cách chọn màu sắc tôn da khi đi hẹn hò buổi tối");
             }
+            // 10. Dịp Công Sở / Đi Làm / Phỏng Vấn (Work & Office)
             else if (clean.Contains("di lam") || clean.Contains("cong so") || clean.Contains("phong van") || clean.Contains("thuyet trinh"))
             {
-                reply = "Môi trường công sở và phỏng vấn đòi hỏi sự chỉn chu, chuyên nghiệp nhưng vẫn thể hiện được gu thẩm mỹ cao cấp 💼.\n\n" +
-                        "✦ **Công thức bất hủ:** Áo Sơ Mi Form Chuẩn + Quần Tây Xếp Ly Dáng Đứng + Giày Loafer Da Bóng. Set đồ này mang lại vẻ ngoài đĩnh đạc và đáng tin cậy.\n" +
+                reply = "Môi trường công sở và phỏng vấn đòi hỏi sự chỉn chu, đĩnh đạc nhưng vẫn thể hiện được gu thẩm mỹ cao cấp 💼.\n\n" +
+                        "✦ **Công thức bất hủ:** Áo Sơ Mi Form Chuẩn + Quần Tây Xếp Ly Dáng Đứng + Giày Loafer Da Bóng. Set đồ này mang lại vẻ ngoài đĩnh đạc và tạo dựng lòng tin tuyệt đối.\n" +
                         "✦ **Nâng tầm đẳng cấp:** Khoác thêm một chiếc Áo Blazer Dạ màu Nâu Cacao hoặc Đen Than Chì. Đường cắt may sắc nét của Blazer sẽ tôn vai và tạo phom dáng quyền lực.\n\n" +
-                        "💡 *Stylist Tip:* Tránh phối quá 3 tông màu trên một set đồ công sở. Tỷ lệ màu 60-30-10 (60% màu trung tính chính, 30% màu bổ trợ, 10% phụ kiện tạo điểm nhấn) là quy chuẩn vàng.";
+                        "💡 *Stylist Tip:* Tránh phối quá 3 tông màu trên một set đồ công sở. Tỷ lệ màu 60-30-10 là quy chuẩn vàng.";
 
                 suggestedItems = FilterPool(pool, "so mi", "blazer", "tay", "quan", "loafer", "tops", "bottoms");
                 followUps.Add("Thời tiết văn phòng có máy lạnh lạnh không?");
                 followUps.Add("Gợi ý giày công sở êm chân di chuyển nhiều");
                 followUps.Add("Cách biến tấu set đồ công sở để đi tiệc sau giờ làm");
             }
+            // 11. Dịp Dự Tiệc / Đám Cưới (Party & Wedding)
             else if (clean.Contains("tiec") || clean.Contains("party") || clean.Contains("dam cuoi") || clean.Contains("su kien"))
             {
-                reply = "Khi tham dự tiệc tùng hoặc sự kiện quan trọng, mục tiêu là nổi bật một cách sang trọng và không lấn át chủ tiệc 🍸.\n\n" +
+                reply = "Khi tham dự tiệc tùng hoặc đám cưới, mục tiêu là nổi bật một cách sang trọng, duyên dáng và không lấn át chủ tiệc 🍸.\n\n" +
                         "✦ **Tiệc tối / Dạ tiệc:** Đầm Lụa Midi hoặc Suit may đo cao cấp tone Đen Obsidian, Xanh Midnight hoặc Vàng Champagne. Kết hợp giày cao gót mũi nhọn hoặc Loafer da bóng lộn.\n" +
                         "✦ **Tiệc cưới / Sự kiện ban ngày:** Váy hoa nhí tone pastel nhạt, hoặc set Quần Tây Trắng ngà + Sơ mi lụa mềm mại tôn lên vẻ thanh thoát nhã nhặn.\n\n" +
                         "💡 *Stylist Tip:* Tiết chế trang sức rườm rà. Một chiếc clutch cầm tay tối giản và một đôi khuyên tai statement là đủ để tạo ấn tượng hoàn mỹ.";
@@ -709,9 +927,10 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 followUps.Add("Dress code của bữa tiệc có yêu cầu màu sắc cụ thể không?");
                 followUps.Add("Nên đi giày cao gót mấy phân để không đau chân?");
             }
+            // 12. Dịp Dạo Phố / Cafe / Cuối Tuần (Casual & Weekend)
             else if (clean.Contains("dao pho") || clean.Contains("cafe") || clean.Contains("cuoi tuan") || clean.Contains("casual") || clean.Contains("di choi"))
             {
-                reply = "Dạo phố cuối tuần là lúc bạn tự do thể hiện sự thoải mái và chất riêng của mình ☕.\n\n" +
+                reply = "Dạo phố cuối tuần là lúc bạn tự do thể hiện sự thoải mái, phóng khoáng và chất riêng của mình ☕.\n\n" +
                         "✦ **Set đồ năng động & trẻ trung:** Áo Thun Cotton Form Boxy phối cùng Quần Jeans Ống Suông Vintage và Sneaker Trắng Retro Classic. Combo này vừa 'hack dáng', vừa cực kỳ thoáng mát.\n" +
                         "✦ **Biến tấu layer cuốn hút:** Khoác hờ sơ mi lanh cộc tay hoặc buộc áo qua vai để tạo điểm nhấn Streetwear chuẩn phong cách Hàn Quốc.\n\n" +
                         "💡 *Stylist Tip:* Điểm thêm một chiếc kính râm gọng vintage và túi tote/túi chéo nhỏ để vừa tiện lợi vừa chụp ảnh check-in cực ăn ảnh.";
@@ -720,54 +939,20 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 followUps.Add("Phối đồ dạo phố cho ngày nắng ấm");
                 followUps.Add("Chọn sneaker nào hợp với quần jeans ống suông?");
             }
-            else if (clean.Contains("mua") || clean.Contains("lanh") || clean.Contains("se lanh") || clean.Contains("mua dong") || clean.Contains("thu dong"))
-            {
-                reply = "Thời tiết mưa hoặc se lạnh là cơ hội tuyệt vời để thử nghiệm kỹ thuật phối đồ đa tầng (Layering) cực thời thượng 🌧️.\n\n" +
-                        "✦ **Lớp nền (Base Layer):** Áo thun cotton giữ nhiệt hoặc áo sơ mi cổ đức phẳng phiu.\n" +
-                        "✦ **Lớp khoác (Mid/Outer):** Áo Blazer Dạ hoặc Trench Coat màu Nâu Cacao, Camel hoặc Đen Than Chì giúp giữ ấm và tạo form vai sắc sảo.\n" +
-                        "✦ **Phần dưới:** Quần Tây hoặc Quần Jeans dày dặn kết hợp Giày Loafer da bò hoặc Boots cổ thấp chống nước nhẹ.\n\n" +
-                        "💡 *Stylist Tip:* Gam màu ấm như Nâu Cacao, Be Khói, và Vàng Champagne sẽ đem lại cảm giác ấm áp và sang trọng trong những ngày mưa lạnh.";
-
-                suggestedItems = FilterPool(pool, "outerwear", "blazer", "shoes", "loafer");
-                followUps.Add("Cách chọn áo khoác dáng dài hợp chiều cao");
-                followUps.Add("Thời trang đi làm ngày mưa không lo bị ướt gấu quần");
-            }
-            else if (clean.Contains("so mi") || clean.Contains("ao so mi"))
-            {
-                reply = "Áo sơ mi là món đồ nền tảng (Capsule Wardrobe) quyền lực nhất trong tủ đồ mọi quý cô và quý ông 👔.\n\n" +
-                        "✦ **Đi làm / Sang trọng:** Sơ vin sơ mi lụa vào quần tây cạp cao, đi giày Loafer và khoác Blazer.\n" +
-                        "✦ **Dạo phố / Cuối tuần:** Mở 1-2 cúc cổ, xắn tay áo lửng tự nhiên, kết hợp quần jeans xanh ống suông và giày sneaker trắng.\n" +
-                        "✦ **Năng động / Phóng khoáng:** Mặc sơ mi như một chiếc áo khoác ngoài (Overshirt) phủ lên áo thun trơn ôm sát.\n\n" +
-                        "💡 *Stylist Tip:* Hãy đầu tư sơ mi màu Trắng hoặc Be trung tính với chất liệu ít nhăn (lụa pha hoặc cotton lụa) để luôn giữ phom dáng thanh tao.";
-
-                suggestedItems = FilterPool(pool, "so mi", "jean", "tay", "blazer");
-                followUps.Add("Cách ủi và bảo quản sơ mi lụa luôn phẳng phiu");
-                followUps.Add("Nên chọn sơ mi cổ đức hay sơ mi cổ trụ?");
-            }
-            else if (clean.Contains("blazer") || clean.Contains("vest") || clean.Contains("suit"))
-            {
-                reply = "Áo Blazer là 'vũ khí sắc đẹp' giúp nâng tầm mọi set đồ từ bình dân thành phong thái tài phiệt Quiet Luxury ✨.\n\n" +
-                        "✦ **Blazer Oversized + Quần Jeans Suông:** Sự cân bằng hoàn hảo giữa tính trang trọng và phóng khoáng casual.\n" +
-                        "✦ **Blazer + Quần Tây Đồng Bộ (Ton-sur-Ton):** Diện mạo quyền lực, chuẩn gu tổng tài công sở hiện đại.\n" +
-                        "✦ **Blazer + Váy Lụa Slip Dress:** Nét tương phản giữa đường nét cứng cáp của áo khoác và sự thướt tha mềm mại của lụa tạo nên sức hút khó cưỡng.\n\n" +
-                        "💡 *Stylist Tip:* Chú ý đệm vai không nên quá rộng vượt quá 2cm so với bờ vai tự nhiên để tránh cảm giác bị 'nuốt dáng'.";
-
-                suggestedItems = FilterPool(pool, "blazer", "outerwear", "tay", "jean");
-                followUps.Add("Cách chọn size blazer chuẩn theo số đo");
-                followUps.Add("Màu blazer nào dễ phối đồ nhất trong tủ?");
-            }
+            // 13. Mẹo Chọn Form Quần Áo Tôn Dáng (Silhouette Hacks)
             else if (clean.Contains("ton dang") || clean.Contains("da ngam") || clean.Contains("map") || clean.Contains("gay") || clean.Contains("hack dang") || clean.Contains("beo") || clean.Contains("lun"))
             {
-                reply = "Bí quyết thời trang đỉnh cao không nằm ở số đo cơ thể, mà nằm ở việc thấu hiểu tỷ lệ cơ thể và sử dụng trang phục làm đòn bẩy thị giác 🪄.\n\n" +
-                        "✦ **Hack chiều cao & Chân dài miên man:** Ưu tiên Quần Cạp Cao ống suông kết hợp Áo sơ vin hoặc Croptop. Giày mũi nhọn hoặc giày cùng tone với quần giúp kéo dài đôi chân không điểm dừng.\n" +
-                        "✦ **Che khuyết điểm vòng 2:** Chọn áo phom suông nhẹ (Straight-fit), chân váy chữ A hoặc đầm quấn eo (Wrap dress).\n" +
-                        "✦ **Tôn da ngăm / Bánh mật:** Tự tin với gam màu Đất ấm áp như Nâu Camel, Terracotta, Trắng Kem, Vàng Mù Tạt hoặc Xanh Olive – những gam màu này cực kỳ tôn vẻ khỏe khoắn sang trọng!\n\n" +
-                        "💡 *Stylist Tip:* Quy tắc 1/3 và 2/3 trong hội họa áp dụng vào trang phục: thân trên chiếm 1/3, thân dưới chiếm 2/3 tổng chiều cao cơ thể.";
+                reply = "Bí quyết thời trang đỉnh cao nằm ở việc dùng phom dáng trang phục làm đòn bẩy thị giác để tôn đường nét đẹp và giấu nhẹm khuyết điểm 🪄.\n\n" +
+                        "✦ **Hack chiều cao & Kéo dài chân:** Ưu tiên Quần Cạp Cao ống suông kết hợp Áo sơ vin hoặc Croptop. Chọn giày cùng tone màu với quần để tạo đường kéo dài liên tục không đứt đoạn.\n" +
+                        "✦ **Che khuyết điểm vòng 2:** Chọn áo phom suông nhẹ (Straight-fit), chân váy chữ A cạp cao hoặc đầm quấn eo (Wrap dress). Tránh thắt lưng to bản ngay bụng dưới.\n" +
+                        "✦ **Cân bằng tỷ lệ cơ thể:** Luôn ghi nhớ quy tắc tỷ lệ vàng 1/3 - 2/3 (thân trên chiếm 1/3, thân dưới chiếm 2/3 tổng chiều dài cơ thể).\n\n" +
+                        "💡 *Stylist Tip:* Tận dụng các đường xếp ly dọc trên quần tây hoặc áo cổ chữ V để kéo dài trục cơ thể theo chiều dọc.";
 
                 suggestedItems = FilterPool(pool, "bottoms", "tops", "dresses", "quan", "ao");
                 followUps.Add("Gợi ý trang phục cho dáng người quả lê");
                 followUps.Add("Cách chọn màu áo tôn làn da sáng mịn");
             }
+            // 14. Phong cách Quiet Luxury / Old Money
             else if (clean.Contains("quiet luxury") || clean.Contains("old money") || clean.Contains("toi gian") || clean.Contains("minimalism"))
             {
                 reply = "Phong cách **Quiet Luxury (Old Money)** tôn sùng sự sang trọng kín đáo, chất liệu thượng hạng và đường may hoàn hảo không phô trương logo 🥂.\n\n" +
@@ -780,61 +965,60 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 followUps.Add("5 món đồ cốt lõi để bắt đầu phong cách Quiet Luxury");
                 followUps.Add("Cách phân biệt chất liệu lụa thật và lụa nhân tạo");
             }
+            // 15. Mặc định: Giới thiệu năng lực AI Stylist chuyên sâu về Quần Áo
             else
             {
-                reply = "Chào bạn! Tôi là Chuyên gia Thời trang & AI Stylist của MYFITDAILY 🌟.\n\n" +
-                        "Tôi sẵn sàng hỗ trợ bạn kiến tạo những bản phối hoàn hảo nhất! Bạn có thể chia sẻ:\n" +
-                        "1. **Dịp sự kiện sắp tới:** (Đi làm, hẹn hò, tiệc tối, dạo phố, phỏng vấn...)\n" +
-                        "2. **Thời tiết hoặc địa điểm:** (Se lạnh, nắng nóng, văn phòng máy lạnh...)\n" +
-                        "3. **Món đồ bạn đang phân vân:** (Ví dụ: 'Phối đồ với áo sơ mi trắng', 'Cách mặc blazer tôn dáng').\n\n" +
-                        "Tôi sẽ dựa vào nguyên lý tỷ lệ vàng và tủ đồ thực tế của bạn để tư vấn ngay!";
+                reply = "Chào bạn! Tôi là Chuyên gia Thời trang & AI Stylist Chuyên Biệt Về Quần Áo & Phối Đồ của MYFITDAILY 🌟.\n\n" +
+                        "Tôi sẵn sàng hỗ trợ bạn kiến tạo những set đồ hoàn hảo nhất! Bạn có thể yêu cầu:\n" +
+                        "1. **Phối đồ với một món cụ thể:** (Ví dụ: 'Phối đồ với áo sơ mi trắng', 'Cách mặc quần jeans ống rộng tôn dáng').\n" +
+                        "2. **Gợi ý outfit theo dịp:** (Đi làm công sở, hẹn hò lãng mạn, dự tiệc cưới, cafe dạo phố...).\n" +
+                        "3. **Tư vấn mix-match từ tủ đồ:** (Chọn món đồ trong tủ đồ bên dưới để tôi gợi ý cách phối ngay).\n" +
+                        "4. **Nguyên tắc phối màu sắc & chất liệu:** (Cách phối đồ tone đất, quy tắc màu sắc 60-30-10...).";
 
-                suggestedItems = pool.Take(3).ToList();
+                suggestedItems = pool.Take(4).ToList();
                 followUps.Add("Gợi ý outfit đi làm thanh lịch hôm nay");
                 followUps.Add("Set đồ hẹn hò lãng mạn cuối tuần");
-                followUps.Add("Cách phối đồ tối giản phong cách Quiet Luxury");
+                followUps.Add("Cách phối đồ phong cách Quiet Luxury");
                 followUps.Add("Bí quyết phối màu trang phục tôn dáng và da");
             }
 
             if (isWardrobeEmpty)
             {
-                reply = "💡 *Lưu ý: Hiện tại chưa có đồ trong tủ đồ cá nhân của bạn. AI Stylist xin tư vấn phong cách chuẩn và chuẩn bị các bộ phối gợi ý mẫu kèm theo bên dưới để bạn tham khảo hoặc lưu vào tủ đồ!*\n\n" + reply;
+                reply = "💡 *Lưu ý: Hiện tại chưa có đồ trong tủ cá nhân của bạn. AI Stylist xin tư vấn phong cách chuẩn và chuẩn bị các bộ phối gợi ý mẫu kèm theo bên dưới để bạn tham khảo hoặc lưu vào tủ đồ!*\n\n" + reply;
             }
 
-            if (user != null && user.Height.HasValue && user.Weight.HasValue)
+            if (user != null && user.Height.HasValue && user.Weight.HasValue && user.Height.Value > 0 && user.Weight.Value > 0)
             {
                 string bodyShapeStr = !string.IsNullOrWhiteSpace(user.BodyShape) ? $"dáng {user.BodyShape}" : "vóc dáng cân đối";
-                reply += $"\n\n✨ **Tư vấn riêng cho vóc dáng của bạn ({user.Height}cm • {user.Weight}kg • {bodyShapeStr}):**\n";
+                reply += $"\n\n✨ **Mẹo chọn form quần áo tôn dáng ({user.Height}cm • {user.Weight}kg • {bodyShapeStr}):**\n";
                 if (user.BodyShape?.Contains("Đồng hồ cát", StringComparison.OrdinalIgnoreCase) == true || user.BodyShape?.Contains("Hourglass", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    reply += "• Với vóc dáng đồng hồ cát lý tưởng, bạn nên ưu tiên trang phục chiết eo, đầm bodycon ôm dáng hoặc sơ vin áo vào quần cạp cao để khoe trọn đường cong quyến rũ.";
+                    reply += "• Ưu tiên trang phục chiết eo, áo sơ vin vào quần cạp cao hoặc đầm ôm dáng để khoe trọn đường cong quyến rũ.";
                 }
                 else if (user.BodyShape?.Contains("Quả lê", StringComparison.OrdinalIgnoreCase) == true || user.BodyShape?.Contains("Pear", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    reply += "• Với dáng quả lê (hông & đùi nở nang), hãy tạo điểm nhấn ở phần trên bằng áo cổ thuyền, tay bồng hoặc áo sáng màu, phối cùng quần ống suông tối màu để tạo sự cân bằng hài hòa.";
+                    reply += "• Tạo điểm nhấn ở phần trên bằng áo sáng màu, cổ bồng hoặc blazer độn vai nhẹ, phối cùng quần ống suông tối màu để cân bằng vai - hông.";
                 }
                 else if (user.BodyShape?.Contains("Tam giác ngược", StringComparison.OrdinalIgnoreCase) == true || user.BodyShape?.Contains("Inverted", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    reply += "• Với dáng tam giác ngược (vai rộng), hãy chọn áo cổ chữ V thanh thoát, phối cùng chân váy chữ A hoặc quần ống rộng để tạo độ phồng cân xứng với vai.";
+                    reply += "• Chọn áo cổ chữ V thanh thoát, phối cùng chân váy chữ A xòe hoặc quần ống rộng để tạo độ phồng cân xứng với vai.";
                 }
                 else if (user.BodyShape?.Contains("Quả táo", StringComparison.OrdinalIgnoreCase) == true || user.BodyShape?.Contains("Apple", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    reply += "• Với dáng quả táo, hãy chọn đầm suông nhẹ hoặc áo cổ chữ V có độ dài qua mông nhẹ, kết hợp khoe đôi chân thon gọn để tạo cảm giác người thanh mảnh hơn.";
+                    reply += "• Chọn đầm suông nhẹ hoặc áo cổ chữ V dài qua mông nhẹ, kết hợp khoe đôi chân thon gọn để tạo cảm giác người thanh mảnh hơn.";
                 }
                 else
                 {
-                    reply += "• Hãy tận dụng thắt lưng bản nhỏ hoặc áo croptop / sơ vin để tạo hiệu ứng thắt eo, giúp tỷ lệ cơ thể trông cao ráo và thanh thoát hơn.";
+                    reply += "• Tận dụng thắt lưng bản nhỏ hoặc áo croptop / sơ vin vạt trước để tạo hiệu ứng thắt eo, giúp tỷ lệ cơ thể trông cao ráo hơn.";
                 }
             }
 
-            // 7. Thêm thông tin xu hướng sàn Thương Mại Điện Tử (TikTok Shop, Shopee, Zara, Uniqlo) theo độ tuổi
-            if (trendService != null && user != null)
+            if (trendService != null && user != null && user.Age.HasValue)
             {
                 var trend = trendService.GetTrendByAge(user.Age);
-                reply += $"\n\n🔥 **Xu hướng Sàn TMĐT ({string.Join(", ", trend.PrimaryChannels.Take(2))}) cho lứa tuổi {trend.AgeGroupLabel}:**\n" +
-                         $"• **Trào lưu thịnh hành:** {string.Join(" • ", trend.SignatureStyles.Take(3))}.\n" +
-                         $"• **Món đồ viral bán chạy nhất:** {string.Join(", ", trend.HotTrendingItems.Take(3))}.\n" +
-                         $"• **Mẹo diện đồ chuẩn gu:** {trend.StylistAdviceSummary}";
+                reply += $"\n\n🔥 **Món đồ Quần Áo Thịnh Hành Sàn TMĐT ({string.Join(", ", trend.PrimaryChannels.Take(2))}) cho lứa tuổi {trend.AgeGroupLabel}:**\n" +
+                         $"• **Món đồ hot-trend:** {string.Join(" • ", trend.HotTrendingItems.Take(3))}.\n" +
+                         $"• **Gợi ý diện đồ chuẩn gu:** {trend.StylistAdviceSummary}";
             }
 
             return new AiChatResponseDto

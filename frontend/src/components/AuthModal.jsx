@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
+  const { text } = useLanguage();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -46,7 +48,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         setError(msg);
       } else {
         // Backend offline fallback option
-        setError("Không thể kết nối đến máy chủ API. Bạn có thể nhấn 'Trải Nghiệm Chế Độ Demo' bên dưới!");
+        setError(text(
+          "Không thể kết nối đến máy chủ API. Bạn có thể nhấn 'Trải Nghiệm Chế Độ Demo' bên dưới!",
+          "Cannot reach the API server. You can click 'Demo Experience' below!"
+        ));
       }
     }
   };
@@ -98,6 +103,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             borderRadius: '50%',
             background: 'rgba(255, 255, 255, 0.08)',
             color: 'var(--text-secondary)',
+            border: 'none',
+            cursor: 'pointer',
           }}
         >
           <X size={18} />
@@ -119,12 +126,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <Sparkles size={26} color="#080A0F" />
           </div>
           <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>
-            {isLoginMode ? 'Chào Mừng Trở Lại' : 'Tạo Tài Khoản Mới'}
+            {isLoginMode ? text('Chào Mừng Trở Lại', 'Welcome Back') : text('Tạo Tài Khoản Mới', 'Create New Account')}
           </h3>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {isLoginMode 
-              ? 'Đăng nhập để quản lý tủ đồ số và nhận gợi ý từ AI Stylist' 
-              : 'Gia nhập cộng đồng thời trang thông minh MYFITDAILY'}
+              ? text('Đăng nhập để quản lý tủ đồ số và nhận gợi ý từ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
+              : text('Gia nhập cộng đồng thời trang thông minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
           </p>
         </div>
 
@@ -148,9 +155,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               fontSize: '0.88rem',
               background: isLoginMode ? 'var(--primary)' : 'transparent',
               color: isLoginMode ? '#FFF' : 'var(--text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
-            Đăng Nhập
+            {text('Đăng Nhập', 'Sign In')}
           </button>
           <button
             type="button"
@@ -163,9 +172,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               fontSize: '0.88rem',
               background: !isLoginMode ? 'var(--primary)' : 'transparent',
               color: !isLoginMode ? '#FFF' : 'var(--text-secondary)',
+              border: 'none',
+              cursor: 'pointer',
             }}
           >
-            Đăng Ký
+            {text('Đăng Ký', 'Register')}
           </button>
         </div>
 
@@ -193,14 +204,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           {!isLoginMode && (
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-                Họ và Tên
+                {text('Họ và Tên', 'Full Name')}
               </label>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   required
                   id="input-auth-name"
-                  placeholder="Nguyễn Văn A"
+                  placeholder={text("Nguyễn Văn A", "Alex Morgan")}
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   style={{ width: '100%', paddingLeft: '38px' }}
@@ -212,7 +223,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              Địa chỉ Email
+              {text('Địa chỉ Email', 'Email Address')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -230,7 +241,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              Mật khẩu
+              {text('Mật khẩu', 'Password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -238,7 +249,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 required
                 minLength={6}
                 id="input-auth-password"
-                placeholder="Ít nhất 6 ký tự"
+                placeholder={text("Ít nhất 6 ký tự", "At least 6 characters")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{ width: '100%', paddingLeft: '38px' }}
@@ -260,7 +271,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               fontSize: '0.95rem',
             }}
           >
-            {loading ? 'Đang xử lý...' : (isLoginMode ? 'Đăng Nhập Ngay' : 'Tạo Tài Khoản')}
+            {loading 
+              ? text('Đang xử lý...', 'Processing...') 
+              : (isLoginMode ? text('Đăng Nhập Ngay', 'Sign In Now') : text('Tạo Tài Khoản', 'Create Account'))}
           </button>
         </form>
 
@@ -286,10 +299,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               borderRadius: 'var(--radius-full)',
               background: 'rgba(167, 139, 250, 0.1)',
               border: '1px solid rgba(167, 139, 250, 0.25)',
+              cursor: 'pointer',
             }}
           >
             <Sparkles size={14} />
-            <span>Trải Nghiệm Nhanh Bằng Tài Khoản Demo</span>
+            <span>{text('Trải Nghiệm Nhanh Bằng Tài Khoản Demo', 'Quick Try with Demo Account')}</span>
           </button>
         </div>
       </div>

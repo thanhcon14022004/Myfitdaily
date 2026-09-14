@@ -4,47 +4,80 @@ import {
   Ruler, Sparkles, AlertCircle, Info, Flame, ChevronRight 
 } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
-
-const BODY_SHAPES = [
-  {
-    id: 'Đồng hồ cát',
-    name: 'Đồng hồ cát (Hourglass)',
-    icon: '⏳',
-    desc: 'Vòng 1 & 3 nở nang cân đối, eo thắt thon gọn rõ nét',
-    tips: 'Ưu tiên đầm bodycon ôm dáng, áo sơ vin cạp cao, thắt lưng nhấn eo để khoe trọn đường cong chữ S hoàn mỹ.'
-  },
-  {
-    id: 'Quả lê',
-    name: 'Quả lê (Pear / Triangle)',
-    icon: '🍐',
-    desc: 'Hông & đùi đầy đặn, phần ngực và vai thanh mảnh',
-    tips: 'Tạo điểm nhấn phần thân trên bằng áo cổ thuyền, tay bồng hoặc áo sáng màu, kết hợp quần ống suông tối màu để tạo sự cân bằng.'
-  },
-  {
-    id: 'Thước kẻ',
-    name: 'Thước kẻ (Rectangle)',
-    icon: '📐',
-    desc: '3 vòng tương đương nhau, vóc dáng suôn thẳng thể thao',
-    tips: 'Tạo ảo giác đường cong bằng cách thắt đai eo, diện áo peplum, áo crop-top hoặc chân váy xếp ly bồng bềnh.'
-  },
-  {
-    id: 'Tam giác ngược',
-    name: 'Tam giác ngược (Inverted)',
-    icon: '🔻',
-    desc: 'Vai & ngực rộng hơn phần hông và đùi',
-    tips: 'Chọn áo cổ chữ V thanh thoát, phối với chân váy chữ A xòe bồng hoặc quần ống rộng để tạo tỉ lệ cân xứng hoàn hảo.'
-  },
-  {
-    id: 'Quả táo',
-    name: 'Quả táo (Apple / Round)',
-    icon: '🍏',
-    desc: 'Thân trên & vòng eo tròn đầy, đôi chân thon gọn',
-    tips: 'Ưu tiên váy suông chữ A thanh thoát, áo cổ chữ V khoét sâu có độ dài qua mông nhẹ để khoe khéo đôi chân dài thon gọn.'
-  }
-];
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
-  const [fullName, setFullName] = useState(user?.fullName || 'Người Dùng');
+  const { text, language } = useLanguage();
+
+  const BODY_SHAPES = [
+    {
+      id: 'Đồng hồ cát',
+      name: text('Đồng hồ cát (Hourglass)', 'Hourglass (Curvy Balance)'),
+      icon: '⏳',
+      desc: text(
+        'Vòng 1 & 3 nở nang cân đối, eo thắt thon gọn rõ nét',
+        'Balanced bust & hips with a well-defined narrow waist'
+      ),
+      tips: text(
+        'Ưu tiên đầm bodycon ôm dáng, áo sơ vin cạp cao, thắt lưng nhấn eo để khoe trọn đường cong chữ S hoàn mỹ.',
+        'Focus on bodycon silhouettes, high-waisted tucked tops, and waist belts to accentuate your S-curve.'
+      )
+    },
+    {
+      id: 'Quả lê',
+      name: text('Quả lê (Pear / Triangle)', 'Pear (Triangle Shape)'),
+      icon: '🍐',
+      desc: text(
+        'Hông & đùi đầy đặn, phần ngực và vai thanh mảnh',
+        'Fuller hips & thighs with a narrower upper torso and shoulders'
+      ),
+      tips: text(
+        'Tạo điểm nhấn phần thân trên bằng áo cổ thuyền, tay bồng hoặc áo sáng màu, kết hợp quần ống suông tối màu để tạo sự cân bằng.',
+        'Draw attention upward with boat necklines, puff sleeves or lighter tops, paired with straight dark trousers for balance.'
+      )
+    },
+    {
+      id: 'Thước kẻ',
+      name: text('Thước kẻ (Rectangle)', 'Rectangle (Athletic Straight)'),
+      icon: '📐',
+      desc: text(
+        '3 vòng tương đương nhau, vóc dáng suôn thẳng thể thao',
+        'Fairly uniform bust, waist, and hips with an athletic straight frame'
+      ),
+      tips: text(
+        'Tạo ảo giác đường cong bằng cách thắt đai eo, diện áo peplum, áo crop-top hoặc chân váy xếp ly bồng bềnh.',
+        'Create curves using peplum tops, cinched belts, crop tops, or flared pleated skirts.'
+      )
+    },
+    {
+      id: 'Tam giác ngược',
+      name: text('Tam giác ngược (Inverted)', 'Inverted Triangle (V-Shape)'),
+      icon: '🔻',
+      desc: text(
+        'Vai & ngực rộng hơn phần hông và đùi',
+        'Broader shoulders and bust tapering down to narrower hips'
+      ),
+      tips: text(
+        'Chọn áo cổ chữ V thanh thoát, phối với chân váy chữ A xòe bồng hoặc quần ống rộng để tạo tỉ lệ cân xứng hoàn hảo.',
+        'Opt for graceful V-necklines combined with A-line skirts or wide-leg trousers to restore balanced proportions.'
+      )
+    },
+    {
+      id: 'Quả táo',
+      name: text('Quả táo (Apple / Round)', 'Apple (Round / Oval)'),
+      icon: '🍏',
+      desc: text(
+        'Thân trên & vòng eo tròn đầy, đôi chân thon gọn',
+        'Fuller midriff and bust with comparatively slender legs'
+      ),
+      tips: text(
+        'Ưu tiên váy suông chữ A thanh thoát, áo cổ chữ V khoét sâu có độ dài qua mông nhẹ để khoe khéo đôi chân dài thon gọn.',
+        'Favor airy A-line shift dresses or deep V-neck tunics that highlight your slender legs effortlessly.'
+      )
+    }
+  ];
+
+  const [fullName, setFullName] = useState(user?.fullName || (language === 'en' ? 'User' : 'Người Dùng'));
   const [gender, setGender] = useState(user?.gender || 'Female');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
 
@@ -73,40 +106,52 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
   const getAgeGroupInfo = (a) => {
     if (!a || a <= 0) return null;
     if (a <= 24) return {
-      label: 'Gen Z (16 - 24 tuổi)',
-      badge: 'TikTok Shop & Shopee Viral',
+      label: text('Gen Z (16 - 24 tuổi)', 'Gen Z (Age 16 - 24)'),
+      badge: 'TikTok & Shopee Viral',
       color: '#FB7185',
       bg: 'rgba(251, 113, 133, 0.1)',
       styles: 'Y2K, Streetwear, Blokecore, Balletcore, Clean Girl',
-      channels: 'TikTok Shop, Shopee, Taobao / Douyin',
-      topItems: 'Baby tee, Quần suông cạp cao, Parachute pants, Giày Samba, Túi baguette'
+      channels: text('TikTok Shop, Shopee, Taobao / Douyin', 'TikTok Shop, Shopee, ASOS'),
+      topItems: text(
+        'Baby tee, Quần suông cạp cao, Parachute pants, Giày Samba, Túi baguette',
+        'Baby tee, High-waist trousers, Parachute pants, Samba sneakers, Baguette bag'
+      )
     };
     if (a <= 34) return {
-      label: 'Millennials & Công Sở Trẻ (25 - 34 tuổi)',
+      label: text('Millennials & Công Sở Trẻ (25 - 34 tuổi)', 'Millennials & Young Pros (Age 25 - 34)'),
       badge: 'Zara & Uniqlo Smart Casual',
       color: '#818CF8',
       bg: 'rgba(129, 140, 248, 0.1)',
       styles: 'Smart Casual, Quiet Luxury, Minimalist Chic, Office Siren',
       channels: 'Shopee Mall, Zara, Uniqlo LifeWear, Mango',
-      topItems: 'Blazer relaxed-fit, Quần tây xếp ly, Sơ mi poplin, Đầm midi lụa, Loafers'
+      topItems: text(
+        'Blazer relaxed-fit, Quần tây xếp ly, Sơ mi poplin, Đầm midi lụa, Loafers',
+        'Relaxed-fit blazer, Pleated trousers, Poplin shirt, Silk midi dress, Loafers'
+      )
     };
     if (a <= 49) return {
-      label: 'Chững Chạc & Đĩnh Đạc (35 - 49 tuổi)',
-      badge: 'Massimo Dutti & Ivy Moda Old Money',
+      label: text('Chững Chạc & Đĩnh Đạc (35 - 49 tuổi)', 'Sophisticated Elegance (Age 35 - 49)'),
+      badge: 'Massimo Dutti & Old Money',
       color: '#FBBF24',
       bg: 'rgba(251, 191, 36, 0.1)',
-      styles: 'Old Money, Classic Elegance, Doanh nhân đĩnh đạc, May đo cao cấp',
+      styles: text('Old Money, Classic Elegance, Doanh nhân đĩnh đạc, May đo cao cấp', 'Old Money, Classic Elegance, Executive, Tailored Bespoke'),
       channels: 'Massimo Dutti, Uniqlo LifeWear, Ivy Moda, Elise',
-      topItems: 'Sơ mi lụa tơ tằm, Quần âu may đo, Áo khoác Tweed, Đầm suông chữ A giấu bụng'
+      topItems: text(
+        'Sơ mi lụa tơ tằm, Quần âu may đo, Áo khoác Tweed, Đầm suông chữ A giấu bụng',
+        'Silk mulberry shirt, Tailored trousers, Tweed jacket, Relaxed A-line dress'
+      )
     };
     return {
-      label: 'Trung Niên & Quý Phái (50+ tuổi)',
-      badge: 'Linen & Lụa Tự Nhiên Cao Cấp',
+      label: text('Trung Niên & Quý Phái (50+ tuổi)', 'Graceful Senior & Zen (Age 50+)'),
+      badge: text('Linen & Lụa Tự Nhiên Cao Cấp', 'Premium Linen & Natural Silk'),
       color: '#34D399',
       bg: 'rgba(52, 211, 153, 0.1)',
-      styles: 'Quý phái, Nhã nhặn, Thoải mái tối đa, Phong cách Zen thư thái',
-      channels: 'Thời trang thiết kế trung niên cao cấp, Lụa Nha Xá/Vạn Phúc',
-      topItems: 'Áo dáng suông tay lỡ đũi/linen, Đầm suông thêu hoa, Quần cạp chun êm ái'
+      styles: text('Quý phái, Nhã nhặn, Thoải mái tối đa, Phong cách Zen thư thái', 'Noble, Graceful, Maximum Comfort, Zen Simplicity'),
+      channels: text('Thời trang thiết kế trung niên cao cấp, Lụa tự nhiên', 'Bespoke Senior Fashion, Natural Silk'),
+      topItems: text(
+        'Áo dáng suông tay lỡ đũi/linen, Đầm suông thêu hoa, Quần cạp chun êm ái',
+        'Loose linen tunic, Embroidered shift dress, Comfy elastic waist pants'
+      )
     };
   };
 
@@ -119,10 +164,10 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
   const getBmiStatus = (val) => {
     if (!val) return null;
     const b = parseFloat(val);
-    if (b < 18.5) return { label: 'Gầy thanh mảnh', color: '#60A5FA', bg: 'rgba(96, 165, 250, 0.12)' };
-    if (b <= 24.9) return { label: 'Cân đối lý tưởng', color: '#34D399', bg: 'rgba(52, 211, 153, 0.12)' };
-    if (b <= 29.9) return { label: 'Hơi đầy đặn', color: '#FBBF24', bg: 'rgba(251, 191, 36, 0.12)' };
-    return { label: 'Mũm mĩm', color: '#FB7185', bg: 'rgba(251, 113, 133, 0.12)' };
+    if (b < 18.5) return { label: text('Gầy thanh mảnh', 'Slender / Slim'), color: '#60A5FA', bg: 'rgba(96, 165, 250, 0.12)' };
+    if (b <= 24.9) return { label: text('Cân đối lý tưởng', 'Ideal & Balanced'), color: '#34D399', bg: 'rgba(52, 211, 153, 0.12)' };
+    if (b <= 29.9) return { label: text('Hơi đầy đặn', 'Slightly Plump'), color: '#FBBF24', bg: 'rgba(251, 191, 36, 0.12)' };
+    return { label: text('Mũm mĩm', 'Curvy / Overweight'), color: '#FB7185', bg: 'rgba(251, 113, 133, 0.12)' };
   };
 
   const bmiStatus = getBmiStatus(bmi);
@@ -133,7 +178,10 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
   // Tự động nhận diện dáng người từ số đo 3 vòng
   const handleAutoDetectBodyShape = () => {
     if (numWaist <= 0 || numHips <= 0) {
-      alert('Vui lòng nhập đầy đủ số đo Vòng 2 (Eo) và Vòng 3 (Mông) để AI tự động nhận diện dáng người!');
+      alert(text(
+        'Vui lòng nhập đầy đủ số đo Vòng 2 (Eo) và Vòng 3 (Mông) để AI tự động nhận diện dáng người!',
+        'Please enter both Waist and Hips measurements for AI body shape auto-detection!'
+      ));
       return;
     }
 
@@ -161,7 +209,11 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
     }
 
     setBodyShape(detected);
-    setAutoDetectNotice(`✨ Đã nhận diện dáng người của bạn là "${detected}" dựa trên tỉ lệ số đo!`);
+    const shapeLabel = BODY_SHAPES.find(b => b.id === detected)?.name || detected;
+    setAutoDetectNotice(text(
+      `✨ Đã nhận diện dáng người của bạn là "${detected}" dựa trên tỉ lệ số đo!`,
+      `✨ Identified your body shape as "${shapeLabel}" based on your biometric proportions!`
+    ));
     setTimeout(() => setAutoDetectNotice(''), 4000);
   };
 
@@ -171,23 +223,23 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
     // Validation chặt chẽ: Bắt buộc điền chiều cao, cân nặng
     const newErrors = {};
     if (!numHeight || numHeight < 50 || numHeight > 250) {
-      newErrors.height = 'Chiều cao là bắt buộc (từ 50cm đến 250cm)';
+      newErrors.height = text('Chiều cao là bắt buộc (từ 50cm đến 250cm)', 'Height is required (50cm to 250cm)');
     }
     if (!numWeight || numWeight < 20 || numWeight > 300) {
-      newErrors.weight = 'Cân nặng là bắt buộc (từ 20kg đến 300kg)';
+      newErrors.weight = text('Cân nặng là bắt buộc (từ 20kg đến 300kg)', 'Weight is required (20kg to 300kg)');
     }
     if (!fullName.trim()) {
-      newErrors.fullName = 'Họ và tên không được để trống';
+      newErrors.fullName = text('Họ và tên không được để trống', 'Full name cannot be empty');
     }
 
     if (numChest && (numChest < 30 || numChest > 200)) {
-      newErrors.chest = 'Số đo Vòng 1 phải từ 30cm đến 200cm';
+      newErrors.chest = text('Số đo Vòng 1 phải từ 30cm đến 200cm', 'Bust measurement must be between 30cm and 200cm');
     }
     if (numWaist && (numWaist < 30 || numWaist > 200)) {
-      newErrors.waist = 'Số đo Vòng 2 phải từ 30cm đến 200cm';
+      newErrors.waist = text('Số đo Vòng 2 phải từ 30cm đến 200cm', 'Waist measurement must be between 30cm and 200cm');
     }
     if (numHips && (numHips < 30 || numHips > 200)) {
-      newErrors.hips = 'Số đo Vòng 3 phải từ 30cm đến 200cm';
+      newErrors.hips = text('Số đo Vòng 3 phải từ 30cm đến 200cm', 'Hips measurement must be between 30cm and 200cm');
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -233,7 +285,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
       setTimeout(() => setSavedSuccess(false), 4000);
     } catch (err) {
       console.error('Lỗi cập nhật hồ sơ:', err);
-      setErrors({ general: 'Không thể kết nối máy chủ. Vui lòng kiểm tra lại.' });
+      setErrors({ general: text('Không thể kết nối máy chủ. Vui lòng kiểm tra lại.', 'Unable to connect to server. Please try again.') });
     } finally {
       setLoading(false);
     }
@@ -247,13 +299,16 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
       <div style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <span className="badge badge-gold">MYFITDAILY BIOMETRICS</span>
-          <span className="badge badge-subtle">Hồ Sơ Vóc Dáng</span>
+          <span className="badge badge-subtle">{text('Hồ Sơ Vóc Dáng', 'Body Profile')}</span>
         </div>
         <h2 style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-          Hồ Sơ Cá Nhân & Chỉ Số Cơ Thể
+          {text('Hồ Sơ Cá Nhân & Chỉ Số Cơ Thể', 'Personal Profile & Body Biometrics')}
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginTop: '4px' }}>
-          Thông tin chiều cao, cân nặng và tỷ lệ vóc dáng bắt buộc để kích hoạt tư vấn cá nhân hóa từ AI Stylist
+          {text(
+            'Thông tin chiều cao, cân nặng và tỷ lệ vóc dáng bắt buộc để kích hoạt tư vấn cá nhân hóa từ AI Stylist',
+            'Height, weight, and biometric parameters required to activate tailored styling suggestions from AI Stylist'
+          )}
         </p>
       </div>
 
@@ -272,11 +327,13 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
           <AlertCircle size={22} color="#FB7185" style={{ flexShrink: 0, marginTop: '2px' }} />
           <div>
             <h4 style={{ color: '#FB7185', fontWeight: 700, fontSize: '0.98rem', marginBottom: '4px' }}>
-              Bắt buộc cập nhật thông số cơ thể để mở khóa AI Stylist!
+              {text('Bắt buộc cập nhật thông số cơ thể để mở khóa AI Stylist!', 'Mandatory body biometrics needed to unlock AI Stylist!')}
             </h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.5 }}>
-              Hiện tại bạn chưa cập nhật <strong>Chiều cao</strong> và <strong>Cân nặng</strong>. 
-              Theo quy định của MYFITDAILY, AI Stylist chỉ có thể trò chuyện và phân tích outfit khi đã có đầy đủ thông số vóc dáng nhằm đảm bảo trang phục phối ra chuẩn form và tôn dáng nhất cho bạn.
+              {text(
+                'Hiện tại bạn chưa cập nhật Chiều cao và Cân nặng. Theo quy định của MYFITDAILY, AI Stylist chỉ có thể trò chuyện và phân tích outfit khi đã có đầy đủ thông số vóc dáng nhằm đảm bảo trang phục phối ra chuẩn form và tôn dáng nhất cho bạn.',
+                'You have not configured your Height and Weight yet. MYFITDAILY requires complete body biometrics so that our AI Stylist can generate outfits that authentically flatter your frame and silhouette.'
+              )}
             </p>
           </div>
         </div>
@@ -323,7 +380,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               </span>
               {user?.height && user?.weight && (
                 <span className="badge badge-gold" style={{ fontSize: '0.75rem' }}>
-                  ✓ Đã có thông số vóc dáng
+                  {text('✓ Đã có thông số vóc dáng', '✓ Biometrics Complete')}
                 </span>
               )}
             </div>
@@ -341,7 +398,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                   textDecoration: 'underline',
                 }}
               >
-                Nâng cấp tài khoản Premium →
+                {text('Nâng cấp tài khoản Premium →', 'Upgrade to Premium VIP Account →')}
               </button>
             </div>
           </div>
@@ -364,9 +421,12 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
           }}>
             <Check size={20} />
             <div>
-              <strong>Đã lưu thông số vóc dáng thành công!</strong>
+              <strong>{text('Đã lưu thông số vóc dáng thành công!', 'Biometric profile saved successfully!')}</strong>
               <p style={{ fontSize: '0.84rem', margin: 0, opacity: 0.9 }}>
-                AI Stylist đã nhận diện tỉ lệ cơ thể của bạn và sẵn sàng tư vấn phối đồ tôn dáng.
+                {text(
+                  'AI Stylist đã nhận diện tỉ lệ cơ thể của bạn và sẵn sàng tư vấn phối đồ tôn dáng.',
+                  'AI Stylist has registered your body proportions and is ready to recommend personalized looks.'
+                )}
               </p>
             </div>
           </div>
@@ -399,13 +459,13 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               gap: '8px',
             }}>
               <User size={18} />
-              <span>1. Thông Tin Cơ Bản</span>
+              <span>{text('1. Thông Tin Cơ Bản', '1. Basic Information')}</span>
             </h4>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Họ và Tên <span style={{ color: '#FB7185' }}>*</span>
+                  {text('Họ và Tên', 'Full Name')} <span style={{ color: '#FB7185' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -427,7 +487,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Giới tính <span style={{ color: '#FB7185' }}>*</span>
+                  {text('Giới tính', 'Gender')} <span style={{ color: '#FB7185' }}>*</span>
                 </label>
                 <select
                   id="select-profile-gender"
@@ -435,21 +495,21 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                   onChange={(e) => setGender(e.target.value)}
                   style={{ width: '100%' }}
                 >
-                  <option value="Female">Nữ</option>
-                  <option value="Male">Nam</option>
-                  <option value="Other">Khác</option>
+                  <option value="Female">{text('Nữ', 'Female')}</option>
+                  <option value="Male">{text('Nam', 'Male')}</option>
+                  <option value="Other">{text('Khác', 'Other')}</option>
                 </select>
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Độ Tuổi <span style={{ color: '#D4AF37' }}>* (TMĐT)</span>
+                  {text('Độ Tuổi', 'Age')} <span style={{ color: '#D4AF37' }}>* (AI Trend)</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="number"
                     id="input-profile-age"
-                    placeholder="VD: 22"
+                    placeholder={text("VD: 22", "e.g. 22")}
                     value={age}
                     onChange={(e) => setAge(e.target.value)}
                     min="10"
@@ -466,7 +526,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                     pointerEvents: 'none',
                     fontWeight: 700
                   }}>
-                    tuổi
+                    {text('tuổi', 'yrs')}
                   </span>
                 </div>
               </div>
@@ -503,21 +563,21 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                     </span>
                   </div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    🛍️ <strong>Kênh TMĐT:</strong> {ageGroupInfo.channels} • <strong>Gu thời trang:</strong> {ageGroupInfo.styles}
+                    🛍️ <strong>{text('Kênh TMĐT:', 'Channels:')}</strong> {ageGroupInfo.channels} • <strong>{text('Gu thời trang:', 'Style:')}</strong> {ageGroupInfo.styles}
                   </div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    🔥 <strong>Món đồ viral:</strong> {ageGroupInfo.topItems}
+                    🔥 <strong>{text('Món đồ viral:', 'Viral picks:')}</strong> {ageGroupInfo.topItems}
                   </div>
                 </div>
                 <div style={{ fontSize: '0.76rem', color: '#D4AF37', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                  ✦ AI TMĐT Kích Hoạt
+                  {text('✦ AI TMĐT Kích Hoạt', '✦ AI Trend Radar Active')}
                 </div>
               </div>
             )}
 
             <div style={{ marginTop: '14px' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '6px' }}>
-                Link Ảnh Đại Diện (Avatar URL)
+                {text('Link Ảnh Đại Diện (Avatar URL)', 'Avatar Image URL')}
               </label>
               <input
                 type="url"
@@ -548,12 +608,14 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 margin: 0,
               }}>
                 <Ruler size={20} />
-                <span>2. Thông Số Chiều Cao & Trọng Lượng Cơ Thể</span>
-                <span className="badge badge-rose" style={{ fontSize: '0.7rem' }}>BẮT BUỘC</span>
+                <span>{text('2. Thông Số Chiều Cao & Trọng Lượng Cơ Thể', '2. Height & Body Weight Biometrics')}</span>
+                <span className="badge badge-rose" style={{ fontSize: '0.7rem' }}>
+                  {text('BẮT BUỘC', 'REQUIRED')}
+                </span>
               </h4>
 
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                * AI Stylist cần thông số này để phân tích dáng
+                {text('* AI Stylist cần thông số này để phân tích dáng', '* AI Stylist uses these parameters to tailor fit')}
               </span>
             </div>
 
@@ -561,7 +623,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px' }}>
-                  Chiều cao <span style={{ color: '#FB7185' }}>* (cm)</span>
+                  {text('Chiều cao', 'Height')} <span style={{ color: '#FB7185' }}>* (cm)</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -571,7 +633,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                     max="250"
                     required
                     id="input-profile-height"
-                    placeholder="Ví dụ: 168"
+                    placeholder={text("Ví dụ: 168", "e.g. 168")}
                     value={height}
                     onChange={(e) => setHeight(e.target.value)}
                     style={{
@@ -604,7 +666,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px' }}>
-                  Trọng lượng / Cân nặng <span style={{ color: '#FB7185' }}>* (kg)</span>
+                  {text('Trọng lượng / Cân nặng', 'Body Weight')} <span style={{ color: '#FB7185' }}>* (kg)</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -614,7 +676,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                     max="300"
                     required
                     id="input-profile-weight"
-                    placeholder="Ví dụ: 54"
+                    placeholder={text("Ví dụ: 54", "e.g. 54")}
                     value={weight}
                     onChange={(e) => setWeight(e.target.value)}
                     style={{
@@ -663,7 +725,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Activity size={18} color={bmiStatus?.color} />
                   <span style={{ fontSize: '0.9rem', fontWeight: 600, color: bmiStatus?.color }}>
-                    Chỉ số BMI: <strong>{bmi}</strong>
+                    {text('Chỉ số BMI:', 'BMI Index:')} <strong>{bmi}</strong>
                   </span>
                   <span className="badge" style={{
                     background: bmiStatus?.color,
@@ -676,7 +738,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 </div>
 
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                  Chuẩn WHO dành cho người châu Á
+                  {text('Chuẩn WHO dành cho người châu Á', 'WHO Asian Standard Benchmark')}
                 </span>
               </div>
             )}
@@ -695,7 +757,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 gap: '8px',
               }}>
                 <Sparkles size={18} />
-                <span>3. Số Đo Tỷ Lệ Cơ Thể 3 Vòng</span>
+                <span>{text('3. Số Đo Tỷ Lệ Cơ Thể 3 Vòng', '3. Body Circumference & Ratios')}</span>
               </h4>
 
               <button
@@ -717,7 +779,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 }}
               >
                 <Sparkles size={14} />
-                <span>AI Tự Nhận Diện Dáng Người</span>
+                <span>{text('AI Tự Nhận Diện Dáng Người', 'AI Detect Body Shape')}</span>
               </button>
             </div>
 
@@ -739,7 +801,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Vòng 1 - Ngực (cm)
+                  {text('Vòng 1 - Ngực (cm)', 'Bust / Chest (cm)')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -769,7 +831,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Vòng 2 - Eo (cm)
+                  {text('Vòng 2 - Eo (cm)', 'Waist (cm)')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -799,7 +861,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: '6px' }}>
-                  Vòng 3 - Mông (cm)
+                  {text('Vòng 3 - Mông (cm)', 'Hips (cm)')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -839,8 +901,11 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               }}>
                 <Flame size={14} color="#D4AF37" />
                 <span>
-                  Tỷ lệ Eo/Mông (WHR): <strong style={{ color: '#D4AF37' }}>{whr}</strong>
-                  {parseFloat(whr) <= 0.75 ? ' — Tỷ lệ vàng thắt eo quyến rũ ✨' : ' — Đường nét cân đối'}
+                  {text('Tỷ lệ Eo/Mông (WHR):', 'Waist-to-Hip Ratio (WHR):')}{' '}
+                  <strong style={{ color: '#D4AF37' }}>{whr}</strong>
+                  {parseFloat(whr) <= 0.75 
+                    ? text(' — Tỷ lệ vàng thắt eo quyến rũ ✨', ' — Golden hour curve ✨') 
+                    : text(' — Đường nét cân đối', ' — Harmonious silhouette')}
                 </span>
               </div>
             )}
@@ -849,7 +914,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
           {/* Section 4: LỰA CHỌN DÁNG NGƯỜI (BODY SHAPE CARDS) */}
           <div>
             <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '10px' }}>
-              4. Dáng Người Của Bạn (Body Shape)
+              {text('4. Dáng Người Của Bạn (Body Shape)', '4. Your Body Shape Silhouette')}
             </label>
 
             <div style={{
@@ -875,7 +940,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                       <span style={{ fontSize: '1.4rem' }}>{shape.icon}</span>
                       <strong style={{ fontSize: '0.92rem', color: isSelected ? '#D4AF37' : 'var(--text-primary)' }}>
-                        {shape.id}
+                        {shape.name}
                       </strong>
                     </div>
                     <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
@@ -897,7 +962,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <Sparkles size={16} color="#D4AF37" />
                 <strong style={{ fontSize: '0.9rem', color: '#D4AF37' }}>
-                  Lời khuyên phối đồ AI cho {selectedShapeObj.name}:
+                  {text(`Lời khuyên phối đồ AI cho ${selectedShapeObj.name}:`, `AI Styling Advice for ${selectedShapeObj.name}:`)}
                 </strong>
               </div>
               <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
@@ -919,7 +984,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
           }}>
             <button
               type="button"
-              onClick={() => onNavigate('stylist')}
+              onClick={() => onNavigate('ai-stylist')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -931,7 +996,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 gap: '4px',
               }}
             >
-              <span>Vào thử AI Stylist</span>
+              <span>{text('Vào thử AI Stylist', 'Try AI Stylist')}</span>
               <ChevronRight size={16} />
             </button>
 
@@ -943,7 +1008,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               style={{ padding: '14px 36px', fontSize: '0.95rem' }}
             >
               <Save size={18} />
-              <span>{loading ? 'Đang lưu...' : 'Lưu Thông Số Hồ Sơ'}</span>
+              <span>{loading ? text('Đang lưu...', 'Saving...') : text('Lưu Thông Số Hồ Sơ', 'Save Profile Biometrics')}</span>
             </button>
           </div>
         </form>

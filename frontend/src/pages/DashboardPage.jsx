@@ -15,6 +15,7 @@ import {
   CloudSun
 } from 'lucide-react';
 import OutfitCard from '../components/OutfitCard';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function DashboardPage({ 
   user, 
@@ -25,6 +26,7 @@ export default function DashboardPage({
   onToggleFavoriteOutfit,
   onDeleteOutfit
 }) {
+  const { text, isEnglish } = useLanguage();
   const favoriteCount = outfits.filter(o => o.isFavorite).length;
 
   // Category counts
@@ -56,16 +58,16 @@ export default function DashboardPage({
       }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <span className="badge badge-rose">Bàn Làm Việc Thời Trang</span>
+            <span className="badge badge-rose">{text('Bàn Làm Việc Thời Trang', 'Fashion Workspace')}</span>
             <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-              ✦ Hôm nay: Thứ Sáu • 28°C Nắng Đẹp
+              {text('✦ Hôm nay: Thứ Sáu • 28°C Nắng Đẹp', '✦ Today: Friday • 28°C Sunny')}
             </span>
           </div>
           <h2 style={{ fontSize: '2.2rem', marginBottom: '8px', fontWeight: 800 }}>
-            Xin chào, <span className="gradient-text">{user?.fullName || 'Fashion Lover'}</span>! ✨
+            {text('Xin chào', 'Welcome back')}, <span className="gradient-text">{user?.fullName || 'Fashion Lover'}</span>! ✨
           </h2>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '560px', fontSize: '0.98rem', lineHeight: 1.6 }}>
-            Tủ đồ số của bạn hiện có <strong style={{ color: '#FFF' }}>{clothes.length} món đồ</strong> và <strong style={{ color: '#FFF' }}>{outfits.length} bộ phối đồ</strong> được sắp xếp ngăn nắp.
+            {text('Tủ đồ số của bạn hiện có', 'Your digital wardrobe currently has')} <strong style={{ color: '#FFF' }}>{clothes.length} {text('món đồ', 'items')}</strong> {text('và', 'and')} <strong style={{ color: '#FFF' }}>{outfits.length} {text('bộ phối đồ', 'outfits')}</strong> {text('được sắp xếp ngăn nắp.', 'organized neatly.')}
           </p>
         </div>
 
@@ -78,7 +80,7 @@ export default function DashboardPage({
             style={{ padding: '12px 24px', fontSize: '0.92rem' }}
           >
             <Plus size={18} />
-            <span>Thêm Món Đồ Mới</span>
+            <span>{text('Thêm Món Đồ Mới', 'Add New Item')}</span>
           </button>
 
           <button
@@ -88,7 +90,7 @@ export default function DashboardPage({
             style={{ padding: '12px 26px', fontSize: '0.92rem' }}
           >
             <Sparkles size={18} />
-            <span>Tư Vấn AI Stylist</span>
+            <span>{text('Tư Vấn AI Stylist', 'Consult AI Stylist')}</span>
           </button>
         </div>
       </div>
@@ -103,49 +105,57 @@ export default function DashboardPage({
         {/* Stat 1: Total Clothes */}
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>TỔNG MÓN ĐỒ</span>
+            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+              {text('TỔNG MÓN ĐỒ', 'TOTAL ITEMS')}
+            </span>
             <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.15)', color: '#F3D98A' }}>
               <Shirt size={20} />
             </div>
           </div>
           <div style={{ fontSize: '2.3rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>{clothes.length}</div>
           <div style={{ fontSize: '0.78rem', color: '#10B981', marginTop: '8px', fontWeight: 600 }}>
-            ✓ Đã phân loại đủ 6 danh mục
+            {text('✓ Đã phân loại đủ 6 danh mục', '✓ Categorized in 6 sections')}
           </div>
         </div>
 
         {/* Stat 2: Total Outfits */}
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>BỘ OUTFIT ĐÃ TẠO</span>
+            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+              {text('BỘ OUTFIT ĐÃ TẠO', 'OUTFITS CREATED')}
+            </span>
             <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(194, 125, 94, 0.15)', color: '#E6CCB2' }}>
               <Layers size={20} />
             </div>
           </div>
           <div style={{ fontSize: '2.3rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>{outfits.length}</div>
           <div style={{ fontSize: '0.78rem', color: '#F3D98A', marginTop: '8px', fontWeight: 600 }}>
-            Sẵn sàng mặc bất cứ lúc nào
+            {text('Sẵn sàng mặc bất cứ lúc nào', 'Ready to wear anytime')}
           </div>
         </div>
 
         {/* Stat 3: Favorites */}
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>OUTFIT YÊU THÍCH</span>
+            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+              {text('OUTFIT YÊU THÍCH', 'FAVORITE OUTFITS')}
+            </span>
             <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.15)', color: '#F3D98A' }}>
               <Heart size={20} />
             </div>
           </div>
           <div style={{ fontSize: '2.3rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>{favoriteCount}</div>
           <div style={{ fontSize: '0.78rem', color: '#F3D98A', marginTop: '8px', fontWeight: 600 }}>
-            Bộ trang phục ưu tiên
+            {text('Bộ trang phục ưu tiên', 'Preferred daily looks')}
           </div>
         </div>
 
         {/* Stat 4: Membership Tier */}
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>GÓI TÀI KHOẢN</span>
+            <span style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+              {text('GÓI TÀI KHOẢN', 'MEMBERSHIP TIER')}
+            </span>
             <div style={{ padding: '8px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.15)', color: '#F3D98A' }}>
               <Crown size={20} />
             </div>
@@ -157,7 +167,7 @@ export default function DashboardPage({
             onClick={() => onNavigate('premium')}
             style={{ fontSize: '0.8rem', color: '#F3D98A', marginTop: '8px', cursor: 'pointer', fontWeight: 700 }}
           >
-            Nâng cấp VIP Hoàng Gia →
+            {text('Nâng cấp VIP Hoàng Gia →', 'Upgrade to Royal VIP →')}
           </div>
         </div>
       </div>
@@ -175,9 +185,11 @@ export default function DashboardPage({
               <CloudSun size={24} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>Outfit Gợi Ý Hôm Nay (OOTD)</h3>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>
+                {text('Outfit Gợi Ý Hôm Nay (OOTD)', 'Outfit of The Day (OOTD)')}
+              </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Thời tiết tại Việt Nam: 28°C Nắng ấm • Gợi ý tối ưu từ tủ đồ của bạn
+                {text('Thời tiết tại Việt Nam: 28°C Nắng ấm • Gợi ý tối ưu từ tủ đồ của bạn', 'Weather: 28°C Warm & Sunny • Optimized picks from your closet')}
               </p>
             </div>
           </div>
@@ -189,7 +201,7 @@ export default function DashboardPage({
             style={{ padding: '10px 20px', fontSize: '0.86rem' }}
           >
             <Sparkles size={15} color="#FB7185" />
-            <span>Nhờ AI Đổi Bộ Khác</span>
+            <span>{text('Nhờ AI Đổi Bộ Khác', 'Ask AI for Another Look')}</span>
           </button>
         </div>
 
@@ -204,7 +216,7 @@ export default function DashboardPage({
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
-            Chưa có outfit nào. Hãy vào Atelier hoặc nhờ AI Stylist tạo bộ phối đầu tiên!
+            {text('Chưa có outfit nào. Hãy vào Atelier hoặc nhờ AI Stylist tạo bộ phối đầu tiên!', 'No outfits yet. Open Atelier or ask AI Stylist to create your first look!')}
           </div>
         )}
       </div>
@@ -212,10 +224,10 @@ export default function DashboardPage({
       {/* Wardrobe Breakdown Category Progress Bar */}
       <div className="glass-card" style={{ padding: '28px', marginBottom: '44px' }}>
         <h4 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '8px' }}>
-          Tỷ Lệ Phân Bổ Danh Mục Tủ Đồ
+          {text('Tỷ Lệ Phân Bổ Danh Mục Tủ Đồ', 'Wardrobe Category Distribution')}
         </h4>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
-          Phân tích trực quan các loại trang phục bạn đang có để cân đối thói quen mua sắm thông minh.
+          {text('Phân tích trực quan các loại trang phục bạn đang có để cân đối thói quen mua sắm thông minh.', 'Visual breakdown of your wardrobe items to balance smart shopping habits.')}
         </p>
 
         {/* Multi-color progress bar */}
@@ -238,22 +250,22 @@ export default function DashboardPage({
         {/* Legend pills */}
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '0.82rem' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D4AF37' }} /> Áo ({categoryCounts.tops})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#D4AF37' }} /> {text('Áo', 'Tops')} ({categoryCounts.tops})
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#C27D5E' }} /> Quần ({categoryCounts.bottoms})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#C27D5E' }} /> {text('Quần', 'Bottoms')} ({categoryCounts.bottoms})
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F3D98A' }} /> Đầm ({categoryCounts.dresses})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F3D98A' }} /> {text('Đầm', 'Dresses')} ({categoryCounts.dresses})
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#9A7B38' }} /> Áo Khoác ({categoryCounts.outerwear})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#9A7B38' }} /> {text('Áo Khoác', 'Outerwear')} ({categoryCounts.outerwear})
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#E6CCB2' }} /> Giày ({categoryCounts.shoes})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#E6CCB2' }} /> {text('Giày', 'Shoes')} ({categoryCounts.shoes})
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#B08968' }} /> Phụ Kiện ({categoryCounts.accessories})
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#B08968' }} /> {text('Phụ Kiện', 'Accessories')} ({categoryCounts.accessories})
           </span>
         </div>
       </div>
@@ -262,9 +274,11 @@ export default function DashboardPage({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Bộ Sưu Tập Trang Phục Của Bạn</h3>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+              {text('Bộ Sưu Tập Trang Phục Của Bạn', 'Your Outfit Collection')}
+            </h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-              Các outfit bạn đã tự tạo hoặc được AI Stylist tư vấn lưu lại.
+              {text('Các outfit bạn đã tự tạo hoặc được AI Stylist tư vấn lưu lại.', 'Outfits you created yourself or saved from AI Stylist consultations.')}
             </p>
           </div>
 
@@ -274,7 +288,7 @@ export default function DashboardPage({
             className="btn-primary"
             style={{ padding: '10px 22px', fontSize: '0.86rem' }}
           >
-            <span>Vào Atelier Phối Đồ</span>
+            <span>{text('Vào Atelier Phối Đồ', 'Open Outfit Atelier')}</span>
             <ArrowRight size={16} />
           </button>
         </div>
@@ -298,12 +312,14 @@ export default function DashboardPage({
         ) : (
           <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center' }}>
             <Layers size={42} color="var(--text-muted)" style={{ margin: '0 auto 16px' }} />
-            <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Chưa có bộ outfit nào</h4>
+            <h4 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>
+              {text('Chưa có bộ outfit nào', 'No outfits created yet')}
+            </h4>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-              Hãy ghé qua Atelier hoặc hỏi AI Stylist để tạo ra bộ trang phục đầu tiên!
+              {text('Hãy ghé qua Atelier hoặc hỏi AI Stylist để tạo ra bộ trang phục đầu tiên!', 'Visit the Atelier or ask AI Stylist to create your first look!')}
             </p>
             <button onClick={() => onNavigate('outfits')} className="btn-primary">
-              Bắt Đầu Phối Đồ
+              {text('Bắt Đầu Phối Đồ', 'Start Styling')}
             </button>
           </div>
         )}

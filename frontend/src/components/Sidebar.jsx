@@ -13,8 +13,10 @@ import {
   Plus, 
   Compass, 
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Settings
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Sidebar({
   isOpen,
@@ -26,12 +28,14 @@ export default function Sidebar({
   onLogout,
   onOpenAddModal,
   onOpenSearch,
+  onOpenSettings,
   onNewChat,
   chatSessions = [],
   activeSessionId,
   onSelectChat,
   onDeleteChat
 }) {
+  const { t, language, text } = useLanguage();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
@@ -49,12 +53,12 @@ export default function Sidebar({
         width: isOpen ? '260px' : '0px',
         minWidth: isOpen ? '260px' : '0px',
         height: '100vh',
-        background: '#171717',
-        borderRight: isOpen ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+        background: 'var(--bg-sidebar)',
+        borderRight: isOpen ? '1px solid var(--border-subtle)' : 'none',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        transition: 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'width 0.22s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease',
         overflow: 'hidden',
         zIndex: 50,
         userSelect: 'none',
@@ -120,7 +124,7 @@ export default function Sidebar({
             <button
               onClick={onOpenSearch}
               className="chatgpt-icon-btn"
-              title="Tìm kiếm (Ctrl+K)"
+              title={text("Tìm kiếm (Ctrl+K)", "Search (Ctrl+K)")}
               style={{
                 width: '32px',
                 height: '32px',
@@ -139,7 +143,7 @@ export default function Sidebar({
             <button
               onClick={onToggle}
               className="chatgpt-icon-btn"
-              title="Đóng thanh bên"
+              title={text("Đóng thanh bên", "Close sidebar")}
               style={{
                 width: '32px',
                 height: '32px',
@@ -180,10 +184,10 @@ export default function Sidebar({
           }}
         >
           <SquarePen size={17} color="#ECECEC" />
-          <span style={{ flex: 1 }}>Đoạn chat mới</span>
+          <span style={{ flex: 1 }}>{t('nav_new_chat')}</span>
         </button>
 
-        {/* Navigation Items - Đổi thành đúng tên các tính năng của MYFITDAILY */}
+        {/* Navigation Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
           
           {/* Tủ Đồ Số (Wardrobe) */}
@@ -208,7 +212,7 @@ export default function Sidebar({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
-              <span>Tủ Đồ Số</span>
+              <span>{t('nav_wardrobe')}</span>
             </div>
             <span style={{
               fontSize: '0.62rem',
@@ -219,7 +223,7 @@ export default function Sidebar({
               fontWeight: 600,
               letterSpacing: '0.02em'
             }}>
-              TỦ ĐỒ
+              {language === 'vi' ? 'TỦ ĐỒ' : 'CLOSET'}
             </span>
           </button>
 
@@ -244,7 +248,7 @@ export default function Sidebar({
             }}
           >
             <Layers size={17} color={currentTab === 'outfits' ? '#D4AF37' : '#B4B4B4'} />
-            <span>Atelier Phối Đồ</span>
+            <span>{t('nav_outfits')}</span>
           </button>
 
           {/* Bàn Làm Việc (Dashboard) */}
@@ -268,7 +272,7 @@ export default function Sidebar({
             }}
           >
             <LayoutDashboard size={17} color={currentTab === 'dashboard' ? '#D4AF37' : '#B4B4B4'} />
-            <span>Bàn Làm Việc</span>
+            <span>{t('nav_dashboard')}</span>
           </button>
 
           {/* AI Stylist */}
@@ -293,7 +297,7 @@ export default function Sidebar({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Sparkles size={17} color={currentTab === 'ai-stylist' ? '#D4AF37' : '#B4B4B4'} />
-              <span>AI Stylist</span>
+              <span>{t('nav_ai_stylist')}</span>
             </div>
             <span style={{
               fontSize: '0.62rem',
@@ -328,7 +332,7 @@ export default function Sidebar({
             }}
           >
             <Crown size={17} color="#D4AF37" />
-            <span>Hội Viên VIP</span>
+            <span>{t('nav_premium', text('Hội Viên VIP', 'VIP Membership'))}</span>
           </button>
 
           {/* Thêm... (More: Khám phá, Thêm đồ nhanh) */}
@@ -353,7 +357,7 @@ export default function Sidebar({
               }}
             >
               <MoreHorizontal size={17} color="#B4B4B4" />
-              <span>Thêm...</span>
+              <span>{text('Thêm...', 'More...')}</span>
             </button>
 
             {/* More options popover */}
@@ -364,11 +368,11 @@ export default function Sidebar({
                   top: '100%',
                   left: '10px',
                   width: '210px',
-                  background: '#212121',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: 'var(--bg-popover)',
+                  border: '1px solid var(--border-medium)',
                   borderRadius: '12px',
                   padding: '6px',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.6)',
+                  boxShadow: 'var(--shadow-lg)',
                   zIndex: 100,
                 }}
                 onMouseLeave={() => setMoreMenuOpen(false)}
@@ -392,7 +396,7 @@ export default function Sidebar({
                   }}
                 >
                   <Plus size={15} />
-                  <span>Thêm món đồ mới</span>
+                  <span>{text('Thêm món đồ mới', 'Add New Garment')}</span>
                 </button>
                 <button
                   onClick={() => { setCurrentTab('landing'); setMoreMenuOpen(false); }}
@@ -413,7 +417,7 @@ export default function Sidebar({
                   }}
                 >
                   <Compass size={15} />
-                  <span>Khám phá giới thiệu</span>
+                  <span>{text('Khám phá giới thiệu', 'Explore Features')}</span>
                 </button>
               </div>
             )}
@@ -448,7 +452,7 @@ export default function Sidebar({
                 color: '#8E8E8E',
                 letterSpacing: '0.01em',
               }}>
-                Đoạn chat
+                {text('Đoạn chat', 'Chats')}
               </span>
               <span style={{ fontSize: '0.68rem', color: '#666' }}>
                 {chatSessions.length}
@@ -497,7 +501,7 @@ export default function Sidebar({
                         if (onDeleteChat) onDeleteChat(session.id);
                       }}
                       className="chat-delete-btn"
-                      title="Xóa đoạn chat này"
+                      title={text("Xóa đoạn chat này", "Delete this chat")}
                       style={{
                         background: 'transparent',
                         border: 'none',
@@ -533,7 +537,10 @@ export default function Sidebar({
                   fontSize: '0.78rem',
                   color: '#71717A',
                 }}>
-                  Chưa có lịch sử đoạn chat nào. Hãy bấm <b>Đoạn chat mới</b> để bắt đầu!
+                  {text(
+                    'Chưa có lịch sử đoạn chat nào. Hãy bấm Đoạn chat mới để bắt đầu!',
+                    'No chat history yet. Click New Chat to get started!'
+                  )}
                 </div>
               )}
             </div>
@@ -605,20 +612,20 @@ export default function Sidebar({
                 bottom: 'calc(100% + 6px)',
                 left: '0px',
                 right: '0px',
-                background: '#212121',
-                border: '1px solid rgba(255, 255, 255, 0.14)',
+                background: 'var(--bg-popover)',
+                border: '1px solid var(--border-medium)',
                 borderRadius: '12px',
                 padding: '6px',
-                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.75)',
+                boxShadow: 'var(--shadow-lg)',
                 zIndex: 110,
               }}
               onMouseLeave={() => setProfileMenuOpen(false)}
             >
-              <div style={{ padding: '8px 10px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '4px' }}>
-                <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#FFF' }}>
+              <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {displayName}
                 </div>
-                <div style={{ fontSize: '0.72rem', color: '#8E8E8E' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                   {user?.email || 'trungthanh@myfitdaily.vn'}
                 </div>
               </div>
@@ -642,7 +649,41 @@ export default function Sidebar({
                 }}
               >
                 <User size={15} />
-                <span>Hồ sơ cá nhân</span>
+                <span>{t('profile_menu_title')}</span>
+              </button>
+
+              <button
+                onClick={() => { onOpenSettings?.(); setProfileMenuOpen(false); }}
+                className="sidebar-popover-item"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  color: '#ECECEC',
+                  fontSize: '0.84rem',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings size={15} />
+                  <span>{t('settings_menu_title')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.68rem',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  color: '#D4AF37',
+                  fontWeight: 600
+                }}>
+                  {language === 'vi' ? '🇻🇳 VI' : '🇺🇸 EN'}
+                </span>
               </button>
 
               <button
@@ -664,7 +705,7 @@ export default function Sidebar({
                 }}
               >
                 <Crown size={15} />
-                <span>Nâng cấp gói Plus / VIP</span>
+                <span>{t('upgrade_vip_title')}</span>
               </button>
 
               <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
@@ -689,7 +730,7 @@ export default function Sidebar({
                   }}
                 >
                   <LogOut size={15} />
-                  <span>Đăng xuất</span>
+                  <span>{t('logout_title')}</span>
                 </button>
               ) : (
                 <button
@@ -711,7 +752,7 @@ export default function Sidebar({
                   }}
                 >
                   <User size={15} />
-                  <span>Đăng nhập / Đăng ký</span>
+                  <span>{t('login_title')}</span>
                 </button>
               )}
             </div>

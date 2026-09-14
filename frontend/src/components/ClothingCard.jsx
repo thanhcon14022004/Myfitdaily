@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2, Plus, Sparkles, Check, Heart } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ClothingCard({ 
   item, 
@@ -10,6 +11,7 @@ export default function ClothingCard({
   isChecked = false,
   onToggleSelect,
 }) {
+  const { text } = useLanguage();
   const getCategoryBadgeClass = (categoryName) => {
     switch (categoryName?.toLowerCase()) {
       case 'tops': return 'badge-rose';
@@ -143,7 +145,7 @@ export default function ClothingCard({
           alignItems: 'flex-start'
         }}>
           <span className={`badge ${getCategoryBadgeClass(item.categoryName)}`} style={{ backdropFilter: 'blur(10px)' }}>
-            {item.categoryName || 'Quần Áo'}
+            {item.categoryName || text('Quần Áo', 'Garment')}
           </span>
           {item.brand && (
             <span className="badge badge-gold" style={{ backdropFilter: 'blur(10px)', fontWeight: 800, fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
@@ -161,7 +163,7 @@ export default function ClothingCard({
               onDelete(item); 
             }}
             id={`btn-delete-clothing-${item.id}`}
-            title="Xóa món đồ này khỏi tủ"
+            title={text("Xóa món đồ này khỏi tủ", "Remove item from wardrobe")}
             style={{
               position: 'absolute',
               top: '12px',
@@ -257,7 +259,7 @@ export default function ClothingCard({
                 backgroundColor: getColorHex(item.color),
                 border: '1px solid rgba(255,255,255,0.4)'
               }} />
-              <span>{item.color || 'Đa sắc'}</span>
+              <span>{item.color || text('Đa sắc', 'Multicolor')}</span>
             </div>
 
             <div style={{
@@ -325,12 +327,12 @@ export default function ClothingCard({
             {isSelected ? (
               <>
                 <Check size={14} />
-                <span>Đã Chọn Trong Studio</span>
+                <span>{text('Đã Chọn Trong Studio', 'Selected in Studio')}</span>
               </>
             ) : (
               <>
                 <Plus size={14} />
-                <span>Chọn Phối Đồ</span>
+                <span>{text('Chọn Phối Đồ', 'Select to Style')}</span>
               </>
             )}
           </button>

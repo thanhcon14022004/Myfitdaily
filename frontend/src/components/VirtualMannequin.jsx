@@ -14,6 +14,7 @@ import {
   Pause
 } from 'lucide-react';
 import { extractGarmentImage } from '../utils/garmentExtractor';
+import { useLanguage } from '../context/LanguageContext';
 
 /**
  * 5 Dáng Người Chuẩn Nhân Trắc Học (Standard Body Shapes)
@@ -210,6 +211,7 @@ export default function VirtualMannequin({
   interactive = true,
   compact = false
 }) {
+  const { text } = useLanguage();
   const resolvedTop = top || topItem;
   const resolvedOuter = outer || outerwearItem;
   const resolvedBottom = bottom || bottomItem;
@@ -1217,7 +1219,7 @@ export default function VirtualMannequin({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
           <button
             onClick={() => setIsAutoRotating(!isAutoRotating)}
-            title={isAutoRotating ? "Tạm dừng xoay tự động" : "Bật chế độ tự động xoay 360 độ"}
+            title={isAutoRotating ? text("Tạm dừng xoay tự động", "Pause auto rotation") : text("Bật chế độ tự động xoay 360 độ", "Spin 360°")}
             style={{
               background: isAutoRotating
                 ? 'linear-gradient(135deg, #D4AF37, #F59E0B)'
@@ -1237,26 +1239,26 @@ export default function VirtualMannequin({
             }}
           >
             {isAutoRotating ? <Pause size={12} /> : <Play size={12} />}
-            <span>{isAutoRotating ? 'Dừng Xoay' : 'Xoay 360°'}</span>
+            <span>{isAutoRotating ? text('Dừng Xoay', 'Stop') : text('Xoay 360°', '360° Spin')}</span>
           </button>
 
           {/* 4 Nút Preset Góc Chuẩn */}
           <div style={{ display: 'flex', gap: '4px' }}>
             {[
-              { label: 'Trước', deg: 0 },
+              { label: text('Trước', 'Front'), deg: 0 },
               { label: '45°', deg: 45 },
-              { label: 'Sau', deg: 180 },
+              { label: text('Sau', 'Back'), deg: 180 },
               { label: '-45°', deg: -45 }
             ].map(p => {
               const isActive = Math.abs(rotation - p.deg) < 12;
               return (
                 <button
-                  key={p.label}
+                  key={p.deg}
                   onClick={() => {
                     setIsAutoRotating(false);
                     setRotation(p.deg);
                   }}
-                  title={`Xoay đến góc ${p.label}`}
+                  title={text(`Xoay đến góc ${p.label}`, `Rotate to ${p.label}`)}
                   style={{
                     background: isActive ? 'rgba(212, 175, 55, 0.3)' : 'rgba(255, 255, 255, 0.04)',
                     color: isActive ? '#FDE68A' : 'var(--text-muted)',
@@ -1280,7 +1282,7 @@ export default function VirtualMannequin({
                 setIsAutoRotating(false);
                 setRotation(0);
               }}
-              title="Đặt lại về góc 0° (Mặt trước)"
+              title={text("Đặt lại về góc 0° (Mặt trước)", "Reset to 0° (Front)")}
               style={{
                 background: 'rgba(255, 255, 255, 0.04)',
                 color: 'var(--text-muted)',
@@ -1311,7 +1313,7 @@ export default function VirtualMannequin({
               setIsAutoRotating(false);
               setRotation(Number(e.target.value));
             }}
-            title="Kéo trượt để xoay ma-nơ-canh đến góc mong muốn"
+            title={text("Kéo trượt để xoay ma-nơ-canh đến góc mong muốn", "Drag slider to rotate mannequin")}
             style={{
               flex: 1,
               accentColor: '#D4AF37',
@@ -1348,9 +1350,15 @@ export default function VirtualMannequin({
             padding: '8px 6px',
             borderRadius: 'var(--radius-sm)'
           }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>Dáng Người (Hồ Sơ)</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
+              {text('Dáng Người (Hồ Sơ)', 'Body Shape (Profile)')}
+            </div>
             <div style={{ fontWeight: 800, color: '#F3D98A' }}>
-              {activeShapeObj.icon} {activeShapeObj.label}
+              {activeShapeObj.icon} {activeShapeObj.id === 'Đồng hồ cát' ? text('Đồng hồ cát', 'Hourglass')
+                : activeShapeObj.id === 'Quả lê' ? text('Quả lê', 'Pear')
+                : activeShapeObj.id === 'Quả táo' ? text('Quả táo', 'Apple')
+                : activeShapeObj.id === 'Tam giác ngược' ? text('Tam giác ngược', 'Inverted Triangle')
+                : text('Thước kẻ', 'Rectangle')}
             </div>
           </div>
 
@@ -1360,7 +1368,9 @@ export default function VirtualMannequin({
             padding: '8px 6px',
             borderRadius: 'var(--radius-sm)'
           }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>Tỉ Lệ Eo/Hông (WHR)</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
+              {text('Tỉ Lệ Eo/Hông (WHR)', 'Waist/Hip (WHR)')}
+            </div>
             <div style={{ fontWeight: 800, color: '#38BDF8' }}>{formModifiers.whr}</div>
           </div>
 
@@ -1370,7 +1380,9 @@ export default function VirtualMannequin({
             padding: '8px 6px',
             borderRadius: 'var(--radius-sm)'
           }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>Chỉ Số BMI</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
+              {text('Chỉ Số BMI', 'BMI Index')}
+            </div>
             <div style={{ fontWeight: 800, color: '#10B981' }}>{formModifiers.bmi}</div>
           </div>
         </div>

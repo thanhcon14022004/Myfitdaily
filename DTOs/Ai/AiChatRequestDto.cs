@@ -17,5 +17,11 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Ai
         public List<ChatMessageItemDto>? History { get; set; } = new();
 
         public List<int>? WardrobeItemIds { get; set; }
+
+        public string? UserLocation { get; set; }
+
+        public double? Temperature { get; set; }
+
+        public string? WeatherCondition { get; set; }
     }
 }
