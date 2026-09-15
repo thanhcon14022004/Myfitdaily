@@ -17,7 +17,10 @@ import PremiumPage from './pages/PremiumPage';
 import { apiRequest } from './api/apiClient';
 import { 
   INITIAL_CATEGORIES, 
-  INITIAL_OUTFITS 
+  INITIAL_OUTFITS,
+  getCategoriesForGender,
+  getInitialOutfitsForGender,
+  sanitizeClothesForGender
 } from './data/initialWardrobe';
 import { INITIAL_CHAT_SESSIONS } from './data/initialChatSessions';
 import { useLanguage } from './context/LanguageContext';
@@ -60,12 +63,21 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Clothing & Outfits state: User's own uploaded clothes (Starts empty for new users)
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
+  const categories = getCategoriesForGender(user?.gender);
+
   const [clothes, setClothes] = useState(() => {
     const saved = localStorage.getItem('myfitdaily_user_clothes');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.warn("Failed to parse saved clothes", e);
+      }
+    }
+    return [];
   });
-
-  const [categories] = useState(INITIAL_CATEGORIES);
 
   const [outfits, setOutfits] = useState(() => {
     const saved = localStorage.getItem('myfitdaily_outfits');
@@ -84,20 +96,33 @@ export default function App() {
     }
   }, []);
 
-  // Fetch user's real wardrobe from database
+  // Fetch user's real wardrobe from database & sanitize by gender
   useEffect(() => {
     async function loadUserClothes() {
       try {
         const res = await apiRequest('/clothes');
         if (res.ok && res.data?.data && Array.isArray(res.data.data)) {
-          setClothes(res.data.data);
+          const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
+          setClothes(items);
+          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(items));
         }
       } catch (err) {
         console.warn("Could not sync clothes from backend, using local state", err);
       }
     }
     loadUserClothes();
-  }, [user]);
+  }, [user, isMale]);
+
+  // Purge legacy female clothes from local state when male account is active
+  useEffect(() => {
+    if (isMale && clothes.length > 0) {
+      const sanitized = sanitizeClothesForGender(clothes, user?.gender);
+      if (sanitized.length !== clothes.length) {
+        setClothes(sanitized);
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(sanitized));
+      }
+    }
+  }, [user, isMale, clothes.length]);
 
   // Save to localStorage when clothes/outfits change
   useEffect(() => {
@@ -332,7 +357,7 @@ export default function App() {
           {currentTab === 'dashboard' && (
             <DashboardPage
               user={user}
-              clothes={clothes}
+              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
               outfits={outfits}
               onNavigate={setCurrentTab}
               onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -343,8 +368,9 @@ export default function App() {
 
           {currentTab === 'wardrobe' && (
             <WardrobePage
-              clothes={clothes}
+              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
               categories={categories}
+              user={user}
               onDeleteClothing={handleDeleteClothing}
               onDeleteItem={handleDeleteClothing}
               onBulkDeleteClothes={handleBulkDeleteClothing}
@@ -355,7 +381,7 @@ export default function App() {
 
           {currentTab === 'outfits' && (
             <OutfitStudioPage
-              clothes={clothes}
+              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
               outfits={outfits}
               onSaveOutfit={handleSaveOutfit}
               onToggleFavorite={handleToggleFavoriteOutfit}
@@ -368,7 +394,7 @@ export default function App() {
 
           {currentTab === 'ai-stylist' && (
             <AiStylistPage
-              clothes={clothes}
+              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
               onSaveAiOutfit={handleSaveAiOutfit}
               onNavigate={setCurrentTab}
               onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -446,6 +472,7 @@ export default function App() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddClothing}
+        user={user}
       />
 
       <SearchModal

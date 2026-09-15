@@ -8,6 +8,9 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Ai
         public string Description { get; set; } = string.Empty;
         public string HarmonyScore { get; set; } = "96%";
         public List<RecommendedClothingDto> Items { get; set; } = new List<RecommendedClothingDto>();
+        public string SourceType { get; set; } = "Wardrobe"; // "Wardrobe" (Tủ đồ) hoặc "TrendingOnline" (Xu hướng mạng TMĐT)
+        public string SourceBadge { get; set; } = "👗 Từ Tủ Đồ Cá Nhân";
+        public string BodyFlatteringNote { get; set; } = string.Empty; // Phân tích tối ưu theo vóc dáng, số đo, tuổi, giới tính
     }
 
     public class AiRecommendResponseDto

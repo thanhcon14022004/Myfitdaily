@@ -22,6 +22,7 @@ import OutfitCard from '../components/OutfitCard';
 import VirtualMannequin from '../components/VirtualMannequin';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
+import { sanitizeClothesForGender } from '../data/initialWardrobe';
 
 export default function OutfitStudioPage({ 
   clothes, 
@@ -34,17 +35,20 @@ export default function OutfitStudioPage({
   user
 }) {
   const { text, isEnglish } = useLanguage();
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
+  const effectiveClothes = isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes;
+
   const [deleteModalItem, setDeleteModalItem] = useState(null);
 
   // Chế độ xem: 'mannequin' (Người ảo thử đồ 3D/2.5D) | 'flatlay' (Sàn phẳng)
   const [studioMode, setStudioMode] = useState('mannequin');
 
   // Flat-Lay & Try-On Garment Slots
-  const [selectedTop, setSelectedTop] = useState(clothes.find(c => c.categoryId === 1) || null);
-  const [selectedOuter, setSelectedOuter] = useState(clothes.find(c => c.categoryId === 4) || null);
-  const [selectedBottom, setSelectedBottom] = useState(clothes.find(c => c.categoryId === 2 || c.categoryId === 3) || null);
-  const [selectedShoes, setSelectedShoes] = useState(clothes.find(c => c.categoryId === 5) || null);
-  const [selectedAccessory, setSelectedAccessory] = useState(clothes.find(c => c.categoryId === 6) || null);
+  const [selectedTop, setSelectedTop] = useState(effectiveClothes.find(c => c.categoryId === 1) || null);
+  const [selectedOuter, setSelectedOuter] = useState(effectiveClothes.find(c => c.categoryId === 4) || null);
+  const [selectedBottom, setSelectedBottom] = useState(effectiveClothes.find(c => isMale ? c.categoryId === 2 : (c.categoryId === 2 || c.categoryId === 3)) || null);
+  const [selectedShoes, setSelectedShoes] = useState(effectiveClothes.find(c => c.categoryId === 5) || null);
+  const [selectedAccessory, setSelectedAccessory] = useState(effectiveClothes.find(c => c.categoryId === 6) || null);
 
   // Active drawer filter tab
   const [drawerCategory, setDrawerCategory] = useState('Tops'); // 'Tops' | 'Outerwear' | 'Bottoms' | 'Shoes' | 'Accessories'
@@ -62,10 +66,10 @@ export default function OutfitStudioPage({
     return true;
   });
 
-  const drawerItems = clothes.filter(c => {
+  const drawerItems = effectiveClothes.filter(c => {
     if (drawerCategory === 'Tops') return c.categoryId === 1;
     if (drawerCategory === 'Outerwear') return c.categoryId === 4;
-    if (drawerCategory === 'Bottoms') return c.categoryId === 2 || c.categoryId === 3;
+    if (drawerCategory === 'Bottoms') return isMale ? c.categoryId === 2 : (c.categoryId === 2 || c.categoryId === 3);
     if (drawerCategory === 'Shoes') return c.categoryId === 5;
     if (drawerCategory === 'Accessories') return c.categoryId === 6;
     return true;
@@ -336,9 +340,9 @@ export default function OutfitStudioPage({
                   alignItems: 'center',
                   textAlign: 'center'
                 }} onClick={() => setDrawerCategory('Bottoms')}>
-                  <span style={{ fontSize: '0.62rem', color: '#818CF8', fontWeight: 800 }}>QUẦN/ĐẦM</span>
+                  <span style={{ fontSize: '0.62rem', color: '#818CF8', fontWeight: 800 }}>{isMale ? 'QUẦN' : 'QUẦN/ĐẦM'}</span>
                   <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
-                    {selectedBottom ? selectedBottom.name : '+ Chọn Đồ'}
+                    {selectedBottom ? selectedBottom.name : (isMale ? '+ Chọn Quần' : '+ Chọn Đồ')}
                   </span>
                   {selectedBottom && (
                     <button 
@@ -481,7 +485,7 @@ export default function OutfitStudioPage({
                   transition: 'var(--transition)',
                 }}
               >
-                <span className="badge badge-indigo" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>QUẦN / ĐẦM</span>
+                <span className="badge badge-indigo" style={{ fontSize: '0.62rem', marginBottom: '6px' }}>{isMale ? 'QUẦN (BOTTOM)' : 'QUẦN / ĐẦM'}</span>
                 {selectedBottom ? (
                   <div>
                     <img src={selectedBottom.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
@@ -489,7 +493,7 @@ export default function OutfitStudioPage({
                   </div>
                 ) : (
                   <div style={{ height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                    + Chọn Quần/Đầm
+                    + Chọn {isMale ? 'Quần' : 'Quần/Đầm'}
                   </div>
                 )}
               </div>
@@ -589,7 +593,10 @@ export default function OutfitStudioPage({
               </label>
               <input
                 type="text"
-                placeholder={text('Ví dụ: Phối cùng son đỏ, đồng hồ dây da nâu...', 'e.g., Pair with red lipstick, leather watch...')}
+                placeholder={text(
+                  isMale ? 'Ví dụ: Phối cùng đồng hồ dây da nâu, thắt lưng da bò...' : 'Ví dụ: Phối cùng son đỏ, đồng hồ dây da nâu...',
+                  isMale ? 'e.g., Pair with leather watch, belt...' : 'e.g., Pair with red lipstick, leather watch...'
+                )}
                 value={outfitDescription}
                 onChange={(e) => setOutfitDescription(e.target.value)}
                 style={{ width: '100%' }}
@@ -623,7 +630,7 @@ export default function OutfitStudioPage({
             {[
               { id: 'Tops', label: text('Áo', 'Tops') },
               { id: 'Outerwear', label: text('Khoác', 'Outerwear') },
-              { id: 'Bottoms', label: text('Quần/Đầm', 'Bottoms/Dresses') },
+              { id: 'Bottoms', label: isMale ? text('Quần', 'Bottoms') : text('Quần/Đầm', 'Bottoms/Dresses') },
               { id: 'Shoes', label: text('Giày', 'Shoes') },
               { id: 'Accessories', label: text('Phụ kiện', 'Accessories') },
             ].map((tab) => (

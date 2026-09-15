@@ -16,10 +16,12 @@ import {
 import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
+import { sanitizeClothesForGender } from '../data/initialWardrobe';
 
 export default function WardrobePage({ 
   clothes = [], 
   categories = [], 
+  user,
   onOpenAddModal, 
   onDeleteClothing,
   onDeleteItem,
@@ -27,6 +29,20 @@ export default function WardrobePage({
   onNavigate 
 }) {
   const { text, isEnglish } = useLanguage();
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
+
+  // Lọc sạch toàn bộ đồ phụ nữ (Đầm, Chân váy, v.v.) nếu tài khoản là Nam
+  const effectiveClothes = isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes;
+
+  // Lọc sạch danh mục Đầm (Dresses) nếu tài khoản là Nam và đổi nhãn Quần & Váy thành Quần
+  const visibleCategories = categories
+    .filter(cat => !(isMale && (cat.id === 3 || cat.name?.toLowerCase() === 'dresses')))
+    .map(cat => {
+      if (isMale && cat.id === 2) {
+        return { ...cat, label: text("Quần", "Bottoms"), name: "Bottoms" };
+      }
+      return cat;
+    });
 
   // Đồng bộ hàm xóa đơn lẻ bất kể tên prop nào được truyền vào
   const deleteSingleHandler = onDeleteClothing || onDeleteItem;
@@ -65,10 +81,10 @@ export default function WardrobePage({
   ];
 
   // Filter logic
-  const filteredClothes = clothes.filter((item) => {
+  const filteredClothes = effectiveClothes.filter((item) => {
     // Category
     if (selectedCategory !== 'all') {
-      const cat = categories.find(c => c.id.toString() === selectedCategory.toString());
+      const cat = visibleCategories.find(c => c.id.toString() === selectedCategory.toString());
       if (cat && item.categoryName !== cat.name) return false;
     }
     // Search
@@ -380,19 +396,20 @@ export default function WardrobePage({
             className={`filter-pill ${selectedCategory === 'all' ? 'active' : ''}`}
           >
             <span>{text('Tất Cả Món Đồ', 'All Items')}</span>
-            <span className="filter-count">{clothes.length}</span>
+            <span className="filter-count">{effectiveClothes.length}</span>
           </button>
 
-          {categories.map((cat) => {
-            const count = clothes.filter(c => c.categoryId === cat.id).length;
+          {visibleCategories.map((cat) => {
+            const count = effectiveClothes.filter(c => c.categoryId === cat.id).length;
             const isActive = selectedCategory === cat.id.toString();
+            const displayName = cat.label || cat.name;
             return (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id.toString())}
                 className={`filter-pill ${isActive ? 'active' : ''}`}
               >
-                <span>{cat.name}</span>
+                <span>{displayName}</span>
                 <span className="filter-count">{count}</span>
               </button>
             );
@@ -437,7 +454,7 @@ export default function WardrobePage({
       </div>
 
       {/* Grid of Clothing Items or Empty States */}
-      {clothes.length === 0 ? (
+      {effectiveClothes.length === 0 ? (
         <div className="glass-card" style={{
           padding: '80px 24px',
           textAlign: 'center',

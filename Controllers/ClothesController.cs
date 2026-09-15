@@ -43,9 +43,35 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 return Ok(ApiResponse<List<ClothingItemDto>>.Ok(new List<ClothingItemDto>(), "Vui lòng đăng nhập để đồng bộ tủ đồ"));
             }
 
-            var items = await _context.ClothingItems
+            var user = await _context.Users.FindAsync(userId.Value);
+            bool isMale = user != null && (
+                string.Equals(user.Gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(user.Gender, "Male", StringComparison.OrdinalIgnoreCase) ||
+                (user.Gender != null && user.Gender.ToLower().Contains("nam"))
+            );
+
+            var query = _context.ClothingItems
                 .Include(c => c.Category)
-                .Where(c => c.UserId == userId.Value)
+                .Where(c => c.UserId == userId.Value);
+
+            // Nếu người dùng là Nam, lọc bỏ hoàn toàn các loại trang phục phụ nữ (Đầm, Chân váy, v.v.)
+            if (isMale)
+            {
+                query = query.Where(c => 
+                    c.CategoryId != 3 &&
+                    !c.Name.ToLower().Contains("váy") &&
+                    !c.Name.ToLower().Contains("đầm") &&
+                    !c.Name.ToLower().Contains("croptop") &&
+                    !c.Name.ToLower().Contains("tiểu thư") &&
+                    !c.Name.ToLower().Contains("cao gót") &&
+                    !c.Name.ToLower().Contains("chân váy") &&
+                    !c.Name.ToLower().Contains("dress") &&
+                    !c.Name.ToLower().Contains("skirt") &&
+                    !c.Name.ToLower().Contains("heels")
+                );
+            }
+
+            var items = await query
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new ClothingItemDto
                 {
@@ -223,15 +249,54 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách các danh mục quần áo
+        /// Lấy danh sách các danh mục quần áo (hỗ trợ lọc theo giới tính người dùng)
         /// </summary>
         [HttpGet("categories")]
-        public async Task<IActionResult> GetCategories()
+        public async Task<IActionResult> GetCategories([FromQuery] string? gender = null)
         {
-            var categories = await _context.Categories
-                .Where(c => c.IsActive)
+            var userId = GetCurrentUserId();
+            bool isMale = false;
+
+            if (userId.HasValue)
+            {
+                var user = await _context.Users.FindAsync(userId.Value);
+                if (user != null && (
+                    string.Equals(user.Gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(user.Gender, "Male", StringComparison.OrdinalIgnoreCase) ||
+                    (user.Gender != null && user.Gender.ToLower().Contains("nam"))
+                ))
+                {
+                    isMale = true;
+                }
+            }
+
+            if (!isMale && !string.IsNullOrWhiteSpace(gender))
+            {
+                isMale = string.Equals(gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
+                         string.Equals(gender, "Male", StringComparison.OrdinalIgnoreCase) ||
+                         gender.ToLower().Contains("nam");
+            }
+
+            var query = _context.Categories.Where(c => c.IsActive);
+            if (isMale)
+            {
+                query = query.Where(c => c.Id != 3);
+            }
+
+            var categories = await query
                 .OrderBy(c => c.DisplayOrder)
                 .ToListAsync();
+
+            if (isMale)
+            {
+                foreach (var cat in categories)
+                {
+                    if (cat.Id == 2)
+                    {
+                        cat.Description = "Quần jeans, quần tây, quần short, quần kaki nam";
+                    }
+                }
+            }
 
             return Ok(ApiResponse<List<Category>>.Ok(categories, "Lấy danh mục thành công"));
         }

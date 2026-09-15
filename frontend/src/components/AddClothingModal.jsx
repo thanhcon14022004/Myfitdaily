@@ -21,7 +21,7 @@ import {
 import { apiRequest } from '../api/apiClient';
 import { extractGarmentImage, SEGMENTED_PRESET_ITEMS } from '../utils/garmentExtractor';
 
-const PRESET_IMAGES = [
+const PRESET_IMAGES_FEMALE = [
   { name: 'Áo Sơ Mi Trắng Lụa', url: '/assets/clothes/shirt_white.svg', cat: 1, brand: 'Zara', color: 'Trắng' },
   { name: 'Áo Thun Cotton Đen', url: '/assets/clothes/tshirt_black.svg', cat: 1, brand: 'Uniqlo', color: 'Đen' },
   { name: 'Quần Jeans Levi\'s 501', url: '/assets/clothes/jeans_blue.svg', cat: 2, brand: 'Levi\'s', color: 'Xanh Denim' },
@@ -33,12 +33,32 @@ const PRESET_IMAGES = [
   { name: 'Túi Da Baguette Minimalist', url: '/assets/clothes/bag_leather.svg', cat: 6, brand: 'Charles & Keith', color: 'Nâu Đất' },
 ];
 
-const CATEGORY_OPTIONS = [
+const PRESET_IMAGES_MALE = [
+  { name: 'Áo Sơ Mi Trắng Oxford', url: '/assets/clothes/shirt_white.svg', cat: 1, brand: 'Uniqlo', color: 'Trắng' },
+  { name: 'Áo Thun Cotton Đen Boxy Fit', url: '/assets/clothes/tshirt_black.svg', cat: 1, brand: 'Zara Men', color: 'Đen' },
+  { name: 'Quần Jeans Levi\'s 501', url: '/assets/clothes/jeans_blue.svg', cat: 2, brand: 'Levi\'s', color: 'Xanh Denim' },
+  { name: 'Quần Tây Ống Suông Đen', url: '/assets/clothes/pants_black.svg', cat: 2, brand: 'Massimo Dutti', color: 'Đen' },
+  { name: 'Áo Blazer Nam Nâu Tây', url: '/assets/clothes/blazer_brown.svg', cat: 4, brand: 'Mango Man', color: 'Nâu' },
+  { name: 'Áo Polo Pique Lacoste', url: '/assets/clothes/shirt_white.svg', cat: 1, brand: 'Lacoste', color: 'Xanh Navy' },
+  { name: 'Giày Penny Loafer Da Bò Nam', url: '/assets/clothes/shoes_loafer.svg', cat: 5, brand: 'Cole Haan', color: 'Đen' },
+  { name: 'Sneakers Trắng Classic Retro Nam', url: '/assets/clothes/shoes_sneaker.svg', cat: 5, brand: 'Nike', color: 'Trắng' },
+  { name: 'Túi Messenger Da Nam', url: '/assets/clothes/bag_leather.svg', cat: 6, brand: 'Coach', color: 'Nâu Đất' },
+];
+
+const CATEGORY_OPTIONS_FEMALE = [
   { id: 1, name: 'Áo (Tops)', icon: '👕', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'], defaultSize: 'M' },
   { id: 2, name: 'Quần (Bottoms)', icon: '👖', sizes: ['28', '29', '30', '31', '32', '33', '34'], defaultSize: '30' },
   { id: 3, name: 'Đầm (Dresses)', icon: '👗', sizes: ['XS', 'S', 'M', 'L'], defaultSize: 'M' },
   { id: 4, name: 'Áo Khoác (Outerwear)', icon: '🧥', sizes: ['S', 'M', 'L', 'XL'], defaultSize: 'L' },
-  { id: 5, name: 'Giày (Shoes)', icon: '👟', sizes: ['38', '39', '40', '41', '42', '43', '44'], defaultSize: '40' },
+  { id: 5, name: 'Giày (Shoes)', icon: '👟', sizes: ['36', '37', '38', '39', '40', '41'], defaultSize: '38' },
+  { id: 6, name: 'Phụ Kiện (Accessories)', icon: '👜', sizes: ['FreeSize', 'Standard'], defaultSize: 'FreeSize' }
+];
+
+const CATEGORY_OPTIONS_MALE = [
+  { id: 1, name: 'Áo (Tops)', icon: '👕', sizes: ['S', 'M', 'L', 'XL', 'XXL'], defaultSize: 'L' },
+  { id: 2, name: 'Quần (Bottoms)', icon: '👖', sizes: ['29', '30', '31', '32', '33', '34', '36'], defaultSize: '31' },
+  { id: 4, name: 'Áo Khoác (Outerwear)', icon: '🧥', sizes: ['M', 'L', 'XL', 'XXL'], defaultSize: 'L' },
+  { id: 5, name: 'Giày (Shoes)', icon: '👟', sizes: ['39', '40', '41', '42', '43', '44'], defaultSize: '41' },
   { id: 6, name: 'Phụ Kiện (Accessories)', icon: '👜', sizes: ['FreeSize', 'Standard'], defaultSize: 'FreeSize' }
 ];
 
@@ -76,8 +96,8 @@ function analyzeImageProperties(imageUrl, filename = '') {
           detectedCategory = 2; // Quần
         } else if (lowerName.includes('ao') || lowerName.includes('shirt') || lowerName.includes('tee') || lowerName.includes('polo') || lowerName.includes('hoodie') || lowerName.includes('len') || lowerName.includes('sweater')) {
           detectedCategory = 1; // Áo
-        } else if (lowerName.includes('dam') || lowerName.includes('dress') || lowerName.includes('vay')) {
-          detectedCategory = 3; // Đầm
+        } else if (!isMale && (lowerName.includes('dam') || lowerName.includes('dress') || lowerName.includes('vay'))) {
+          detectedCategory = 3; // Đầm (chỉ cho nữ)
         } else if (lowerName.includes('khoac') || lowerName.includes('blazer') || lowerName.includes('jacket') || lowerName.includes('coat')) {
           detectedCategory = 4; // Áo khoác
         } else if (lowerName.includes('giay') || lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('loafer')) {
@@ -202,7 +222,14 @@ function analyzeImageProperties(imageUrl, filename = '') {
   });
 }
 
-export default function AddClothingModal({ isOpen, onClose, onAdd }) {
+export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
+  const categoryOptions = isMale ? CATEGORY_OPTIONS_MALE : CATEGORY_OPTIONS_FEMALE;
+  const presetImages = isMale ? PRESET_IMAGES_MALE : PRESET_IMAGES_FEMALE;
+  const segmentedPresets = isMale 
+    ? SEGMENTED_PRESET_ITEMS.filter(p => p.categoryId !== 3 && !p.name?.toLowerCase().includes('đầm') && !p.name?.toLowerCase().includes('váy')) 
+    : SEGMENTED_PRESET_ITEMS;
+
   const [imageSourceTab, setImageSourceTab] = useState('file'); // 'file' | 'presets' | 'url'
   const fileInputRef = useRef(null);
 
@@ -215,10 +242,10 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
     imageUrl: '',
     description: '',
     brand: '',
-    size: 'M',
+    size: isMale ? 'L' : 'M',
   });
 
-  const [suggestedSizes, setSuggestedSizes] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+  const [suggestedSizes, setSuggestedSizes] = useState(isMale ? ['S', 'M', 'L', 'XL', 'XXL'] : ['XS', 'S', 'M', 'L', 'XL', 'XXL']);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -234,7 +261,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
 
   // Xử lý khi người dùng bấm chuyển Loại trang phục (Áo / Quần / Đầm...)
   const handleSelectCategory = (catId) => {
-    const opt = CATEGORY_OPTIONS.find(c => c.id === catId);
+    const opt = categoryOptions.find(c => c.id === catId);
     if (!opt) return;
 
     setFormData(prev => ({
@@ -251,12 +278,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
     setScanResult(null);
 
     // 1. Phân tích trực tiếp từ Canvas điểm ảnh và phom dáng
-    const analysis = await analyzeImageProperties(imageUrl, hint);
+    const analysis = await analyzeImageProperties(imageUrl, hint, isMale);
     const detectedColor = explicitColor || analysis.color || 'Trắng';
-    const detectedCatId = explicitCategory || analysis.categoryId || 1;
+    let detectedCatId = explicitCategory || analysis.categoryId || 1;
+    if (isMale && detectedCatId === 3) detectedCatId = 1;
 
     // Cập nhật ngay danh mục và dải size đề xuất
-    const catOpt = CATEGORY_OPTIONS.find(c => c.id === detectedCatId) || CATEGORY_OPTIONS[0];
+    const catOpt = categoryOptions.find(c => c.id === detectedCatId) || categoryOptions[0];
     setSuggestedSizes(catOpt.sizes);
 
     setFormData(prev => ({
@@ -282,8 +310,9 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
         const scan = res.data.data;
         setScanResult(scan);
 
-        const finalCatId = scan.categoryId || detectedCatId;
-        const targetCatOpt = CATEGORY_OPTIONS.find(c => c.id === finalCatId) || catOpt;
+        let finalCatId = scan.categoryId || detectedCatId;
+        if (isMale && finalCatId === 3) finalCatId = 1;
+        const targetCatOpt = categoryOptions.find(c => c.id === finalCatId) || catOpt;
         
         const sizes = scan.suggestedSizes && scan.suggestedSizes.length > 0 
           ? scan.suggestedSizes 
@@ -516,7 +545,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
     border: '#F3D98A'
   };
 
-  const currentCatObj = CATEGORY_OPTIONS.find(c => c.id === formData.categoryId) || CATEGORY_OPTIONS[0];
+  const currentCatObj = categoryOptions.find(c => c.id === formData.categoryId) || categoryOptions[0];
 
   return (
     <div style={{
@@ -824,7 +853,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
                   <span>Bộ Trang Phục Mẫu Đã Tách Nền Chuẩn Studio (Thử đồ tức thì):</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px', marginBottom: '14px' }}>
-                  {SEGMENTED_PRESET_ITEMS.map((preset, idx) => {
+                  {segmentedPresets.map((preset, idx) => {
                     const isSel = formData.imageUrl === preset.imageUrl;
                     return (
                       <div
@@ -888,7 +917,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
                   Các mẫu trang phục đời thường khác:
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
-                  {PRESET_IMAGES.map((preset, idx) => {
+                  {presetImages.map((preset, idx) => {
                     const isSel = formData.imageUrl === preset.url;
                     return (
                       <div
@@ -1114,7 +1143,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd }) {
 
               {/* Category selector pills */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {CATEGORY_OPTIONS.map((cat) => {
+                {categoryOptions.map((cat) => {
                   const isSelected = formData.categoryId === cat.id;
                   return (
                     <button

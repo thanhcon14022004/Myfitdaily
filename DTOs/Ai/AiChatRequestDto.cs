@@ -23,5 +23,15 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Ai
         public double? Temperature { get; set; }
 
         public string? WeatherCondition { get; set; }
+        
+        // Thông số vóc dáng, số đo, tuổi tác, giới tính của người dùng
+        public double? Height { get; set; }
+        public double? Weight { get; set; }
+        public string? Gender { get; set; }
+        public int? Age { get; set; }
+        public string? BodyShape { get; set; }
+        public double? Chest { get; set; }
+        public double? Waist { get; set; }
+        public double? Hips { get; set; }
     }
 }

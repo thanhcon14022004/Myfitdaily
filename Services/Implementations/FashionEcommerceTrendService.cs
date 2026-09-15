@@ -135,19 +135,57 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             return "Trung Niên & Quý Phái (50+ tuổi)";
         }
 
-        public string GetTrendSummaryForAiPrompt(int? age)
+        public string GetTrendSummaryForAiPrompt(int? age, bool isMale = false)
         {
             var trend = GetTrendByAge(age);
-            var hotItemsStr = string.Join(", ", trend.HotTrendingItems.Take(5));
+            List<string> hotItems;
+            string stylistAdvice;
+            string signatureStyles;
+
+            if (isMale)
+            {
+                if (!age.HasValue || age.Value <= 24)
+                {
+                    hotItems = new List<string> { "Áo Thun Cotton Boxy Fit 250gsm Streetwear", "Quần Parachute Pants / Cargo Pants túi hộp", "Quần Jeans ống suông rộng Wash Retro", "Áo Zip Hoodie nỉ bông form rộng", "Giày Sneaker Retro (Adidas Samba / Chunky)" };
+                    stylistAdvice = "Độ tuổi Gen Z nam ưu tiên sự năng động, cá tính streetwear và form dáng phóng khoáng (Oversized / Boxy Fit). Phối đồ theo quy tắc 'trên rộng dưới đứng' (Boxy Tee/Hoodie + Quần Cargo/Jeans suông).";
+                    signatureStyles = "Streetwear Bụi Bặm, Blokecore Nam Tính, Gorpcore Cá Tính, Clean Fit";
+                }
+                else if (age.Value <= 34)
+                {
+                    hotItems = new List<string> { "Áo Blazer Nam May Đo Relaxed Fit", "Áo Polo Pique Cotton / Dệt Kim Phóng Khoáng", "Quần Tây âu xếp ly may đo ống suông", "Áo Sơ mi Oxford Classic Dài Tay", "Giày Penny Loafer da bò cao cấp" };
+                    stylistAdvice = "Độ tuổi 25-34 nam giới chuộng phong cách Smart Casual & Quiet Luxury: Lịch lãm, đĩnh đạc nơi công sở và tự tin, phong độ khi gặp gỡ đối tác hoặc hẹn hò.";
+                    signatureStyles = "Smart Casual Quý Ông, Quiet Luxury, Minimalist Nam Tính, Soft Tailoring";
+                }
+                else if (age.Value <= 49)
+                {
+                    hotItems = new List<string> { "Áo Sơ mi May Đo Cổ Đức Classic", "Quần Âu May Đo Ống Đứng Che Khuyết Điểm", "Áo Blazer Nam Dạ Cao Cấp / Măng-tô", "Áo Len Cashmere Cổ Tròn / Cổ Lọ", "Giày Tây Oxford / Chelsea Boots Da Thật" };
+                    stylistAdvice = "Độ tuổi 35-49 nam giới tôn vinh phong thái quý ông thành đạt, chất liệu len wool/cashmere thượng hạng và đường may may đo hoàn hảo.";
+                    signatureStyles = "Old Money Quý Tộc, Doanh Nhân Thành Đạt, May Đo Tailoring Cao Cấp";
+                }
+                else
+                {
+                    hotItems = new List<string> { "Áo Polo / Sơ Mi Dệt Kim Đũi Mộc Thoáng Khí", "Quần Tây Cạp Chun Co Giãn Thoải Mái", "Áo Khoác Dệt Kim Mỏng Nhẹ Chắn Gió", "Giày Da Lười Đế Mềm Chống Trượt" };
+                    stylistAdvice = "Độ tuổi 50+ nam giới chú trọng sự thoải mái tối đa, chất liệu tự nhiên thoáng mát và màu sắc trầm ấm phong độ.";
+                    signatureStyles = "Thoải Mái Tối Đa, Nhã Nhặn Đĩnh Đạc, Chất Liệu Thiên Nhiên";
+                }
+            }
+            else
+            {
+                hotItems = trend.HotTrendingItems.Take(5).ToList();
+                stylistAdvice = trend.StylistAdviceSummary;
+                signatureStyles = string.Join(", ", trend.SignatureStyles.Take(3));
+            }
+
+            var hotItemsStr = string.Join(", ", hotItems);
             var channelsStr = string.Join(", ", trend.PrimaryChannels);
-            var stylesStr = string.Join(", ", trend.SignatureStyles.Take(3));
 
             return $"ĐỘ TUỔI & XU HƯỚNG THƯƠNG MẠI ĐIỆN TỬ:\n" +
+                   $"- Giới tính khách hàng: {(isMale ? "Nam giới" : "Nữ giới")}\n" +
                    $"- Nhóm tuổi khách hàng: {trend.AgeGroupLabel} (Tuổi thực tế: {(age.HasValue ? age.Value.ToString() : "Chưa khai báo - Mặc định Gen Z / Trẻ")})\n" +
                    $"- Kênh TMĐT thịnh hành nhất: {channelsStr}\n" +
-                   $"- Phong cách & Trào lưu hot-trend: {stylesStr}\n" +
+                   $"- Phong cách & Trào lưu hot-trend: {signatureStyles}\n" +
                    $"- Các món đồ bán chạy & viral nhất trên sàn: {hotItemsStr}\n" +
-                   $"- Lời khuyên định hướng: {trend.StylistAdviceSummary}\n" +
+                   $"- Lời khuyên định hướng: {stylistAdvice}\n" +
                    $"- Dữ liệu bán chạy thực tế: {trend.BestSellingInsight}";
         }
     }

@@ -27,6 +27,7 @@ export default function DashboardPage({
   onDeleteOutfit
 }) {
   const { text, isEnglish } = useLanguage();
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
   const favoriteCount = outfits.filter(o => o.isFavorite).length;
 
   // Category counts
@@ -114,7 +115,7 @@ export default function DashboardPage({
           </div>
           <div style={{ fontSize: '2.3rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>{clothes.length}</div>
           <div style={{ fontSize: '0.78rem', color: '#10B981', marginTop: '8px', fontWeight: 600 }}>
-            {text('✓ Đã phân loại đủ 6 danh mục', '✓ Categorized in 6 sections')}
+            {isMale ? text('✓ Đã phân loại đủ 5 danh mục', '✓ Categorized in 5 sections') : text('✓ Đã phân loại đủ 6 danh mục', '✓ Categorized in 6 sections')}
           </div>
         </div>
 
@@ -241,7 +242,9 @@ export default function DashboardPage({
         }}>
           <div style={{ width: `${(categoryCounts.tops / (clothes.length || 1)) * 100}%`, background: '#D4AF37' }} title="Áo (Tops)" />
           <div style={{ width: `${(categoryCounts.bottoms / (clothes.length || 1)) * 100}%`, background: '#C27D5E' }} title="Quần (Bottoms)" />
-          <div style={{ width: `${(categoryCounts.dresses / (clothes.length || 1)) * 100}%`, background: '#F3D98A' }} title="Đầm (Dresses)" />
+          {!isMale && (
+            <div style={{ width: `${(categoryCounts.dresses / (clothes.length || 1)) * 100}%`, background: '#F3D98A' }} title="Đầm (Dresses)" />
+          )}
           <div style={{ width: `${(categoryCounts.outerwear / (clothes.length || 1)) * 100}%`, background: '#9A7B38' }} title="Áo Khoác (Outerwear)" />
           <div style={{ width: `${(categoryCounts.shoes / (clothes.length || 1)) * 100}%`, background: '#E6CCB2' }} title="Giày (Shoes)" />
           <div style={{ width: `${(categoryCounts.accessories / (clothes.length || 1)) * 100}%`, background: '#B08968' }} title="Phụ Kiện (Accessories)" />
@@ -255,9 +258,11 @@ export default function DashboardPage({
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#C27D5E' }} /> {text('Quần', 'Bottoms')} ({categoryCounts.bottoms})
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F3D98A' }} /> {text('Đầm', 'Dresses')} ({categoryCounts.dresses})
-          </span>
+          {!isMale && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F3D98A' }} /> {text('Đầm', 'Dresses')} ({categoryCounts.dresses})
+            </span>
+          )}
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#9A7B38' }} /> {text('Áo Khoác', 'Outerwear')} ({categoryCounts.outerwear})
           </span>
