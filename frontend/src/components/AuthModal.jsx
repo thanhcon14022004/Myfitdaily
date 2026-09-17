@@ -12,7 +12,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [formData, setFormData] = useState({
     email: 'demo@myfitdaily.com',
     password: 'Password123!',
-    fullName: 'Fashionista (Demo Nß╗»)',
+    fullName: 'Fashionista (Demo Nữ)',
     gender: 'Female',
   });
 
@@ -49,7 +49,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       } else {
         // Backend offline fallback option
         setError(text(
-          "Kh├┤ng thß╗â kß║┐t nß╗æi ─æß║┐n m├íy chß╗º API. Bß║ín c├│ thß╗â nhß║Ñn 'Trß║úi Nghiß╗çm Chß║┐ ─Éß╗Ö Demo' b├¬n d╞░ß╗¢i!",
+          "Không thể kết nối đến máy chủ API. Bạn có thể nhấn 'Trải Nghiệm Chế Độ Demo' bên dưới!",
           "Cannot reach the API server. You can click 'Demo Experience' below!"
         ));
       }
@@ -68,21 +68,21 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       chest: 98,
       waist: 78,
       hips: 95,
-      bodyShape: 'Tam gi├íc ng╞░ß╗úc',
+      bodyShape: 'Tam giác ngược',
       role: 'User',
       subscriptionType: 'Premium',
       avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
     } : {
       id: 999,
-      fullName: 'Fashionista (Demo Nß╗»)',
+      fullName: 'Fashionista (Demo Nữ)',
       email: 'demo@myfitdaily.com',
-      gender: 'Nß╗»',
+      gender: 'Nữ',
       height: 165,
       weight: 52,
       chest: 88,
       waist: 64,
       hips: 92,
-      bodyShape: '─Éß╗ông hß╗ô c├ít',
+      bodyShape: 'Đồng hồ cát',
       role: 'User',
       subscriptionType: 'Premium',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
@@ -148,12 +148,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <Sparkles size={26} color="#080A0F" />
           </div>
           <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>
-            {isLoginMode ? text('Ch├áo Mß╗½ng Trß╗ƒ Lß║íi', 'Welcome Back') : text('Tß║ío T├ái Khoß║ún Mß╗¢i', 'Create New Account')}
+            {isLoginMode ? text('Chào Mừng Trở Lại', 'Welcome Back') : text('Tạo Tài Khoản Mới', 'Create New Account')}
           </h3>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {isLoginMode 
-              ? text('─É─âng nhß║¡p ─æß╗â quß║ún l├╜ tß╗º ─æß╗ô sß╗æ v├á nhß║¡n gß╗úi ├╜ tß╗½ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
-              : text('Gia nhß║¡p cß╗Öng ─æß╗ông thß╗¥i trang th├┤ng minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
+              ? text('Đăng nhập để quản lý tủ đồ số và nhận gợi ý từ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
+              : text('Gia nhập cộng đồng thời trang thông minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
           </p>
         </div>
 
@@ -181,7 +181,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            {text('─É─âng Nhß║¡p', 'Sign In')}
+            {text('Đăng Nhập', 'Sign In')}
           </button>
           <button
             type="button"
@@ -198,7 +198,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            {text('─É─âng K├╜', 'Register')}
+            {text('Đăng Ký', 'Register')}
           </button>
         </div>
 
@@ -243,7 +243,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Sparkles size={14} color="#D4AF37" />
-                {text('T├ái khoß║ún Demo c├│ sß║╡n (Bß║Ñm ─æß╗â ─æiß╗ün)', 'Available Demo Accounts (Click to fill)')}
+                {text('Tài khoản Demo có sẵn (Bấm để điền)', 'Available Demo Accounts (Click to fill)')}
               </span>
               <span style={{ fontSize: '0.72rem', opacity: 0.85 }}>Pass: Password123!</span>
             </div>
@@ -268,12 +268,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ≡ƒæ⌐ {text('Demo Nß╗»', 'Demo Female')}
+                    👩 {text('Demo Nữ', 'Demo Female')}
                   </span>
                   {formData.email === 'demo@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
                 </div>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>demo@myfitdaily.com</span>
-                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>165cm ΓÇó 52kg ΓÇó 88-64-92</span>
+                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>165cm • 52kg • 88-64-92</span>
               </button>
 
               <button
@@ -296,12 +296,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ≡ƒæ¿ {text('Demo Nam', 'Demo Male')}
+                    👨 {text('Demo Nam', 'Demo Male')}
                   </span>
                   {formData.email === 'test@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
                 </div>
                 <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>test@myfitdaily.com</span>
-                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>178cm ΓÇó 70kg ΓÇó 98-78-95</span>
+                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>178cm • 70kg • 98-78-95</span>
               </button>
             </div>
           </div>
@@ -312,14 +312,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           {!isLoginMode && (
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-                {text('Hß╗ì v├á T├¬n', 'Full Name')}
+                {text('Họ và Tên', 'Full Name')}
               </label>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   required
                   id="input-auth-name"
-                  placeholder={text("Nguyß╗àn V─ân A", "Alex Morgan")}
+                  placeholder={text("Nguyễn Văn A", "Alex Morgan")}
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   style={{ width: '100%', paddingLeft: '38px' }}
@@ -331,7 +331,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              {text('─Éß╗ïa chß╗ë Email', 'Email Address')}
+              {text('Địa chỉ Email', 'Email Address')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -349,7 +349,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              {text('Mß║¡t khß║⌐u', 'Password')}
+              {text('Mật khẩu', 'Password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -357,7 +357,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 required
                 minLength={6}
                 id="input-auth-password"
-                placeholder={text("├ìt nhß║Ñt 6 k├╜ tß╗▒", "At least 6 characters")}
+                placeholder={text("Ít nhất 6 ký tự", "At least 6 characters")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{ width: '100%', paddingLeft: '38px' }}
@@ -380,8 +380,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}
           >
             {loading 
-              ? text('─Éang xß╗¡ l├╜...', 'Processing...') 
-              : (isLoginMode ? text('─É─âng Nhß║¡p Ngay', 'Sign In Now') : text('Tß║ío T├ái Khoß║ún', 'Create Account'))}
+              ? text('Đang xử lý...', 'Processing...') 
+              : (isLoginMode ? text('Đăng Nhập Ngay', 'Sign In Now') : text('Tạo Tài Khoản', 'Create Account'))}
           </button>
         </form>
 
@@ -412,7 +412,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            <span>≡ƒæ⌐ V├áo nhanh Demo Nß╗»</span>
+            <span>👩 Vào nhanh Demo Nữ</span>
           </button>
           <button
             type="button"
@@ -432,7 +432,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            <span>≡ƒæ¿ V├áo nhanh Demo Nam</span>
+            <span>👨 Vào nhanh Demo Nam</span>
           </button>
         </div>
       </div>

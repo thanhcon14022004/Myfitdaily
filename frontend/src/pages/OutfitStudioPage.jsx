@@ -713,7 +713,25 @@ export default function OutfitStudioPage({
                     <Trash2 size={12} />
                   </button>
                 )}
-                <img src={item.imageUrl} alt="" style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px' }} />
+                <img 
+                  src={item.imageUrl && item.imageUrl.startsWith('http') 
+                    ? item.imageUrl 
+                    : (item.imageUrl && item.imageUrl.startsWith('/') ? item.imageUrl : `/${item.imageUrl || ''}`)} 
+                  alt={item.name} 
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = item.categoryId === 1 
+                      ? 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80'
+                      : item.categoryId === 2
+                      ? 'https://images.unsplash.com/photo-1542272604-780c96856592?w=400&auto=format&fit=crop&q=80'
+                      : item.categoryId === 4
+                      ? 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&auto=format&fit=crop&q=80'
+                      : item.categoryId === 5
+                      ? 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&auto=format&fit=crop&q=80'
+                      : 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&auto=format&fit=crop&q=80';
+                  }}
+                  style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '6px', marginBottom: '6px', background: 'rgba(255,255,255,0.03)' }} 
+                />
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.name}
                 </div>
