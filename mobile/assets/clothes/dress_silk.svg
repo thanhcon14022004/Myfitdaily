@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 370" width="100%" height="100%">
+  <defs>
+    <!-- Silk charmeuse blush rose gradient -->
+    <linearGradient id="silkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE7F3" />
+      <stop offset="30%" stop-color="#FBCFE8" />
+      <stop offset="70%" stop-color="#F472B6" />
+      <stop offset="100%" stop-color="#DB2777" />
+    </linearGradient>
+    <filter id="dressDrop" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="rgba(219,39,119,0.3)" />
+    </filter>
+  </defs>
+
+  <g filter="url(#dressDrop)">
+    <!-- Delicate Halter Ties -->
+    <path d="M 62,4 Q 70,16 64,30" stroke="#F472B6" stroke-width="1.8" fill="none" />
+    <path d="M 78,4 Q 70,16 76,30" stroke="#F472B6" stroke-width="1.8" fill="none" />
+
+    <!-- Silk Slip Dress Silhouette Contoured to Mannequin -->
+    <path d="M 64,30 Q 70,40 76,30 L 92,48 C 104,62 112,85 108,105 C 104,125 100,135 104,150 C 114,168 116,190 114,225 L 126,365 C 105,368 85,367 70,367 C 55,367 35,368 14,365 L 26,225 C 24,190 26,168 36,150 C 40,135 36,125 32,105 C 28,85 36,62 48,48 Z" fill="url(#silkGrad)" stroke="#DB2777" stroke-width="0.8" />
+
+    <!-- Cowl Neckline Drapes -->
+    <path d="M 54,42 Q 70,54 86,42" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" fill="none" />
+    <path d="M 50,52 Q 70,66 90,52" stroke="rgba(255,255,255,0.5)" stroke-width="1.0" fill="none" />
+
+    <!-- Bias Cut Flowing Satin Drapes -->
+    <path d="M 64,110 Q 80,175 60,350" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" fill="none" />
+    <path d="M 76,110 Q 60,175 80,350" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" fill="none" />
+    <path d="M 45,190 Q 60,250 35,360" stroke="rgba(255,255,255,0.25)" stroke-width="1.0" fill="none" />
+    <path d="M 95,190 Q 80,250 105,360" stroke="rgba(255,255,255,0.25)" stroke-width="1.0" fill="none" />
+
+    <!-- Bottom Hem Curve -->
+    <path d="M 14,365 Q 70,370 126,365" stroke="#BE185D" stroke-width="0.8" fill="none" />
+  </g>
+</svg>

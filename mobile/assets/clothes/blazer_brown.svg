@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 240" width="100%" height="100%">
+  <defs>
+    <!-- Wool fabric gradient -->
+    <linearGradient id="blzFabric" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7B493B" />
+      <stop offset="35%" stop-color="#653A2E" />
+      <stop offset="70%" stop-color="#4E291F" />
+      <stop offset="100%" stop-color="#381B14" />
+    </linearGradient>
+    <!-- Left sleeve lighting -->
+    <linearGradient id="blzSleeveL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#552C21" />
+      <stop offset="45%" stop-color="#734335" />
+      <stop offset="100%" stop-color="#482218" />
+    </linearGradient>
+    <!-- Right sleeve lighting -->
+    <linearGradient id="blzSleeveR" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#482218" />
+      <stop offset="55%" stop-color="#734335" />
+      <stop offset="100%" stop-color="#552C21" />
+    </linearGradient>
+    <!-- Lapel satin sheen -->
+    <linearGradient id="blzLapel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7A4839" />
+      <stop offset="50%" stop-color="#5C3328" />
+      <stop offset="100%" stop-color="#432017" />
+    </linearGradient>
+    <!-- Soft shadow filter -->
+    <filter id="blzDrop" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(0,0,0,0.4)" />
+    </filter>
+  </defs>
+
+  <g filter="url(#blzDrop)">
+    <!-- 1. LEFT SLEEVE (Hangs straight down along torso hugging the arm) -->
+    <path d="M 18,34 C 13,55 11,100 11,155 C 11,185 13,208 16,218 L 31,216 C 31,192 33,155 35,115 C 36,90 38,72 38,72 Z" fill="url(#blzSleeveL)" stroke="#220F0A" stroke-width="0.8" />
+    <!-- Left Sleeve Cuff & Buttons -->
+    <line x1="16" y1="211" x2="31" y2="209" stroke="#220F0A" stroke-width="0.8" />
+    <circle cx="19" cy="204" r="1.4" fill="#1C0D0A" />
+    <circle cx="21" cy="198" r="1.4" fill="#1C0D0A" />
+    <circle cx="23" cy="192" r="1.4" fill="#1C0D0A" />
+
+    <!-- 2. RIGHT SLEEVE (Hangs straight down along torso hugging the arm) -->
+    <path d="M 132,34 C 137,55 139,100 139,155 C 139,185 137,208 134,218 L 119,216 C 119,192 117,155 115,115 C 114,90 112,72 112,72 Z" fill="url(#blzSleeveR)" stroke="#220F0A" stroke-width="0.8" />
+    <!-- Right Sleeve Cuff & Buttons -->
+    <line x1="134" y1="211" x2="119" y2="209" stroke="#220F0A" stroke-width="0.8" />
+    <circle cx="131" cy="204" r="1.4" fill="#1C0D0A" />
+    <circle cx="129" cy="198" r="1.4" fill="#1C0D0A" />
+    <circle cx="127" cy="192" r="1.4" fill="#1C0D0A" />
+
+    <!-- 3. MAIN TORSO BODY WITH V-NECK CUTAWAY (Reveals shirt underneath) -->
+    <!-- Starts at left neck (60,8), goes to left shoulder (18,34), down armpit (38,72), waist (43,128), hips (36,180), hem (34,235) -->
+    <!-- Hem across to right (116,235), up hips (114,180), waist (107,128), armpit (112,72), right shoulder (132,34), right neck (90,8) -->
+    <!-- Then V-cutout: down to center button point (75,142) and back up to left neck (60,8) -->
+    <path d="M 60,8 C 45,15 28,24 18,34 L 38,72 C 41,94 43,115 43,128 C 43,158 37,185 36,208 L 34,235 C 52,239 75,238 75,238 C 75,238 98,239 116,235 L 114,208 C 113,185 107,158 107,128 C 107,115 109,94 112,72 L 132,34 C 122,24 105,15 90,8 L 84,48 L 75,142 L 66,48 Z" fill="url(#blzFabric)" stroke="#220F0A" stroke-width="0.8" />
+
+    <!-- 4. INNER LINING SHADOW BEHIND LAPELS -->
+    <path d="M 64,12 L 75,142 L 68,142 L 60,35 Z" fill="#220F0A" opacity="0.35" />
+    <path d="M 86,12 L 75,142 L 82,142 L 90,35 Z" fill="#220F0A" opacity="0.35" />
+
+    <!-- 5. PRINCESS TAILORED SEAMS -->
+    <path d="M 50,70 Q 53,128 51,228" stroke="rgba(0,0,0,0.22)" stroke-width="0.8" fill="none" />
+    <path d="M 100,70 Q 97,128 99,228" stroke="rgba(0,0,0,0.22)" stroke-width="0.8" fill="none" />
+
+    <!-- 6. NOTCH LAPELS (Left & Right lapels folded elegantly over chest) -->
+    <!-- Left Lapel -->
+    <path d="M 61,8 L 54,48 L 43,56 L 54,62 L 75,142 L 75,124 L 61,52 Z" fill="url(#blzLapel)" stroke="#1C0D0A" stroke-width="0.8" />
+    <!-- Right Lapel -->
+    <path d="M 89,8 L 96,48 L 107,56 L 96,62 L 75,142 L 75,124 L 89,52 Z" fill="url(#blzLapel)" stroke="#1C0D0A" stroke-width="0.8" />
+
+    <!-- Collar Band along back of neck -->
+    <path d="M 61,8 Q 75,13 89,8 L 87,17 Q 75,20 63,17 Z" fill="#381B14" stroke="#1C0D0A" stroke-width="0.6" />
+
+    <!-- 7. BREAST WELT POCKET (Left chest) -->
+    <line x1="49" y1="76" x2="65" y2="73" stroke="#2A130C" stroke-width="1.8" />
+    <rect x="50" y="74" width="14" height="2" fill="#5C3328" />
+
+    <!-- 8. WAIST FLAP POCKETS -->
+    <rect x="38" y="172" width="24" height="5.5" rx="1" fill="#381B14" stroke="#1C0D0A" stroke-width="0.6" />
+    <rect x="88" y="172" width="24" height="5.5" rx="1" fill="#381B14" stroke="#1C0D0A" stroke-width="0.6" />
+
+    <!-- 9. BUTTONS -->
+    <!-- Button 1 at waist crossover -->
+    <circle cx="75" cy="146" r="2.6" fill="#1C0D0A" stroke="#B45309" stroke-width="0.5" />
+    <circle cx="75" cy="146" r="1.0" fill="#78350F" />
+    <!-- Button 2 lower waist -->
+    <circle cx="75" cy="178" r="2.6" fill="#1C0D0A" stroke="#B45309" stroke-width="0.5" />
+    <circle cx="75" cy="178" r="1.0" fill="#78350F" />
+  </g>
+</svg>
