@@ -9,6 +9,8 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.User
         public string? Gender { get; set; }
         public string Role { get; set; } = string.Empty;
         public string SubscriptionType { get; set; } = string.Empty;
+        public DateTime? SubscriptionExpiresAt { get; set; }
+        public string? SubscriptionPeriod { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // Thông số thể trạng & tỉ lệ cơ thể

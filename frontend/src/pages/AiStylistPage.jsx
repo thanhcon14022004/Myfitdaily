@@ -3,6 +3,7 @@ import {
   Sparkles, 
   Send, 
   Bookmark, 
+  Heart,
   User, 
   RotateCcw, 
   Sliders, 
@@ -30,6 +31,8 @@ import { getLiveWeather, ALL_LOCATIONS, setManualCity, clearManualCity } from '.
 
 export default function AiStylistPage({ 
   clothes = [], 
+  outfits = [],
+  onToggleFavoriteAiOutfit = null,
   onSaveAiOutfit, 
   onNavigate, 
   onOpenAddModal, 
@@ -258,7 +261,7 @@ export default function AiStylistPage({
 
         const fallbackNote = isMaleUser
           ? `✦ Tối ưu vóc dáng nam giới (${uShape}): Phom dáng đứng đắn chỉn chu, áp dụng tỷ lệ 4:6 với quần âu/jeans cạp vừa và áo phom Regular giúp hack chiều cao ${uHeight}cm, phong độ và lịch lãm ở tuổi ${uAge}.`
-          : `✦ Tối ưu dáng ${uShape}: Áp dụng quy tắc tỷ lệ vàng 1/3 - 2/3 với quần cạp cao và áo sơ vin giúp kéo dài chân thêm 5cm cho chiều cao ${uHeight}cm, giữ tỷ lệ người thon gọn và cân đối nhất.`;
+          : `✦ Tối ưu dáng ${uShape}: Áp dụng quy tắc phối cân đối 1/3 - 2/3 với quần cạp cao và áo sơ vin giúp kéo dài chân thêm 5cm cho chiều cao ${uHeight}cm, giữ tỷ lệ người thon gọn và cân đối nhất.`;
 
         const fallbackOutfits = isMaleUser ? [
           {
@@ -509,21 +512,40 @@ export default function AiStylistPage({
     }
   }, [activeChatPrompt]);
 
-  const handleSaveToLookbook = (outfit) => {
+  const isOutfitFavorited = (set) => {
+    if (!set) return false;
+    return outfits.some(o => 
+      o.isFavorite && (
+        (set.id && o.id === set.id) || 
+        (o.name && set.name && o.name.toLowerCase() === set.name.toLowerCase())
+      )
+    );
+  };
+
+  const handleToggleFavorite = (outfit) => {
     if (!outfit) return;
-    onSaveAiOutfit({
-      id: Date.now(),
-      name: outfit.name,
-      occasion: 'Casual',
-      season: 'AllSeason',
-      items: outfit.items || [],
-      itemIds: (outfit.items || []).map(i => i.id),
-      stylistNotes: outfit.description,
-      harmonyScore: outfit.harmonyScore || '98%',
-      createdByAi: true,
-      isFavorite: true,
-    });
-    alert(`💖 Đã lưu bộ outfit "${outfit.name}" vào Lookbook của bạn!`);
+    if (onToggleFavoriteAiOutfit) {
+      const nowFav = onToggleFavoriteAiOutfit(outfit);
+      if (nowFav) {
+        alert(`💖 ${text('Đã thêm', 'Added')} "${outfit.name}" ${text('vào mục Trang Phục Yêu Thích!', 'to your Favorite Outfits!')}`);
+      } else {
+        alert(`🤍 ${text('Đã bỏ', 'Removed')} "${outfit.name}" ${text('khỏi mục Trang Phục Yêu Thích.', 'from your Favorite Outfits.')}`);
+      }
+    } else if (onSaveAiOutfit) {
+      onSaveAiOutfit({
+        id: outfit.id || Date.now(),
+        name: outfit.name,
+        occasion: 'Casual',
+        season: 'AllSeason',
+        items: outfit.items || [],
+        itemIds: (outfit.items || []).map(i => i.id),
+        stylistNotes: outfit.description,
+        harmonyScore: outfit.harmonyScore || '98%',
+        createdByAi: true,
+        isFavorite: true,
+      });
+      alert(`💖 ${text('Đã thêm', 'Added')} "${outfit.name}" ${text('vào mục Trang Phục Yêu Thích!', 'to your Favorite Outfits!')}`);
+    }
   };
 
   return (
@@ -1147,19 +1169,30 @@ export default function AiStylistPage({
                               </button>
 
                               <button
-                                onClick={() => handleSaveToLookbook(set)}
-                                className="btn-secondary"
+                                onClick={() => handleToggleFavorite(set)}
+                                id={`btn-fav-ai-${sIdx}`}
+                                title={isOutfitFavorited(set) ? text("Bỏ khỏi Trang phục yêu thích", "Remove from Favorites") : text("Thêm vào Trang phục yêu thích", "Add to Favorite Outfits")}
                                 style={{
-                                  padding: '10px 15px',
-                                  fontSize: '0.8rem',
+                                  padding: '10px 16px',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '5px',
-                                  borderRadius: '24px'
+                                  gap: '6px',
+                                  borderRadius: '24px',
+                                  background: isOutfitFavorited(set) ? 'rgba(244, 63, 94, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                                  border: isOutfitFavorited(set) ? '1.5px solid #F43F5E' : '1px solid var(--border-subtle)',
+                                  color: isOutfitFavorited(set) ? '#FB7185' : 'var(--text-secondary)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
                                 }}
                               >
-                                <Bookmark size={14} />
-                                <span>Lưu</span>
+                                <Heart 
+                                  size={15} 
+                                  color={isOutfitFavorited(set) ? '#F43F5E' : 'currentColor'} 
+                                  fill={isOutfitFavorited(set) ? '#F43F5E' : 'none'} 
+                                />
+                                <span>{isOutfitFavorited(set) ? text('Đã Thích', 'Favorited') : text('Yêu Thích', 'Favorite')}</span>
                               </button>
                             </div>
                           </div>
@@ -1646,21 +1679,29 @@ export default function AiStylistPage({
               {/* Save & Transfer to Studio Buttons */}
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                  onClick={() => handleSaveToLookbook(activeOutfitSet)}
+                  onClick={() => handleToggleFavorite(activeOutfitSet)}
                   className="btn-primary"
                   style={{
                     flex: 1,
                     padding: '8px 12px',
                     fontSize: '0.8rem',
+                    fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    borderRadius: '20px'
+                    borderRadius: '20px',
+                    background: isOutfitFavorited(activeOutfitSet) ? 'rgba(244, 63, 94, 0.25)' : undefined,
+                    border: isOutfitFavorited(activeOutfitSet) ? '1px solid #F43F5E' : undefined,
+                    color: isOutfitFavorited(activeOutfitSet) ? '#FB7185' : undefined,
                   }}
                 >
-                  <Bookmark size={14} />
-                  <span>Lưu Vào Outfits</span>
+                  <Heart 
+                    size={14} 
+                    fill={isOutfitFavorited(activeOutfitSet) ? 'currentColor' : 'none'} 
+                    color={isOutfitFavorited(activeOutfitSet) ? '#F43F5E' : 'currentColor'} 
+                  />
+                  <span>{isOutfitFavorited(activeOutfitSet) ? text('Đã Thích', 'Favorited') : text('Lưu Vào Yêu Thích', 'Save to Favorites')}</span>
                 </button>
 
                 <button

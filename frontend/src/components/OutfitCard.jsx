@@ -2,12 +2,14 @@ import React from 'react';
 import { Heart, Trash2, Sparkles, Layers, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelete }) {
+export default function OutfitCard({ outfit, allItems = [], onToggleFavorite, onDelete }) {
   const { text } = useLanguage();
-  // Find clothing items in this outfit
-  const items = (outfit.itemIds || [])
-    .map(id => allItems.find(item => item.id === id))
-    .filter(Boolean);
+  // Find clothing items in this outfit (either from outfit.items or mapped from allItems by itemIds)
+  const items = (outfit.items && outfit.items.length > 0)
+    ? outfit.items
+    : (outfit.itemIds || [])
+        .map(id => allItems.find(item => item.id === id))
+        .filter(Boolean);
 
   return (
     <div 
@@ -20,8 +22,8 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
         justifyContent: 'space-between',
         position: 'relative',
         borderRadius: 'var(--radius-lg)',
-        border: outfit.isFavorite ? '1px solid rgba(212, 175, 55, 0.45)' : '1px solid var(--border-subtle)',
-        boxShadow: outfit.isFavorite ? '0 12px 35px rgba(212, 175, 55, 0.15)' : 'var(--shadow-md)',
+        border: outfit.isFavorite ? '1.5px solid rgba(244, 63, 94, 0.45)' : '1px solid var(--border-subtle)',
+        boxShadow: outfit.isFavorite ? '0 12px 35px rgba(244, 63, 94, 0.12)' : 'var(--shadow-md)',
       }}
     >
       <div>
@@ -35,7 +37,7 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-              <h4 style={{ fontSize: '1.18rem', fontWeight: 800, color: '#FFF' }}>
+              <h4 style={{ fontSize: '1.18rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {outfit.name}
               </h4>
               {outfit.createdByAi && (
@@ -66,9 +68,10 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: outfit.isFavorite ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                color: outfit.isFavorite ? '#F3D98A' : 'var(--text-muted)',
-                border: '1px solid ' + (outfit.isFavorite ? 'var(--primary)' : 'var(--border-subtle)'),
+                background: outfit.isFavorite ? 'rgba(244, 63, 94, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                color: outfit.isFavorite ? '#F43F5E' : 'var(--text-muted)',
+                border: '1px solid ' + (outfit.isFavorite ? '#F43F5E' : 'var(--border-subtle)'),
+                cursor: 'pointer',
                 transition: 'var(--transition)',
               }}
             >
@@ -149,7 +152,7 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
         </div>
 
         {/* Description or Editorial Note */}
-        {outfit.description && (
+        {(outfit.description || outfit.stylistNotes) && (
           <p style={{
             fontSize: '0.84rem',
             color: 'var(--text-secondary)',
@@ -159,7 +162,7 @@ export default function OutfitCard({ outfit, allItems, onToggleFavorite, onDelet
             paddingLeft: '10px',
             marginBottom: '8px',
           }}>
-            "{outfit.description}"
+            "{outfit.description || outfit.stylistNotes}"
           </p>
         )}
       </div>

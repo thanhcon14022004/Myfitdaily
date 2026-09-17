@@ -133,6 +133,23 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 return BadRequest(ApiResponse<object>.Fail("Danh mục không tồn tại"));
             }
 
+            // Kiểm tra hạn mức lưu trữ tủ đồ theo gói dịch vụ VIP
+            var user = await _context.Users.FindAsync(finalUserId);
+            var subType = user?.SubscriptionType ?? "Free";
+            int maxLimit = subType switch
+            {
+                "PremiumPlus" or "premium_plus" => int.MaxValue,
+                "Premium" or "premium" => 100,
+                _ => 15
+            };
+
+            var currentItemCount = await _context.ClothingItems.CountAsync(c => c.UserId == finalUserId);
+            if (currentItemCount >= maxLimit)
+            {
+                var planName = subType == "Free" ? "Free" : subType;
+                return BadRequest(ApiResponse<object>.Fail($"Tủ đồ của bạn đã đạt hạn mức tối đa ({maxLimit} món) của gói {planName}. Vui lòng nâng cấp lên gói Premium hoặc Premium Plus để mở rộng không gian lưu trữ!"));
+            }
+
             var newItem = new ClothingItem
             {
                 UserId = finalUserId,

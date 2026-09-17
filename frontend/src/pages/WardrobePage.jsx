@@ -245,7 +245,21 @@ export default function WardrobePage({
           </button>
 
           <button
-            onClick={onOpenAddModal}
+            onClick={() => {
+              const subType = user?.subscriptionType || 'Free';
+              const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
+              const isPremium = subType.toLowerCase() === 'premium';
+              const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
+              if (effectiveClothes.length >= maxLimit) {
+                alert(text(
+                  `Tủ đồ của bạn đã đạt giới hạn tối đa (${maxLimit} món) của gói ${subType}. Vui lòng nâng cấp lên gói Premium hoặc Premium Plus để mở rộng không gian lưu trữ!`,
+                  `Your wardrobe has reached the maximum capacity (${maxLimit} items) for the ${subType} plan. Please upgrade to Premium or Premium Plus!`
+                ));
+                onNavigate('premium');
+                return;
+              }
+              onOpenAddModal();
+            }}
             id="btn-wardrobe-add"
             className="btn-primary"
             style={{ padding: '11px 22px', fontSize: '0.88rem' }}
@@ -255,6 +269,103 @@ export default function WardrobePage({
           </button>
         </div>
       </div>
+
+      {/* Thanh Sức Chứa Tủ Đồ (Wardrobe Capacity Meter) */}
+      {(() => {
+        const subType = user?.subscriptionType || 'Free';
+        const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
+        const isPremium = subType.toLowerCase() === 'premium';
+        const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
+        const currentCount = effectiveClothes.length;
+        const percent = isPlus ? 15 : Math.min(100, Math.round((currentCount / maxLimit) * 100));
+        const isNearLimit = !isPlus && currentCount >= (maxLimit * 0.8);
+        const isAtLimit = !isPlus && currentCount >= maxLimit;
+
+        return (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: isAtLimit 
+              ? '1px solid rgba(239, 68, 68, 0.4)' 
+              : '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginBottom: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px'
+          }}>
+            <div style={{ flex: '1 1 280px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#FFF' }}>
+                    {text('Sức Chứa Tủ Đồ:', 'Wardrobe Capacity:')}
+                  </span>
+                  <span className={`badge ${isPlus ? 'badge-rose' : isPremium ? 'badge-gold' : 'badge-indigo'}`} style={{ fontSize: '0.74rem' }}>
+                    {isPlus ? '💎 Premium Plus' : isPremium ? '👑 Premium' : 'Free (Cơ Bản)'}
+                  </span>
+                </div>
+                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: isAtLimit ? '#EF4444' : isNearLimit ? '#F59E0B' : '#D4AF37' }}>
+                  {isPlus 
+                    ? `${currentCount} / Không giới hạn (∞)` 
+                    : `${currentCount} / ${maxLimit} ${text('món', 'items')} (${percent}%)`}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{
+                height: '7px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                borderRadius: '9999px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${percent}%`,
+                  height: '100%',
+                  background: isAtLimit 
+                    ? '#EF4444' 
+                    : isNearLimit 
+                      ? 'linear-gradient(90deg, #F59E0B, #EF4444)' 
+                      : isPlus
+                        ? 'linear-gradient(90deg, #FB7185, #E11D48)'
+                        : 'linear-gradient(90deg, #D4AF37, #10B981)',
+                  borderRadius: '9999px',
+                  transition: 'width 0.4s ease'
+                }} />
+              </div>
+            </div>
+
+            {!isPlus && (
+              <button
+                onClick={() => onNavigate('premium')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  background: isAtLimit 
+                    ? 'linear-gradient(135deg, #EF4444, #DC2626)' 
+                    : 'linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(194, 125, 94, 0.3))',
+                  border: isAtLimit ? 'none' : '1px solid rgba(212, 175, 55, 0.4)',
+                  color: isAtLimit ? '#FFF' : '#FCD34D',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>👑</span>
+                <span>
+                  {isAtLimit 
+                    ? text('Tủ Đã Đầy • Nâng Cấp Ngay', 'Full Closet • Upgrade Now') 
+                    : text('Mở Rộng Sức Chứa (Lên 100+ món)', 'Expand Capacity (100+ items)')}
+                </span>
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Bulk Mode Banner Guide */}
       {isSelectionMode && (

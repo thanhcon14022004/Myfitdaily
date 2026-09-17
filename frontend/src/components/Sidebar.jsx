@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  PanelLeftClose, 
-  SquarePen, 
-  Shirt, 
-  Layers, 
-  LayoutDashboard, 
-  Sparkles, 
-  Crown, 
-  User, 
-  LogOut, 
-  Plus, 
-  Compass, 
+import {
+  Search,
+  PanelLeftClose,
+  SquarePen,
+  Shirt,
+  Layers,
+  LayoutDashboard,
+  Heart,
+  Sparkles,
+  Crown,
+  User,
+  LogOut,
+  Plus,
+  Compass,
   Trash2,
   MoreHorizontal,
   Settings
@@ -33,7 +34,8 @@ export default function Sidebar({
   chatSessions = [],
   activeSessionId,
   onSelectChat,
-  onDeleteChat
+  onDeleteChat,
+  favoriteCount = 0
 }) {
   const { t, language, text } = useLanguage();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -41,13 +43,18 @@ export default function Sidebar({
 
   // User display info
   const displayName = user?.fullName || 'Hà Trung Thành';
-  const displayInitials = user?.fullName 
-    ? user.fullName.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase() 
+  const displayInitials = user?.fullName
+    ? user.fullName.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase()
     : 'HT';
-  const displayPlan = user?.subscriptionType || 'Free';
+  const subType = user?.subscriptionType || 'Free';
+  const displayPlan = (subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus')
+    ? '💎 Premium Plus'
+    : subType.toLowerCase() === 'premium'
+      ? '👑 VIP Premium'
+      : 'Gói Free Cơ Bản';
 
   return (
-    <aside 
+    <aside
       className={`chatgpt-sidebar ${isOpen ? 'open' : 'closed'}`}
       style={{
         width: isOpen ? '260px' : '0px',
@@ -76,7 +83,7 @@ export default function Sidebar({
         boxSizing: 'border-box',
         padding: '8px 8px 8px',
       }}>
-        
+
         {/* Top Header: Brand Name + Quick Search + Collapse Toggle */}
         <div style={{
           display: 'flex',
@@ -86,7 +93,7 @@ export default function Sidebar({
           minHeight: '40px',
         }}>
           {/* Logo / Brand Name */}
-          <div 
+          <div
             onClick={() => setCurrentTab('landing')}
             style={{
               display: 'flex',
@@ -189,7 +196,7 @@ export default function Sidebar({
 
         {/* Navigation Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
-          
+
           {/* Tủ Đồ Số (Wardrobe) */}
           <button
             onClick={() => setCurrentTab('wardrobe')}
@@ -251,7 +258,7 @@ export default function Sidebar({
             <span>{t('nav_outfits')}</span>
           </button>
 
-          {/* Bàn Làm Việc (Dashboard) */}
+          {/* Trang Phục Yêu Thích (Favorite Outfits) */}
           <button
             onClick={() => setCurrentTab('dashboard')}
             className={`sidebar-nav-item ${currentTab === 'dashboard' ? 'active' : ''}`}
@@ -259,11 +266,11 @@ export default function Sidebar({
               width: '100%',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              justifyContent: 'space-between',
               padding: '8px 12px',
               borderRadius: '8px',
               background: currentTab === 'dashboard' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-              color: currentTab === 'dashboard' ? '#FFFFFF' : '#ECECEC',
+              color: currentTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-secondary)',
               fontSize: '0.88rem',
               fontWeight: currentTab === 'dashboard' ? 600 : 500,
               border: 'none',
@@ -271,8 +278,27 @@ export default function Sidebar({
               textAlign: 'left',
             }}
           >
-            <LayoutDashboard size={17} color={currentTab === 'dashboard' ? '#D4AF37' : '#B4B4B4'} />
-            <span>{t('nav_dashboard')}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Heart 
+                size={17} 
+                color={currentTab === 'dashboard' ? '#F43F5E' : 'var(--text-muted)'} 
+                fill={currentTab === 'dashboard' ? '#F43F5E' : 'none'} 
+              />
+              <span>{t('nav_dashboard')}</span>
+            </div>
+            {favoriteCount > 0 && (
+              <span style={{
+                fontSize: '0.7rem',
+                background: 'rgba(244, 63, 94, 0.18)',
+                color: '#FB7185',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                fontWeight: 700,
+                border: '1px solid rgba(244, 63, 94, 0.3)'
+              }}>
+                {favoriteCount}
+              </span>
+            )}
           </button>
 
           {/* AI Stylist */}
@@ -362,7 +388,7 @@ export default function Sidebar({
 
             {/* More options popover */}
             {moreMenuOpen && (
-              <div 
+              <div
                 style={{
                   position: 'absolute',
                   top: '100%',
@@ -425,7 +451,7 @@ export default function Sidebar({
         </div>
 
         {/* Scrollable Center Area: Chat History */}
-        <div 
+        <div
           className="sidebar-scrollable-content"
           style={{
             flex: 1,
@@ -484,10 +510,10 @@ export default function Sidebar({
                     }}
                     title={session.title}
                   >
-                    <span style={{ 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      whiteSpace: 'nowrap', 
+                    <span style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                       flex: 1,
                       marginRight: '6px'
                     }}>
@@ -606,7 +632,7 @@ export default function Sidebar({
 
           {/* Profile Popover Menu */}
           {profileMenuOpen && (
-            <div 
+            <div
               style={{
                 position: 'absolute',
                 bottom: 'calc(100% + 6px)',

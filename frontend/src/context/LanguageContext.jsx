@@ -8,7 +8,7 @@ const translations = {
 
     // Sidebar & Navigation
     nav_explore: 'Khám phá phong cách',
-    nav_dashboard: 'Trang chủ & Thống kê',
+    nav_dashboard: 'Trang phục yêu thích',
     nav_wardrobe: 'Tủ đồ cá nhân',
     nav_outfits: 'Phối đồ Studio',
     nav_ai_stylist: 'AI Stylist Studio',
@@ -32,7 +32,7 @@ const translations = {
 
     // TopBar
     topbar_ai_stylist: 'AI Stylist',
-    topbar_dashboard: 'Bàn làm việc',
+    topbar_dashboard: 'Trang phục yêu thích',
     topbar_wardrobe: 'Tủ đồ số',
     topbar_outfits: 'Atelier phối đồ',
     topbar_profile: 'Hồ sơ cá nhân',
@@ -74,7 +74,7 @@ const translations = {
 
     // Sidebar & Navigation
     nav_explore: 'Explore Styles',
-    nav_dashboard: 'Dashboard & Analytics',
+    nav_dashboard: 'Favorite Outfits',
     nav_wardrobe: 'My Wardrobe',
     nav_outfits: 'Outfit Studio',
     nav_ai_stylist: 'AI Stylist Studio',
@@ -83,12 +83,12 @@ const translations = {
     nav_search: 'Search',
     nav_recent_chats: 'Recent Chats',
     nav_no_chats: 'No chat history yet. Click New Chat to start styling!',
-    nav_delete_chat: 'Delete this chat',
+    nav_delete_chat: 'Delete chat',
     nav_close_sidebar: 'Close sidebar',
     nav_open_sidebar: 'Open sidebar',
 
     // Profile Popover
-    profile_menu_title: 'Personal Profile',
+    profile_menu_title: 'User Profile',
     settings_menu_title: 'Settings',
     upgrade_vip_title: 'Upgrade to Plus / VIP',
     logout_title: 'Log out',
@@ -98,7 +98,7 @@ const translations = {
 
     // TopBar
     topbar_ai_stylist: 'AI Stylist',
-    topbar_dashboard: 'Dashboard',
+    topbar_dashboard: 'Favorite Outfits',
     topbar_wardrobe: 'Digital Wardrobe',
     topbar_outfits: 'Outfit Atelier',
     topbar_profile: 'Profile',

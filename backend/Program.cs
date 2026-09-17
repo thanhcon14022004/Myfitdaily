@@ -125,30 +125,37 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Đảm bảo các cột thông số cơ thể tồn tại trong PostgreSQL Supabase
-try
+// Đảm bảo các cột thông số cơ thể tồn tại trong PostgreSQL Supabase (chạy ngầm để không block khởi động server)
+_ = Task.Run(async () =>
 {
-    using var scope = app.Services.CreateScope();
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    await dbContext.Database.ExecuteSqlRawAsync(@"
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Height"" double precision;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Weight"" double precision;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Chest"" double precision;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Waist"" double precision;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Hips"" double precision;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""BodyShape"" character varying(50);
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Age"" integer;
-        ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""AgeGroup"" character varying(50);
-        ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Brand"" character varying(100);
-        ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Size"" character varying(20);
-        ALTER TABLE ""ClothingItems"" ALTER COLUMN ""ImageUrl"" TYPE text;
-        ALTER TABLE ""ClothingItems"" ALTER COLUMN ""Description"" TYPE text;
-    ");
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"[DB Auto-Migration Warning]: {ex.Message}");
-}
+    try
+    {
+        await Task.Delay(1000); // Đợi server up trước
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Height"" double precision;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Weight"" double precision;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Chest"" double precision;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Waist"" double precision;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Hips"" double precision;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""BodyShape"" character varying(50);
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""Age"" integer;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""AgeGroup"" character varying(50);
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionExpiresAt"" timestamp with time zone;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionPeriod"" character varying(20);
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Brand"" character varying(100);
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Size"" character varying(20);
+            ALTER TABLE ""ClothingItems"" ALTER COLUMN ""ImageUrl"" TYPE text;
+            ALTER TABLE ""ClothingItems"" ALTER COLUMN ""Description"" TYPE text;
+        ");
+        Console.WriteLine("[DB Auto-Migration]: Supabase database schema verified successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[DB Auto-Migration Warning]: {ex.Message}");
+    }
+});
 
 app.Run();
 

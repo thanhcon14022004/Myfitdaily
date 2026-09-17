@@ -28,7 +28,12 @@ namespace MYFITDAILY_EXE201_Group6.Entities
 
         [Required]
         [MaxLength(20)]
-        public string SubscriptionType { get; set; } = "Free"; // "Free", "Premium"
+        public string SubscriptionType { get; set; } = "Free"; // "Free", "Premium", "PremiumPlus"
+
+        public DateTime? SubscriptionExpiresAt { get; set; }
+
+        [MaxLength(20)]
+        public string? SubscriptionPeriod { get; set; } // "Monthly", "Yearly"
 
         // Thông số cơ thể và tỉ lệ vóc dáng (Bắt buộc cho AI Stylist cá nhân hóa)
         public double? Height { get; set; }     // Chiều cao (cm)

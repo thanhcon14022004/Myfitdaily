@@ -375,8 +375,19 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fullName}</h3>
-              <span className="badge badge-rose">
-                <Crown size={12} /> {user?.subscriptionType || 'Free'}
+              <span className={`badge ${
+                (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+                  ? 'badge-rose'
+                  : user?.subscriptionType?.toLowerCase() === 'premium'
+                    ? 'badge-gold'
+                    : 'badge-indigo'
+              }`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Crown size={12} />
+                {(user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+                  ? 'VIP Premium Plus'
+                  : user?.subscriptionType?.toLowerCase() === 'premium'
+                    ? 'VIP Premium'
+                    : 'Gói Free'}
               </span>
               {user?.height && user?.weight && (
                 <span className="badge badge-gold" style={{ fontSize: '0.75rem' }}>
@@ -386,6 +397,11 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
               {user?.email || 'user@myfitdaily.com'}
+              {user?.subscriptionExpiresAt && (
+                <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: '#10B981' }}>
+                  • {text('Hiệu lực đến:', 'Valid until:')} {new Date(user.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
+                </span>
+              )}
             </p>
             <div style={{ marginTop: '8px' }}>
               <button
@@ -393,12 +409,18 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 onClick={() => onNavigate('premium')}
                 style={{
                   fontSize: '0.82rem',
-                  color: '#FB7185',
+                  color: '#D4AF37',
                   fontWeight: 700,
                   textDecoration: 'underline',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0
                 }}
               >
-                {text('Nâng cấp tài khoản Premium →', 'Upgrade to Premium VIP Account →')}
+                {user?.subscriptionType === 'PremiumPlus'
+                  ? text('Quản lý gói VIP Premium Plus →', 'Manage Premium Plus VIP →')
+                  : text('Nâng cấp gói thành viên VIP (Từ 49K) →', 'Upgrade VIP Membership (From 49K) →')}
               </button>
             </div>
           </div>
@@ -904,7 +926,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                   {text('Tỷ lệ Eo/Mông (WHR):', 'Waist-to-Hip Ratio (WHR):')}{' '}
                   <strong style={{ color: '#D4AF37' }}>{whr}</strong>
                   {parseFloat(whr) <= 0.75 
-                    ? text(' — Tỷ lệ vàng thắt eo quyến rũ ✨', ' — Golden hour curve ✨') 
+                    ? text(' — Đường nét thắt eo quyến rũ ✨', ' — Graceful waist curve ✨') 
                     : text(' — Đường nét cân đối', ' — Harmonious silhouette')}
                 </span>
               </div>

@@ -15,6 +15,15 @@ import {
 } from 'lucide-react';
 import { extractGarmentImage } from '../utils/garmentExtractor';
 import { useLanguage } from '../context/LanguageContext';
+import {
+  AtelierTrousers,
+  AtelierShirt,
+  AtelierTShirt,
+  AtelierBlazer,
+  AtelierShoes,
+  AtelierDress,
+  AtelierBag
+} from './AtelierGarments';
 
 /**
  * 5 Dáng Người Chuẩn Nhân Trắc Học (Standard Body Shapes)
@@ -301,6 +310,7 @@ export default function VirtualMannequin({
   // Tùy chọn hiển thị
   const [showMeasurements, setShowMeasurements] = useState(true);
   const [activeSlotFocus, setActiveSlotFocus] = useState(null);
+  const [fittingMode, setFittingMode] = useState('atelier'); // 'atelier' (Phom Chuẩn 3D) hoặc 'flatlay' (Ảnh Bóc Tách)
 
   // =========================================================================
   // HỆ THỐNG XOAY 3D SÂN KHẤU SHOWROOM (3D TURNTABLE ROTATION SYSTEM)
@@ -656,28 +666,84 @@ export default function VirtualMannequin({
             </span>
           </div>
 
-          {/* Bật/Tắt Thước đo */}
-          <button
-            onClick={() => setShowMeasurements(!showMeasurements)}
-            title="Bật/Tắt thước đo số đo 3 vòng"
-            style={{
-              background: showMeasurements ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-              color: showMeasurements ? '#F3D98A' : 'var(--text-muted)',
-              border: '1px solid rgba(212, 175, 55, 0.3)',
-              padding: '4px 12px',
-              borderRadius: 'var(--radius-full)',
-              cursor: 'pointer',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Chuyển Chế Độ Thử Đồ: Phom Chuẩn 3D vs Ảnh Bóc Tách */}
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              transition: 'var(--transition)'
-            }}
-          >
-            <Ruler size={13} />
-            <span>{showMeasurements ? 'Ẩn Số Đo' : 'Hiện Số Đo'}</span>
-          </button>
+              gap: '2px',
+              background: 'rgba(255,255,255,0.05)',
+              padding: '2px 4px',
+              borderRadius: 'var(--radius-full)',
+              border: '1px solid rgba(212, 175, 55, 0.25)'
+            }}>
+              <button
+                onClick={() => setFittingMode('atelier')}
+                title="Phom Chuẩn 3D: Quần dài chạm mắt cá chân, áo ôm vai vừa vặn, giày xỏ cả 2 chân"
+                style={{
+                  background: fittingMode === 'atelier' ? 'linear-gradient(135deg, #D4AF37, #B8860B)' : 'transparent',
+                  color: fittingMode === 'atelier' ? '#07090E' : 'var(--text-muted)',
+                  border: 'none',
+                  padding: '3px 9px',
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Sparkles size={11} />
+                <span>Phom Chuẩn 3D</span>
+              </button>
+              <button
+                onClick={() => setFittingMode('flatlay')}
+                title="Ảnh Bóc Tách: Hiển thị ảnh chụp sản phẩm bóc nền phẳng"
+                style={{
+                  background: fittingMode === 'flatlay' ? 'rgba(212, 175, 55, 0.25)' : 'transparent',
+                  color: fittingMode === 'flatlay' ? '#F3D98A' : 'var(--text-muted)',
+                  border: 'none',
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Layers size={11} />
+                <span>Ảnh Bóc Tách</span>
+              </button>
+            </div>
+
+            {/* Bật/Tắt Thước đo */}
+            <button
+              onClick={() => setShowMeasurements(!showMeasurements)}
+              title="Bật/Tắt thước đo số đo 3 vòng"
+              style={{
+                background: showMeasurements ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                color: showMeasurements ? '#F3D98A' : 'var(--text-muted)',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                transition: 'var(--transition)'
+              }}
+            >
+              <Ruler size={13} />
+              <span>{showMeasurements ? 'Ẩn Số Đo' : 'Hiện Số Đo'}</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -827,69 +893,99 @@ export default function VirtualMannequin({
               onClick={() => setActiveSlotFocus('bottom')}
               style={{
                 position: 'absolute',
-                top: isMale ? '20.5%' : '20.0%',
+                top: isMale ? '20.0%' : '19.5%',
                 left: isMale ? '50.0%' : '52.0%',
                 transform: 'translate(-50%, 0)',
                 width: `${Math.round((isMale ? 40 : 36) * Math.max(sChest, sHips))}%`,
+                height: isMale ? '56%' : '58%',
                 cursor: 'pointer',
                 zIndex: 5,
                 filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.65))',
                 transition: 'all 0.3s ease'
               }}
             >
-              <IsolatedClothingImage
-                src={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.imageUrl}
-                alt={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.name || 'Đầm liền'}
-                maxHeight={compact ? '300px' : '360px'}
-              />
+              {fittingMode === 'atelier' ? (
+                <AtelierDress item={resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop} />
+              ) : (
+                <IsolatedClothingImage
+                  src={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.imageUrl}
+                  alt={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.name || 'Đầm liền'}
+                  maxHeight={compact ? '300px' : '360px'}
+                />
+              )}
             </div>
           )}
 
-          {/* 2. BOTTOMS (Quần tây / Quần Jeans - Ôm từ eo xuống sát cổ chân) */}
+          {/* 2. BOTTOMS (Quần tây / Quần Jeans - Kéo dài thẳng tắp từ eo xuống sát mắt cá chân) */}
           {!isDress && resolvedBottom && (
             <div
               onClick={() => setActiveSlotFocus('bottom')}
               style={{
                 position: 'absolute',
-                top: isMale ? '41.5%' : '41.0%',
+                top: isMale ? '40.6%' : '40.0%',
                 left: isMale ? '50.0%' : '51.2%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 37 : 33) * sHips)}%`,
+                width: `${Math.round((isMale ? 38 : 34) * sHips)}%`,
+                height: isMale ? '52.5%' : '53.0%',
                 cursor: 'pointer',
                 zIndex: 4,
-                filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.7))',
+                filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.75))',
                 transition: 'all 0.3s ease'
               }}
             >
-              <IsolatedClothingImage
-                src={resolvedBottom.imageUrl}
-                alt={resolvedBottom.name || ''}
-                maxHeight={compact ? '235px' : '275px'}
-              />
+              {fittingMode === 'atelier' ? (
+                <AtelierTrousers
+                  item={resolvedBottom}
+                  isJeans={
+                    (resolvedBottom.name || '').toLowerCase().includes('jean') ||
+                    (resolvedBottom.name || '').toLowerCase().includes('denim') ||
+                    (resolvedBottom.name || '').toLowerCase().includes('bò')
+                  }
+                />
+              ) : (
+                <IsolatedClothingImage
+                  src={resolvedBottom.imageUrl}
+                  alt={resolvedBottom.name || ''}
+                  maxHeight={compact ? '235px' : '275px'}
+                />
+              )}
             </div>
           )}
 
-          {/* 3. TOP (Áo sơ mi / Áo thun - Ôm vừa vặn vai và ngực ma-nơ-canh) */}
+          {/* 3. TOP (Áo sơ mi / Áo thun - Ôm vừa vặn vai và ngực ma-nơ-canh, phủ kín bụng) */}
           {!isDress && resolvedTop && (
             <div
               onClick={() => setActiveSlotFocus('top')}
               style={{
                 position: 'absolute',
-                top: isMale ? '20.5%' : '20.2%',
+                top: isMale ? '19.8%' : '19.5%',
                 left: isMale ? '50.0%' : '53.0%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 42 : 38) * Math.max(sChest, sShoulder))}%`,
+                width: `${Math.round((isMale ? 46 : 42) * Math.max(sChest, sShoulder))}%`,
+                height: isMale ? '28.5%' : '27.5%',
                 cursor: 'pointer',
                 zIndex: 5,
-                filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.7))',
+                filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.7))',
                 transition: 'all 0.3s ease'
               }}
             >
-              <IsolatedClothingImage
-                src={resolvedTop.imageUrl}
-                alt={resolvedTop.name || ''}
-                maxHeight={compact ? '130px' : '155px'}
-              />
+              {fittingMode === 'atelier' ? (
+                ((resolvedTop.name || '').toLowerCase().includes('sơ mi') ||
+                 (resolvedTop.name || '').toLowerCase().includes('shirt') ||
+                 (resolvedTop.name || '').toLowerCase().includes('polo') ||
+                 (resolvedTop.name || '').toLowerCase().includes('cổ bẻ') ||
+                 (resolvedTop.name || '').toLowerCase().includes('oxford')) ? (
+                  <AtelierShirt item={resolvedTop} />
+                ) : (
+                  <AtelierTShirt item={resolvedTop} />
+                )
+              ) : (
+                <IsolatedClothingImage
+                  src={resolvedTop.imageUrl}
+                  alt={resolvedTop.name || ''}
+                  maxHeight={compact ? '130px' : '155px'}
+                />
+              )}
             </div>
           )}
 
@@ -899,66 +995,90 @@ export default function VirtualMannequin({
               onClick={() => setActiveSlotFocus('outer')}
               style={{
                 position: 'absolute',
-                top: isMale ? '20.2%' : '19.8%',
+                top: isMale ? '19.5%' : '19.2%',
                 left: isMale ? '50.0%' : '53.0%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 46 : 41) * sShoulder)}%`,
+                width: `${Math.round((isMale ? 50 : 45) * sShoulder)}%`,
+                height: isMale ? '44%' : '42%',
                 cursor: 'pointer',
                 zIndex: 6,
-                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.8))',
+                filter: 'drop-shadow(0 10px 22px rgba(0,0,0,0.85))',
                 transition: 'all 0.3s ease'
               }}
             >
-              <IsolatedClothingImage
-                src={resolvedOuter.imageUrl}
-                alt={resolvedOuter.name || ''}
-                maxHeight={compact ? '210px' : '240px'}
-              />
+              {fittingMode === 'atelier' ? (
+                <AtelierBlazer item={resolvedOuter} />
+              ) : (
+                <IsolatedClothingImage
+                  src={resolvedOuter.imageUrl}
+                  alt={resolvedOuter.name || ''}
+                  maxHeight={compact ? '210px' : '240px'}
+                />
+              )}
             </div>
           )}
 
-          {/* 5. SHOES (Giày vừa vặn bàn chân) */}
+          {/* 5. SHOES (Giày vừa vặn cả 2 bàn chân ma-nơ-canh trên bục xoay) */}
           {resolvedShoes && (
             <div
               onClick={() => setActiveSlotFocus('shoes')}
               style={{
                 position: 'absolute',
-                bottom: '12px',
+                bottom: '1.2%',
                 left: isMale ? '50.0%' : '52.5%',
                 transform: 'translate(-50%, 0)',
-                width: isMale ? '21%' : '17%',
+                width: isMale ? '32%' : '28%',
+                height: '38px',
                 cursor: 'pointer',
                 zIndex: 4,
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.6))'
+                filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.65))'
               }}
             >
-              <IsolatedClothingImage
-                src={resolvedShoes.imageUrl}
-                alt={resolvedShoes.name || ''}
-                maxHeight="34px"
-              />
+              {fittingMode === 'atelier' ? (
+                <AtelierShoes
+                  item={resolvedShoes}
+                  isSneaker={
+                    (resolvedShoes.name || '').toLowerCase().includes('sneaker') ||
+                    (resolvedShoes.name || '').toLowerCase().includes('thể thao') ||
+                    (resolvedShoes.name || '').toLowerCase().includes('samba') ||
+                    (resolvedShoes.name || '').toLowerCase().includes('salomon') ||
+                    (resolvedShoes.name || '').toLowerCase().includes('running') ||
+                    (resolvedShoes.name || '').toLowerCase().includes('chunky')
+                  }
+                />
+              ) : (
+                <IsolatedClothingImage
+                  src={resolvedShoes.imageUrl}
+                  alt={resolvedShoes.name || ''}
+                  maxHeight="34px"
+                />
+              )}
             </div>
           )}
 
-          {/* 6. ACCESSORY (Túi xách) */}
+          {/* 6. ACCESSORY (Túi xách da đeo chéo) */}
           {resolvedAccessory && (
             <div
               onClick={() => setActiveSlotFocus('accessory')}
               style={{
                 position: 'absolute',
-                top: isMale ? '40%' : '38%',
-                right: '8%',
+                top: isMale ? '38%' : '36%',
+                right: '6%',
                 width: '24%',
                 cursor: 'pointer',
                 zIndex: 7,
                 filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.7))'
               }}
             >
-              <IsolatedClothingImage
-                src={resolvedAccessory.imageUrl}
-                alt={resolvedAccessory.name || ''}
-                maxHeight="100px"
-              />
+              {fittingMode === 'atelier' ? (
+                <AtelierBag item={resolvedAccessory} />
+              ) : (
+                <IsolatedClothingImage
+                  src={resolvedAccessory.imageUrl}
+                  alt={resolvedAccessory.name || ''}
+                  maxHeight="100px"
+                />
+              )}
             </div>
           )}
 

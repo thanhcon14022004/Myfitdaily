@@ -257,6 +257,24 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 }
             }
 
+            // Kiểm tra hạn mức gợi ý outfit AI theo gói VIP (Gói Free tối đa 5 lượt/ngày, Premium & Premium Plus không giới hạn)
+            if (userId.HasValue && user != null)
+            {
+                var subType = string.IsNullOrWhiteSpace(user.SubscriptionType) ? "Free" : user.SubscriptionType;
+                bool isFree = string.Equals(subType, "Free", StringComparison.OrdinalIgnoreCase);
+                if (isFree)
+                {
+                    var todayUtc = DateTime.UtcNow.Date;
+                    var dailyUsage = await _context.AiStylistHistories
+                        .CountAsync(h => h.UserId == user.Id && h.CreatedAt >= todayUtc);
+
+                    if (dailyUsage >= 5)
+                    {
+                        return ApiResponse<AiRecommendResponseDto>.Fail("Bạn đã sử dụng hết hạn mức 5 gợi ý outfit/ngày của gói Free. Vui lòng nâng cấp lên gói Premium (49.000đ) hoặc Premium Plus để nhận gợi ý AI không giới hạn!");
+                    }
+                }
+            }
+
             bool isUserMale = user != null && (
                 string.Equals(user.Gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(user.Gender, "Male", StringComparison.OrdinalIgnoreCase) ||

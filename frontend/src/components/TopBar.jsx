@@ -75,17 +75,69 @@ export default function TopBar({
         </div>
       </div>
 
-      {/* Right Area: User Workspace / Profile Pill */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div 
+      {/* Right Area: VIP Badge & User Profile Pill */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* VIP Status Badge */}
+        <button
+          onClick={() => setCurrentTab('premium')}
+          id="btn-topbar-vip-badge"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 12px',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.76rem',
+            fontWeight: 700,
+            background: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+              ? 'linear-gradient(135deg, rgba(251, 113, 133, 0.25), rgba(225, 29, 72, 0.35))'
+              : user?.subscriptionType?.toLowerCase() === 'premium'
+                ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(194, 125, 94, 0.35))'
+                : 'var(--hover-bg)',
+            color: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+              ? '#FB7185'
+              : user?.subscriptionType?.toLowerCase() === 'premium'
+                ? '#FCD34D'
+                : 'var(--text-secondary)',
+            border: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+              ? '1px solid rgba(251, 113, 133, 0.5)'
+              : user?.subscriptionType?.toLowerCase() === 'premium'
+                ? '1px solid rgba(212, 175, 55, 0.5)'
+                : '1px solid var(--border-subtle)',
+            transition: 'all 0.2s ease',
+          }}
+          title={text("Xem chi tiết quyền lợi gói VIP", "View VIP membership benefits")}
+        >
+          {(user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus') ? (
+            <>
+              <span>💎</span>
+              <span>Premium Plus</span>
+            </>
+          ) : user?.subscriptionType?.toLowerCase() === 'premium' ? (
+            <>
+              <span>👑</span>
+              <span>VIP Premium</span>
+            </>
+          ) : (
+            <>
+              <span>⭐</span>
+              <span>{text('Nâng Cấp VIP', 'Upgrade VIP')}</span>
+            </>
+          )}
+        </button>
+
+        {/* User Workspace Profile Pill */}
+        <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             padding: '4px 10px 4px 6px',
             borderRadius: '9999px',
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'var(--hover-bg-subtle)',
+            border: '1px solid var(--border-subtle)',
             cursor: 'pointer',
           }}
           onClick={() => setCurrentTab('profile')}
@@ -105,7 +157,7 @@ export default function TopBar({
           }}>
             {user?.fullName ? user.fullName[0].toUpperCase() : 'H'}
           </div>
-          <span style={{ fontSize: '0.75rem', color: '#D1D5DB', fontWeight: 500 }} className="hide-mobile">
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }} className="hide-mobile">
             {text('Cá nhân', 'Personal')}
           </span>
         </div>

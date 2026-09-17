@@ -101,6 +101,8 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 Gender = user.Gender,
                 Role = user.Role,
                 SubscriptionType = user.SubscriptionType,
+                SubscriptionExpiresAt = user.SubscriptionExpiresAt,
+                SubscriptionPeriod = user.SubscriptionPeriod,
                 CreatedAt = user.CreatedAt,
                 Height = user.Height,
                 Weight = user.Weight,

@@ -152,6 +152,20 @@ export default function App() {
   };
 
   const handleAddClothing = async (newItem) => {
+    const subType = user?.subscriptionType || 'Free';
+    const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
+    const isPremium = subType.toLowerCase() === 'premium';
+    const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
+
+    if (clothes.length >= maxLimit) {
+      alert(text(
+        `Tủ đồ của bạn đã đạt giới hạn tối đa (${maxLimit} món) của gói ${subType}. Vui lòng nâng cấp lên gói Premium hoặc Premium Plus để mở rộng không gian lưu trữ!`,
+        `Your wardrobe has reached the maximum limit (${maxLimit} items) for the ${subType} plan. Please upgrade to Premium or Premium Plus to expand your digital closet!`
+      ));
+      setCurrentTab('premium');
+      return false;
+    }
+
     try {
       const res = await apiRequest('/clothes', {
         method: 'POST',
@@ -169,13 +183,19 @@ export default function App() {
       });
       if (res.ok && res.data?.data) {
         setClothes(prev => [res.data.data, ...prev]);
-        return;
+        return true;
       }
     } catch (err) {
+      if (err?.message?.includes('hạn mức') || err?.message?.includes('giới hạn')) {
+        alert(err.message);
+        setCurrentTab('premium');
+        return false;
+      }
       console.warn("API add clothing failed, saving locally:", err);
     }
     // Local fallback
     setClothes(prev => [{ ...newItem, id: Date.now() }, ...prev]);
+    return true;
   };
 
   const handleDeleteClothing = async (id) => {
@@ -230,14 +250,64 @@ export default function App() {
     setOutfits([aiOutfit, ...outfits]);
   };
 
-  const handleUpgradePremium = () => {
-    const updated = { ...user, subscriptionType: 'Premium' };
-    setUser(updated);
-    localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
-    alert(text(
-      "🎉 Chúc mừng bạn đã nâng cấp thành công gói MYFITDAILY VIP Premium!",
-      "🎉 Congratulations! You have successfully upgraded to MYFITDAILY VIP Premium!"
-    ));
+  const handleToggleFavoriteAiOutfit = (aiOutfit) => {
+    if (!aiOutfit) return false;
+    let isNowFav = false;
+    setOutfits(prevOutfits => {
+      const existingIndex = prevOutfits.findIndex(o => 
+        (aiOutfit.id && o.id === aiOutfit.id) || 
+        (o.name && aiOutfit.name && o.name.toLowerCase() === aiOutfit.name.toLowerCase())
+      );
+
+      if (existingIndex >= 0) {
+        const existing = prevOutfits[existingIndex];
+        isNowFav = !existing.isFavorite;
+        const updated = [...prevOutfits];
+        updated[existingIndex] = { ...existing, isFavorite: isNowFav };
+        return updated;
+      } else {
+        isNowFav = true;
+        const newOutfit = {
+          id: aiOutfit.id || Date.now(),
+          name: aiOutfit.name,
+          occasion: aiOutfit.occasion || 'Casual',
+          season: aiOutfit.season || 'AllSeason',
+          items: aiOutfit.items || [],
+          itemIds: (aiOutfit.items || []).map(i => i.id),
+          stylistNotes: aiOutfit.description || aiOutfit.stylistNotes,
+          harmonyScore: aiOutfit.harmonyScore || '98%',
+          createdByAi: true,
+          isFavorite: true,
+          createdAt: Date.now()
+        };
+        return [newOutfit, ...prevOutfits];
+      }
+    });
+    return isNowFav;
+  };
+
+  const handleUpgradePremium = async (planId = 'Premium', cycle = 'Monthly') => {
+    try {
+      const res = await apiRequest('/api/subscription/upgrade', {
+        method: 'POST',
+        body: JSON.stringify({
+          planId: planId,
+          billingCycle: cycle === 'yearly' ? 'Yearly' : 'Monthly',
+          paymentMethod: 'VietQR'
+        })
+      });
+
+      const updated = res?.data || { ...user, subscriptionType: planId };
+      setUser(updated);
+      localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
+      return updated;
+    } catch (err) {
+      console.error("Upgrade API error, fallback local:", err);
+      const updated = { ...user, subscriptionType: planId };
+      setUser(updated);
+      localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
+      return updated;
+    }
   };
 
   const handleToggleSidebar = () => {
@@ -323,6 +393,7 @@ export default function App() {
         activeSessionId={selectedChatId}
         onSelectChat={handleSelectChat}
         onDeleteChat={handleDeleteChat}
+        favoriteCount={outfits.filter(o => o.isFavorite).length}
       />
 
       {/* Mobile Drawer Backdrop */}
@@ -343,7 +414,15 @@ export default function App() {
         />
 
         {/* Page Content Body */}
-        <main style={{ flex: 1, minHeight: 0 }}>
+        <main 
+          style={{ 
+            flex: currentTab === 'ai-stylist' ? '1 1 0%' : '1 0 auto',
+            minHeight: currentTab === 'ai-stylist' ? 0 : 'auto',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
           {currentTab === 'landing' && (
             <LandingPage
               onGetStarted={() => {
@@ -395,6 +474,8 @@ export default function App() {
           {currentTab === 'ai-stylist' && (
             <AiStylistPage
               clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
+              outfits={outfits}
+              onToggleFavoriteAiOutfit={handleToggleFavoriteAiOutfit}
               onSaveAiOutfit={handleSaveAiOutfit}
               onNavigate={setCurrentTab}
               onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -428,8 +509,13 @@ export default function App() {
           <footer style={{
             background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
-            padding: '28px 0 20px',
+            padding: '32px 0 24px',
             textAlign: 'center',
+            marginTop: 'auto',
+            flexShrink: 0,
+            width: '100%',
+            position: 'relative',
+            zIndex: 10,
             transition: 'background 0.3s ease, border-color 0.3s ease'
           }}>
             <div className="container">
