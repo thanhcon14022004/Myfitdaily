@@ -28,3 +28,6 @@ pnpm-debug.log*
 ## OS & General
 .DS_Store
 Thumbs.db
+
+mobile/
+
