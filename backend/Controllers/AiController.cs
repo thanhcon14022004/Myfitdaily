@@ -20,7 +20,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// Y├¬u cß║ºu AI Stylist ph├ón t├¡ch tß╗º ─æß╗ô v├á gß╗úi ├╜ bß╗Ö phß╗æi trang phß╗Ñc ph├╣ hß╗úp
+        /// Yêu cầu AI Stylist phân tích tủ đồ và gợi ý bộ phối trang phục phù hợp
         /// </summary>
         [HttpPost("recommend")]
         public async Task<IActionResult> GetRecommendation([FromBody] AiRecommendRequestDto request)
@@ -42,7 +42,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// Tr├▓ chuyß╗çn trß╗▒c tiß║┐p vß╗¢i AI Stylist (C├│ hß╗ç thß╗æng Fashion Guardrail chß╗ë trß║ú lß╗¥i vß╗ü thß╗¥i trang & trang phß╗Ñc)
+        /// Trò chuyện trực tiếp với AI Stylist (Có hệ thống Fashion Guardrail chỉ trả lời về thời trang & trang phục)
         /// </summary>
         [HttpPost("chat")]
         public async Task<IActionResult> ChatWithStylist([FromBody] AiChatRequestDto request)
@@ -64,7 +64,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// Lß║Ñy dß╗» liß╗çu Radar xu h╞░ß╗¢ng thß╗¥i trang tr├¬n c├íc s├án TM─ÉT (Shopee, TikTok Shop, Taobao, Zara, Uniqlo) ph├ón h├│a theo tß╗½ng ─æß╗Ö tuß╗òi
+        /// Lấy dữ liệu Radar xu hướng thời trang trên các sàn TMĐT (Shopee, TikTok Shop, Taobao, Zara, Uniqlo) phân hóa theo từng độ tuổi
         /// </summary>
         [HttpGet("ecommerce-trends")]
         public IActionResult GetEcommerceTrends([FromQuery] string? ageGroupKey, [FromQuery] int? age)
@@ -72,21 +72,21 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             if (age.HasValue)
             {
                 var trend = _trendService.GetTrendByAge(age.Value);
-                return Ok(ApiResponse<EcommerceTrendDto>.Ok(trend, "Lß║Ñy xu h╞░ß╗¢ng TM─ÉT th├ánh c├┤ng"));
+                return Ok(ApiResponse<EcommerceTrendDto>.Ok(trend, "Lấy xu hướng TMĐT thành công"));
             }
 
             if (!string.IsNullOrWhiteSpace(ageGroupKey))
             {
                 var trend = _trendService.GetTrendByGroupKey(ageGroupKey);
-                return Ok(ApiResponse<EcommerceTrendDto>.Ok(trend, "Lß║Ñy xu h╞░ß╗¢ng TM─ÉT th├ánh c├┤ng"));
+                return Ok(ApiResponse<EcommerceTrendDto>.Ok(trend, "Lấy xu hướng TMĐT thành công"));
             }
 
             var all = _trendService.GetAllTrends();
-            return Ok(ApiResponse<List<EcommerceTrendDto>>.Ok(all, "Danh s├ích to├án bß╗Ö xu h╞░ß╗¢ng TM─ÉT theo c├íc ─æß╗Ö tuß╗òi"));
+            return Ok(ApiResponse<List<EcommerceTrendDto>>.Ok(all, "Danh sách toàn bộ xu hướng TMĐT theo các độ tuổi"));
         }
 
         /// <summary>
-        /// AI Vision Smart Scan: ─Éß╗ìc h├¼nh ß║únh m├│n ─æß╗ô/nh├ún m├íc, tß╗▒ ─æß╗Öng nhß║¡n diß╗çn th╞░╞íng hiß╗çu, t├¬n, danh mß╗Ñc, m├áu sß║»c, phong c├ích v├á size
+        /// AI Vision Smart Scan: Đọc hình ảnh món đồ/nhãn mác, tự động nhận diện thương hiệu, tên, danh mục, màu sắc, phong cách và size
         /// </summary>
         [HttpPost("scan-clothing")]
         public async Task<IActionResult> ScanClothing([FromBody] ScanClothingRequestDto request)
@@ -101,7 +101,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// AI OOTD Deconstruction: Ph├ón t├¡ch ß║únh to├án th├ón (OOTD) v├á b├│c t├ích ─æß╗ông loß║ít ├üo / Quß║ºn / Gi├áy / Phß╗Ñ kiß╗çn v├áo tß╗º ─æß╗ô
+        /// AI OOTD Deconstruction: Phân tích ảnh toàn thân (OOTD) và bóc tách đồng loạt Áo / Quần / Giày / Phụ kiện vào tủ đồ
         /// </summary>
         [HttpPost("scan-ootd")]
         public async Task<IActionResult> ScanOotd([FromBody] ScanOotdRequestDto request)

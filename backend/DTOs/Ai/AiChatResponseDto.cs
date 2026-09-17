@@ -19,5 +19,8 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Ai
         // Bắt buộc có thông số tỉ trọng & vóc dáng trước khi AI trả lời
         public bool RequiresBodyMetrics { get; set; } = false;
         public string? BodyMetricsWarning { get; set; }
+
+        public string? Timeframe { get; set; } = "Now";
+        public FutureEventOutfitPairDto? FutureEventOutfits { get; set; }
     }
 }

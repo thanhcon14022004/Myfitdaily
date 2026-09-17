@@ -30,7 +30,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
-        /// Lß║Ñy to├án bß╗Ö danh s├ích quß║ºn ├ío trong tß╗º ─æß╗ô cß╗ºa ng╞░ß╗¥i d├╣ng hiß╗çn tß║íi
+        /// Lấy toàn bộ danh sách quần áo trong tủ đồ của người dùng hiện tại
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetMyClothes()
@@ -39,7 +39,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             {
                 var userId = GetCurrentUserId();
 
-                // Nß║┐u ng╞░ß╗¥i d├╣ng ch╞░a ─æ─âng nhß║¡p, trß║ú vß╗ü danh s├ích quß║ºn ├ío cß╗ºa t├ái khoß║ún Demo
+                // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo
                 if (!userId.HasValue)
                 {
                     var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "demo@myfitdaily.com")
@@ -57,7 +57,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     (user.Gender != null && user.Gender.ToLower().Contains("nam"))
                 );
 
-                // Nß║┐u t├ái khoß║ún ch╞░a c├│ m├│n ─æß╗ô n├áo, tß╗▒ ─æß╗Öng nß║íp bß╗Ö s╞░u tß║¡p ─æß╗ô mß║½u theo giß╗¢i t├¡nh v├áo database
+                // Nếu tài khoản chưa có món đồ nào, tự động nạp bộ sưu tập đồ mẫu theo giới tính vào database
                 if (userId.HasValue && !await _context.ClothingItems.AnyAsync(c => c.UserId == userId.Value))
                 {
                     var seedList = isMale ? DbSeeder.GetMaleSeedClothes(userId.Value) : DbSeeder.GetFemaleSeedClothes(userId.Value);
@@ -69,17 +69,17 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     .Include(c => c.Category)
                     .Where(c => c.UserId == (userId ?? 0));
 
-                // Nß║┐u ng╞░ß╗¥i d├╣ng l├á Nam, lß╗ìc bß╗Å ho├án to├án c├íc loß║íi trang phß╗Ñc phß╗Ñ nß╗» (─Éß║ºm, Ch├ón v├íy, v.v.)
+                // Nếu người dùng là Nam, lọc bỏ hoàn toàn các loại trang phục phụ nữ (Đầm, Chân váy, v.v.)
                 if (isMale)
                 {
                     query = query.Where(c => 
                         c.CategoryId != 3 &&
-                        !c.Name.ToLower().Contains("v├íy") &&
-                        !c.Name.ToLower().Contains("─æß║ºm") &&
+                        !c.Name.ToLower().Contains("váy") &&
+                        !c.Name.ToLower().Contains("đầm") &&
                         !c.Name.ToLower().Contains("croptop") &&
-                        !c.Name.ToLower().Contains("tiß╗âu th╞░") &&
-                        !c.Name.ToLower().Contains("cao g├│t") &&
-                        !c.Name.ToLower().Contains("ch├ón v├íy") &&
+                        !c.Name.ToLower().Contains("tiểu thư") &&
+                        !c.Name.ToLower().Contains("cao gót") &&
+                        !c.Name.ToLower().Contains("chân váy") &&
                         !c.Name.ToLower().Contains("dress") &&
                         !c.Name.ToLower().Contains("skirt") &&
                         !c.Name.ToLower().Contains("heels")
@@ -106,11 +106,11 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     })
                     .ToListAsync();
 
-                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(items, "Lß║Ñy danh s├ích tß╗º ─æß╗ô th├ánh c├┤ng"));
+                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(items, "Lấy danh sách tủ đồ thành công"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ClothesController DB Warning]: {ex.Message}. Trß║ú vß╗ü tß╗º ─æß╗ô mß║½u in-memory.");
+                Console.WriteLine($"[ClothesController DB Warning]: {ex.Message}. Trả về tủ đồ mẫu in-memory.");
                 var userClaimId = GetCurrentUserId() ?? 2;
                 var emailClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
                 bool isMale = !emailClaim.ToLower().Contains("demo");
@@ -132,12 +132,12 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     CreatedAt = c.CreatedAt
                 }).ToList();
 
-                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(dtoList, "Lß║Ñy danh s├ích tß╗º ─æß╗ô th├ánh c├┤ng (Chß║┐ ─æß╗Ö t╞░╞íng th├¡ch offline)"));
+                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(dtoList, "Lấy danh sách tủ đồ thành công (Chế độ tương thích offline)"));
             }
         }
 
         /// <summary>
-        /// Th├¬m mß╗Öt m├│n ─æß╗ô mß╗¢i v├áo tß╗º ─æß╗ô cß╗ºa ng╞░ß╗¥i d├╣ng
+        /// Thêm một món đồ mới vào tủ đồ của người dùng
         /// </summary>
         [HttpPost]
         public async Task<IActionResult> AddClothingItem([FromBody] CreateClothingItemDto request)
@@ -148,7 +148,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             }
 
             var userId = GetCurrentUserId();
-            // Nß║┐u ch╞░a ─æ─âng nhß║¡p, sß╗¡ dß╗Ñng t├ái khoß║ún mß║½u hoß║╖c y├¬u cß║ºu ─æ─âng nhß║¡p
+            // Nếu chưa đăng nhập, sử dụng tài khoản mẫu hoặc yêu cầu đăng nhập
             int finalUserId;
             if (userId.HasValue)
             {
@@ -156,7 +156,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             }
             else
             {
-                // T├¼m hoß║╖c tß║ío t├ái khoß║ún mß║╖c ─æß╗ïnh cho kh├ích trß║úi nghiß╗çm
+                // Tìm hoặc tạo tài khoản mặc định cho khách trải nghiệm
                 var firstUser = await _context.Users.FirstOrDefaultAsync();
                 if (firstUser != null)
                 {
@@ -164,15 +164,15 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 }
                 else
                 {
-                    return Unauthorized(ApiResponse<object>.Fail("Vui l├▓ng ─æ─âng nhß║¡p ─æß╗â l╞░u m├│n ─æß╗ô v├áo tß╗º ─æß╗ô cß╗ºa bß║ín"));
+                    return Unauthorized(ApiResponse<object>.Fail("Vui lòng đăng nhập để lưu món đồ vào tủ đồ của bạn"));
                 }
             }
 
-            // Kiß╗âm tra danh mß╗Ñc hß╗úp lß╗ç
+            // Kiểm tra danh mục hợp lệ
             var category = await _context.Categories.FindAsync(request.CategoryId);
             if (category == null)
             {
-                return BadRequest(ApiResponse<object>.Fail("Danh mß╗Ñc kh├┤ng tß╗ôn tß║íi"));
+                return BadRequest(ApiResponse<object>.Fail("Danh mục không tồn tại"));
             }
 
             var newItem = new ClothingItem
@@ -210,18 +210,18 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 CreatedAt = newItem.CreatedAt
             };
 
-            return Ok(ApiResponse<ClothingItemDto>.Ok(responseDto, "─É├ú th├¬m m├│n ─æß╗ô mß╗¢i v├áo tß╗º ─æß╗ô th├ánh c├┤ng"));
+            return Ok(ApiResponse<ClothingItemDto>.Ok(responseDto, "Đã thêm món đồ mới vào tủ đồ thành công"));
         }
 
         /// <summary>
-        /// Th├¬m ─æß╗ông loß║ít nhiß╗üu m├│n ─æß╗ô v├áo tß╗º ─æß╗ô (sau khi qu├⌐t AI OOTD)
+        /// Thêm đồng loạt nhiều món đồ vào tủ đồ (sau khi quét AI OOTD)
         /// </summary>
         [HttpPost("batch-create")]
         public async Task<IActionResult> BatchAddClothingItems([FromBody] BatchCreateClothingItemDto request)
         {
             if (!ModelState.IsValid || request.Items == null || request.Items.Count == 0)
             {
-                return BadRequest(ApiResponse<object>.Fail("Danh s├ích m├│n ─æß╗ô kh├┤ng ─æ╞░ß╗úc ─æß╗â trß╗æng"));
+                return BadRequest(ApiResponse<object>.Fail("Danh sách món đồ không được để trống"));
             }
 
             var userId = GetCurrentUserId();
@@ -239,7 +239,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 }
                 else
                 {
-                    return Unauthorized(ApiResponse<object>.Fail("Vui l├▓ng ─æ─âng nhß║¡p ─æß╗â l╞░u m├│n ─æß╗ô v├áo tß╗º ─æß╗ô cß╗ºa bß║ín"));
+                    return Unauthorized(ApiResponse<object>.Fail("Vui lòng đăng nhập để lưu món đồ vào tủ đồ của bạn"));
                 }
             }
 
@@ -256,7 +256,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     UserId = finalUserId,
                     CategoryId = categoryId,
                     Name = itemDto.Name.Trim(),
-                    Color = (itemDto.Color ?? "Trß║»ng").Trim(),
+                    Color = (itemDto.Color ?? "Trắng").Trim(),
                     Style = (itemDto.Style ?? "Casual").Trim(),
                     Season = (itemDto.Season ?? "AllSeason").Trim(),
                     ImageUrl = (itemDto.ImageUrl ?? "assets/clothes/shirt_white.svg").Trim(),
@@ -287,14 +287,14 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 });
             }
 
-            return Ok(ApiResponse<List<ClothingItemDto>>.Ok(addedItems, $"─É├ú th├¬m th├ánh c├┤ng {addedItems.Count} m├│n ─æß╗ô v├áo tß╗º ─æß╗ô cß╗ºa bß║ín!"));
+            return Ok(ApiResponse<List<ClothingItemDto>>.Ok(addedItems, $"Đã thêm thành công {addedItems.Count} món đồ vào tủ đồ của bạn!"));
         }
 
         /// <summary>
-        /// X├│a mß╗Öt m├│n ─æß╗ô khß╗Åi tß╗º ─æß╗ô cß╗ºa ng╞░ß╗¥i d├╣ng
+        /// Xóa một món đồ khỏi tủ đồ của người dùng
         /// </summary>
         /// <summary>
-        /// X├│a mß╗Öt m├│n ─æß╗ô khß╗Åi tß╗º ─æß╗ô cß╗ºa ng╞░ß╗¥i d├╣ng
+        /// Xóa một món đồ khỏi tủ đồ của người dùng
         /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteClothingItem(int id)
@@ -304,16 +304,16 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             var item = await _context.ClothingItems.FindAsync(id);
             if (item == null)
             {
-                return NotFound(ApiResponse<object>.Fail("Kh├┤ng t├¼m thß║Ñy m├│n ─æß╗ô cß║ºn x├│a"));
+                return NotFound(ApiResponse<object>.Fail("Không tìm thấy món đồ cần xóa"));
             }
 
-            // Nß║┐u c├│ userId, kiß╗âm tra quyß╗ün sß╗ƒ hß╗»u
+            // Nếu có userId, kiểm tra quyền sở hữu
             if (userId.HasValue && item.UserId != userId.Value)
             {
                 return Forbid();
             }
 
-            // X├│a c├íc bß║ún ghi OutfitItem li├¬n quan ─æß╗â tr├ính lß╗ùi kh├│a ngoß║íi Restrict
+            // Xóa các bản ghi OutfitItem liên quan để tránh lỗi khóa ngoại Restrict
             var relatedOutfitItems = await _context.OutfitItems
                 .Where(oi => oi.ClothingItemId == id)
                 .ToListAsync();
@@ -325,11 +325,11 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             _context.ClothingItems.Remove(item);
             await _context.SaveChangesAsync();
 
-            return Ok(ApiResponse<bool>.Ok(true, "─É├ú x├│a m├│n ─æß╗ô khß╗Åi tß╗º ─æß╗ô th├ánh c├┤ng"));
+            return Ok(ApiResponse<bool>.Ok(true, "Đã xóa món đồ khỏi tủ đồ thành công"));
         }
 
         /// <summary>
-        /// X├│a h├áng loß║ít nhiß╗üu m├│n ─æß╗ô khß╗Åi tß╗º ─æß╗ô
+        /// Xóa hàng loạt nhiều món đồ khỏi tủ đồ
         /// </summary>
         [HttpPost("bulk-delete")]
         public async Task<IActionResult> BulkDeleteClothingItems([FromBody] List<int> ids)
@@ -338,7 +338,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
 
             if (ids == null || !ids.Any())
             {
-                return BadRequest(ApiResponse<object>.Fail("Danh s├ích ID m├│n ─æß╗ô cß║ºn x├│a kh├┤ng hß╗úp lß╗ç"));
+                return BadRequest(ApiResponse<object>.Fail("Danh sách ID món đồ cần xóa không hợp lệ"));
             }
 
             var items = await _context.ClothingItems
@@ -347,12 +347,12 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
 
             if (!items.Any())
             {
-                return NotFound(ApiResponse<object>.Fail("Kh├┤ng t├¼m thß║Ñy m├│n ─æß╗ô n├áo ph├╣ hß╗úp ─æß╗â x├│a"));
+                return NotFound(ApiResponse<object>.Fail("Không tìm thấy món đồ nào phù hợp để xóa"));
             }
 
             var itemIds = items.Select(i => i.Id).ToList();
 
-            // X├│a c├íc li├¬n kß║┐t OutfitItem tr╞░ß╗¢c
+            // Xóa các liên kết OutfitItem trước
             var relatedOutfitItems = await _context.OutfitItems
                 .Where(oi => itemIds.Contains(oi.ClothingItemId))
                 .ToListAsync();
@@ -364,11 +364,11 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             _context.ClothingItems.RemoveRange(items);
             await _context.SaveChangesAsync();
 
-            return Ok(ApiResponse<int>.Ok(items.Count, $"─É├ú x├│a {items.Count} m├│n ─æß╗ô khß╗Åi tß╗º ─æß╗ô th├ánh c├┤ng"));
+            return Ok(ApiResponse<int>.Ok(items.Count, $"Đã xóa {items.Count} món đồ khỏi tủ đồ thành công"));
         }
 
         /// <summary>
-        /// Lß║Ñy danh s├ích c├íc danh mß╗Ñc quß║ºn ├ío (hß╗ù trß╗ú lß╗ìc theo giß╗¢i t├¡nh ng╞░ß╗¥i d├╣ng)
+        /// Lấy danh sách các danh mục quần áo (hỗ trợ lọc theo giới tính người dùng)
         /// </summary>
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories([FromQuery] string? gender = null)
@@ -414,29 +414,29 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     {
                         if (cat.Id == 2)
                         {
-                            cat.Description = "Quß║ºn jeans, quß║ºn t├óy, quß║ºn short, quß║ºn kaki nam";
+                            cat.Description = "Quần jeans, quần tây, quần short, quần kaki nam";
                         }
                     }
                 }
 
-                return Ok(ApiResponse<List<Category>>.Ok(categories, "Lß║Ñy danh mß╗Ñc th├ánh c├┤ng"));
+                return Ok(ApiResponse<List<Category>>.Ok(categories, "Lấy danh mục thành công"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Categories DB Warning]: {ex.Message}. Trß║ú vß╗ü danh mß╗Ñc mß║½u.");
+                Console.WriteLine($"[Categories DB Warning]: {ex.Message}. Trả về danh mục mẫu.");
                 var isMale = (gender ?? "").ToLower().Contains("nam");
                 var fallbackCategories = new List<Category>
                 {
-                    new Category { Id = 1, Name = "Tops", Description = "├üo thun, ├ío s╞í mi, ├ío len, ├ío kho├íc", DisplayOrder = 1, IsActive = true },
-                    new Category { Id = 2, Name = "Bottoms", Description = isMale ? "Quß║ºn jeans, quß║ºn t├óy, quß║ºn short, quß║ºn kaki nam" : "Quß║ºn jeans, quß║ºn t├óy, ch├ón v├íy", DisplayOrder = 2, IsActive = true },
-                    new Category { Id = 4, Name = "Shoes", Description = "Gi├áy sneaker, gi├áy da, sandal, boots", DisplayOrder = 4, IsActive = true },
-                    new Category { Id = 5, Name = "Accessories", Description = "T├║i x├ích, thß║»t l╞░ng, m┼⌐, k├¡nh mß║»t", DisplayOrder = 5, IsActive = true },
+                    new Category { Id = 1, Name = "Tops", Description = "Áo thun, áo sơ mi, áo len, áo khoác", DisplayOrder = 1, IsActive = true },
+                    new Category { Id = 2, Name = "Bottoms", Description = isMale ? "Quần jeans, quần tây, quần short, quần kaki nam" : "Quần jeans, quần tây, chân váy", DisplayOrder = 2, IsActive = true },
+                    new Category { Id = 4, Name = "Shoes", Description = "Giày sneaker, giày da, sandal, boots", DisplayOrder = 4, IsActive = true },
+                    new Category { Id = 5, Name = "Accessories", Description = "Túi xách, thắt lưng, mũ, kính mắt", DisplayOrder = 5, IsActive = true },
                 };
                 if (!isMale)
                 {
-                    fallbackCategories.Insert(2, new Category { Id = 3, Name = "Dresses", Description = "V├íy, ─æß║ºm c├┤ng sß╗ƒ, ─æß║ºm dß║í tiß╗çc", DisplayOrder = 3, IsActive = true });
+                    fallbackCategories.Insert(2, new Category { Id = 3, Name = "Dresses", Description = "Váy, đầm công sở, đầm dạ tiệc", DisplayOrder = 3, IsActive = true });
                 }
-                return Ok(ApiResponse<List<Category>>.Ok(fallbackCategories, "Lß║Ñy danh mß╗Ñc th├ánh c├┤ng (Chß║┐ ─æß╗Ö t╞░╞íng th├¡ch offline)"));
+                return Ok(ApiResponse<List<Category>>.Ok(fallbackCategories, "Lấy danh mục thành công (Chế độ tương thích offline)"));
             }
         }
     }

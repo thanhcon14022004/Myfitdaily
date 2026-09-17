@@ -21,7 +21,11 @@ import {
   MapPin,
   ChevronDown,
   Check,
-  Search
+  Search,
+  Calendar,
+  Briefcase,
+  Tag,
+  Eye
 } from 'lucide-react';
 
 import { apiRequest } from '../api/apiClient';
@@ -58,6 +62,17 @@ export default function AiStylistPage({
   // Chatbot State
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Modal Gợi Ý Phối Đồ: "Bây giờ" hoặc "Sự kiện trong tương lai"
+  const [showRecommendModal, setShowRecommendModal] = useState(false);
+  const [recTimeframe, setRecTimeframe] = useState('Now'); // 'Now' | 'FutureEvent'
+  const [recOccasion, setRecOccasion] = useState('Đi làm / Công sở');
+  const [recStyle, setRecStyle] = useState('Minimalist');
+  const [recEventNature, setRecEventNature] = useState('Tiệc cưới sang trọng');
+  const [recJobContext, setRecJobContext] = useState('Văn phòng / Công sở');
+  const [recEventWeather, setRecEventWeather] = useState('24°C, Tiết trời mát mẻ');
+  const [recEventDate, setRecEventDate] = useState('');
+  const [selectedOutfitForDetail, setSelectedOutfitForDetail] = useState(null);
 
   // Live Weather State (Tự động nhận diện khu vực và thời tiết theo thời gian thực)
   const [weather, setWeather] = useState(null);
@@ -192,8 +207,8 @@ export default function AiStylistPage({
     setActiveShoes(shoe);
   };
 
-  // Gửi tin nhắn chat với AI
-  const handleSendMessage = async (customPrompt) => {
+  // Gửi tin nhắn chat với AI (Hỗ trợ cả Bây giờ & Sự kiện tương lai)
+  const handleSendMessage = async (customPrompt, futureEventOptions = null) => {
     const messageToSend = (customPrompt || chatInput).trim();
     if (!messageToSend || chatLoading) return;
 
@@ -202,6 +217,7 @@ export default function AiStylistPage({
       sender: 'user',
       text: messageToSend,
       isFashionRelated: true,
+      futureEventOptions
     };
 
     setChatMessages(prev => [...prev, userMsg]);
@@ -230,7 +246,12 @@ export default function AiStylistPage({
           bodyShape: user?.bodyShape || '',
           chest: user?.chest ? parseFloat(user.chest) : null,
           waist: user?.waist ? parseFloat(user.waist) : null,
-          hips: user?.hips ? parseFloat(user.hips) : null
+          hips: user?.hips ? parseFloat(user.hips) : null,
+          timeframe: futureEventOptions?.timeframe || 'Now',
+          eventNature: futureEventOptions?.eventNature || null,
+          jobContext: futureEventOptions?.jobContext || null,
+          eventWeather: futureEventOptions?.eventWeather || null,
+          eventDate: futureEventOptions?.eventDate || null
         })
       });
 
@@ -243,7 +264,9 @@ export default function AiStylistPage({
           isFashionRelated: data.isFashionRelated,
           accompanyingOutfits: data.accompanyingOutfits || [],
           suggestedItems: data.suggestedItems || [],
-          suggestedFollowUpQuestions: data.suggestedFollowUpQuestions || []
+          suggestedFollowUpQuestions: data.suggestedFollowUpQuestions || [],
+          futureEventOutfits: data.futureEventOutfits || null,
+          timeframe: data.timeframe || futureEventOptions?.timeframe || 'Now'
         };
 
         const updatedHistory = [...chatMessages, userMsg, aiMessage];
@@ -472,12 +495,75 @@ export default function AiStylistPage({
             `\n\nDưới đây là **3 set từ tủ đồ** và **3 style hot trend trên mạng** tối ưu riêng cho vóc dáng của bạn:`;
         }
 
+        let fallbackFutureOutfits = null;
+        if (futureEventOptions?.timeframe === 'FutureEvent' || futureEventOptions?.eventNature) {
+          const evNature = futureEventOptions?.eventNature || 'Tiệc tối & Sự kiện sang trọng';
+          const evJob = futureEventOptions?.jobContext || 'Văn phòng / Công sở';
+          const evWeather = futureEventOptions?.eventWeather || '24°C, Tiết trời mát mẻ';
+          
+          fallbackFutureOutfits = {
+            eventNature: evNature,
+            jobContext: evJob,
+            eventWeather: evWeather,
+            stylistAnalysis: `✦ AI Stylist đã tổng hợp 2 phương án tối ưu cho sự kiện '${evNature}': (1) Tận dụng set đồ trong tủ đồ cá nhân và (2) Bộ đồ mua sắm liên kết từ đối tác Affiliate với giá ưu đãi. Cả 2 đều phù hợp vị thế '${evJob}' và thời tiết '${evWeather}'.`,
+            wardrobeOutfit: {
+              id: Date.now() + 11,
+              name: `Gợi Ý 1 (Tủ Đồ): Set Phối Sẵn Cho ${evNature}`,
+              style: isMaleUser ? 'Smart Formal / Sartorial Gent' : 'Quiet Luxury / Evening Glamour',
+              description: `Phối từ tủ đồ cá nhân: Tối ưu trang phục có sẵn giúp bạn tự tin, chuyên nghiệp trong vai trò '${evJob}' và thích ứng thoải mái với thời tiết '${evWeather}'.`,
+              harmonyScore: '98%',
+              sourceType: 'Wardrobe',
+              sourceBadge: isMaleUser ? '👔 Gợi Ý 1: Từ Tủ Đồ Cá Nhân' : '👗 Gợi Ý 1: Từ Tủ Đồ Cá Nhân',
+              bodyFlatteringNote: fallbackNote,
+              items: isMaleUser ? [
+                { id: 1001, name: 'Áo Sơ Mi Nam Oxford Trắng Dài Tay Classic', categoryName: 'Tops', imageUrl: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&auto=format&fit=crop&q=80' },
+                { id: 1002, name: 'Quần Tây Xếp Ly Ống Suông Ghi Xám Tôn Dáng', categoryName: 'Bottoms', imageUrl: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500&auto=format&fit=crop&q=80' },
+                { id: 1003, name: 'Áo Khoác Blazer May Đo Nam Xanh Navy Đứng Phom', categoryName: 'Outerwear', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop&q=80' },
+                { id: 1004, name: 'Giày Loafer Da Bò Nam Khóa Ngựa Cao Cấp', categoryName: 'Shoes', imageUrl: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=500&auto=format&fit=crop&q=80' }
+              ] : [
+                { id: 101, name: 'Áo Sơ Mi Lụa Satin Trắng Ngà Dáng Rộng', categoryName: 'Tops', imageUrl: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?w=500&auto=format&fit=crop&q=80' },
+                { id: 102, name: 'Quần Tây Xếp Ly Cạp Cao Ống Rộng Nâu Cacao', categoryName: 'Bottoms', imageUrl: 'https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=500&auto=format&fit=crop&q=80' },
+                { id: 103, name: 'Áo Blazer Dạ Tweed Tiểu Thư Khuy Vàng Sang Trọng', categoryName: 'Outerwear', imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&auto=format&fit=crop&q=80' },
+                { id: 104, name: 'Giày Loafer Da Mềm Khóa Kim Loại Tinh Tế', categoryName: 'Shoes', imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=500&auto=format&fit=crop&q=80' }
+              ]
+            },
+            affiliateOutfit: {
+              id: Date.now() + 12,
+              name: isMaleUser
+                ? `Gợi Ý 2 (Mua Sắm): Set Suit & Blazer May Đo Quý Ông • Coolmate x Routine`
+                : `Gợi Ý 2 (Mua Sắm): Set Đầm Lụa & Tweed Dạ Tiệc Quý Phái • Ivy Moda x Shopee`,
+              style: isMaleUser ? 'Modern Sartorial • Đối tác Shopee Mall & Routine' : 'Quiet Luxury • Đối tác Ivy Moda & Shopee Mall',
+              description: isMaleUser
+                ? 'Set đồ đối tác mua sắm liên kết trọn gói gồm Sơ mi sợi tre kháng khuẩn Coolmate, Quần tây Smart Pants Routine co giãn 4 chiều, Áo Blazer may đo thời thượng và Giày Penny Loafer da bò cao cấp.'
+                : 'Bộ phối liên kết mua sắm gồm Đầm lụa satin midi chiết eo Ivy Moda, Áo khoác Tweed dạ tiểu thư khuy vàng, Giày cao gót mũi nhọn êm chân và Túi xách baguette thời thượng.',
+              harmonyScore: '99%',
+              affiliatePartner: isMaleUser ? 'Routine Official x Coolmate Partner' : 'Ivy Moda Official x Shopee Mall',
+              totalEstimatedPrice: isMaleUser ? '1.490.000đ' : '1.580.000đ',
+              stylistReason: `Bộ đồ mới từ đối tác liên kết giúp bạn có diện mạo hoàn hảo, tự tin 100% khi tham gia '${evNature}', giữ ấm/thoáng khí chuẩn xác cho thời tiết '${evWeather}' và thể hiện đúng tầm vóc '${evJob}'.`,
+              bodyFlatteringNote: fallbackNote,
+              items: isMaleUser ? [
+                { id: 6011, name: 'Áo Sơ Mi Nam Sợi Tre Kháng Khuẩn Coolmate', categoryName: 'Tops', imageUrl: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&auto=format&fit=crop&q=80', price: '329.000đ', originalPrice: '450.000đ', platform: 'Coolmate Official', affiliateUrl: 'https://www.coolmate.me/collection/ao-so-mi-nam', discountBadge: '-27%' },
+                { id: 6012, name: 'Quần Tây Smart Pants Routine Co Giãn 4 Chiều', categoryName: 'Bottoms', imageUrl: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=500&auto=format&fit=crop&q=80', price: '499.000đ', originalPrice: '650.000đ', platform: 'Routine Mall', affiliateUrl: 'https://routine.vn/quan-nam/quan-tay-nam', discountBadge: '-23%' },
+                { id: 6013, name: 'Áo Khoác Blazer Nam Relaxed Fit Form Đứng', categoryName: 'Outerwear', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=500&auto=format&fit=crop&q=80', price: '790.000đ', originalPrice: '1.100.000đ', platform: 'Shopee Mall', affiliateUrl: 'https://shopee.vn/search?keyword=blazer%20nam%20may%20do', discountBadge: '-28%' },
+                { id: 6014, name: 'Giày Da Loafer Penny Nam Da Bò Thật', categoryName: 'Shoes', imageUrl: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=500&auto=format&fit=crop&q=80', price: '580.000đ', originalPrice: '820.000đ', platform: 'Shopee Mall', affiliateUrl: 'https://shopee.vn/search?keyword=giay%20loafer%20nam%20da%20bo', discountBadge: '-29%' }
+              ] : [
+                { id: 6031, name: 'Đầm Lụa Satin Dáng Midi Chiết Eo Ivy Moda', categoryName: 'Dresses', imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=80', price: '690.000đ', originalPrice: '950.000đ', platform: 'Ivy Moda Official', affiliateUrl: 'https://ivymoda.com/danh-muc/dam', discountBadge: '-27%' },
+                { id: 6032, name: 'Áo Khoác Dạ Tweed Tiểu Thư Khuy Vàng', categoryName: 'Outerwear', imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&auto=format&fit=crop&q=80', price: '550.000đ', originalPrice: '790.000đ', platform: 'Shopee Mall', affiliateUrl: 'https://shopee.vn/search?keyword=ao%20khoac%20tweed%20nu', discountBadge: '-30%' },
+                { id: 6033, name: 'Giày Cao Gót Mũi Nhọn 5cm Êm Chân Vascara', categoryName: 'Shoes', imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&auto=format&fit=crop&q=80', price: '495.000đ', originalPrice: '650.000đ', platform: 'Vascara Official', affiliateUrl: 'https://www.vascara.com/giay-cao-got', discountBadge: '-24%' },
+                { id: 6034, name: 'Túi Da Mini Baguette Đeo Chéo Nữ Tính', categoryName: 'Accessories', imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80', price: '299.000đ', originalPrice: '420.000đ', platform: 'Shopee Mall', affiliateUrl: 'https://shopee.vn/search?keyword=tui%20baguette%20nu', discountBadge: '-29%' }
+              ]
+            }
+          };
+        }
+
         const fallbackMsg = {
           id: Date.now() + 1,
           sender: 'ai',
           text: fallbackText,
           isFashionRelated: true,
           accompanyingOutfits: fallbackOutfits,
+          futureEventOutfits: fallbackFutureOutfits,
+          timeframe: futureEventOptions?.timeframe || 'Now',
           suggestedFollowUpQuestions: [
             "Thời tiết này mang giày gì phù hợp nhất?",
             "Gợi ý phụ kiện phối kèm cho set đồ này",
@@ -495,6 +581,28 @@ export default function AiStylistPage({
       console.error("Chat error:", err);
     } finally {
       setChatLoading(false);
+    }
+  };
+
+  // Xử lý gửi yêu cầu từ modal Gợi Ý Phối Đồ (Bây giờ hoặc Sự kiện tương lai)
+  const handleRecommendSubmit = () => {
+    setShowRecommendModal(false);
+    if (recTimeframe === 'Now') {
+      const prompt = isEnglish
+        ? `Recommend an outfit for right now. Occasion: ${recOccasion}, Preferred style: ${recStyle}.`
+        : `Gợi ý phối đồ ngay bây giờ cho dịp: ${recOccasion}, phong cách mong muốn: ${recStyle}. Dựa vào thời tiết hiện tại và vóc dáng của tôi.`;
+      handleSendMessage(prompt, { timeframe: 'Now' });
+    } else {
+      const prompt = isEnglish
+        ? `Recommend outfits for a future event:\n- Event nature: ${recEventNature}\n- Job/Role context: ${recJobContext}\n- Forecasted weather: ${recEventWeather}${recEventDate ? `\n- Date: ${recEventDate}` : ''}.\nPlease provide 2 recommendations: 1 from my personal wardrobe and 1 affiliate partnership shopping outfit.`
+        : `Gợi ý phối đồ cho sự kiện tương lai:\n- Tính chất sự kiện: ${recEventNature}\n- Công việc / Bối cảnh: ${recJobContext}\n- Thời tiết sự kiện: ${recEventWeather}${recEventDate ? `\n- Ngày diễn ra: ${recEventDate}` : ''}.\nHãy đưa ra 2 gợi ý: 1 set từ tủ đồ cá nhân và 1 bộ đồ mua sắm liên kết (affiliate) có giá ưu đãi.`;
+      handleSendMessage(prompt, {
+        timeframe: 'FutureEvent',
+        eventNature: recEventNature,
+        jobContext: recJobContext,
+        eventWeather: recEventWeather,
+        eventDate: recEventDate
+      });
     }
   };
 
@@ -899,6 +1007,30 @@ export default function AiStylistPage({
               </button>
             )}
 
+            {/* Recommendation Options Modal Trigger (Bây giờ hoặc Sự kiện tương lai) */}
+            <button
+              onClick={() => setShowRecommendModal(true)}
+              title={text('Yêu cầu AI đưa ra gợi ý phối đồ', 'Request AI outfit recommendation')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                color: '#FFF',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                boxShadow: '0 2px 10px rgba(225, 29, 72, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <Sparkles size={14} />
+              <span>{text('Gợi Ý Phối Đồ AI', 'AI Stylist Recommend')}</span>
+            </button>
+
             {/* New Chat Button */}
             <button
               onClick={() => {
@@ -1021,16 +1153,18 @@ export default function AiStylistPage({
                         return (
                           <div
                             key={sIdx}
+                            onClick={() => setSelectedOutfitForDetail(set)}
                             style={{
                               background: 'var(--hover-bg)',
                               border: isCurrentlyWearing ? '1.5px solid var(--primary)' : '1px solid var(--border-subtle)',
                               borderRadius: '14px',
-                              padding: '16px',
+                              padding: '14px 16px',
                               transition: 'all 0.25s ease',
                               boxShadow: isCurrentlyWearing ? '0 0 18px rgba(225, 29, 72, 0.25)' : '0 2px 8px rgba(0,0,0,0.06)',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '12px'
+                              gap: '10px',
+                              cursor: 'pointer'
                             }}
                           >
                             {/* Card Header: Badge & Style */}
@@ -1060,30 +1194,6 @@ export default function AiStylistPage({
                               </div>
                             </div>
 
-                            {/* Set Description */}
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
-                              {set.description}
-                            </p>
-
-                            {/* ✨ Body Flattering Advice Callout */}
-                            {set.bodyFlatteringNote && (
-                              <div style={{
-                                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.09), rgba(225, 29, 72, 0.05))',
-                                borderLeft: '3.5px solid #D4AF37',
-                                borderRadius: '4px 10px 10px 4px',
-                                padding: '10px 13px',
-                                fontSize: '0.78rem',
-                                color: 'var(--text-primary)',
-                                lineHeight: 1.5
-                              }}>
-                                <div style={{ fontWeight: 800, color: '#D4AF37', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                  <Sparkles size={13} color="#D4AF37" />
-                                  <span>Tối ưu theo vóc dáng ({user?.bodyShape || 'Chuẩn'} • {user?.height ? `${user.height}cm` : '165cm'}):</span>
-                                </div>
-                                <div style={{ color: 'var(--text-secondary)' }}>{set.bodyFlatteringNote}</div>
-                              </div>
-                            )}
-
                             {/* Garment Items Mini Grid */}
                             <div style={{
                               display: 'grid',
@@ -1097,7 +1207,7 @@ export default function AiStylistPage({
                                     textAlign: 'center', 
                                     background: 'rgba(0,0,0,0.18)', 
                                     padding: '6px', 
-                                    borderRadius: '10px',
+                                    borderRadius: '10px', 
                                     border: '1px solid var(--border-subtle)',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -1143,13 +1253,33 @@ export default function AiStylistPage({
                               ))}
                             </div>
 
-                            {/* Action Buttons: Mặc Thử Lên Người Ảo & Lưu */}
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
+                            {/* Action Buttons: Xem Chi Tiết, Mặc Thử Lên Người Ảo & Lưu */}
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => setSelectedOutfitForDetail(set)}
+                                style={{
+                                  padding: '9px 14px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  borderRadius: '24px',
+                                  background: 'rgba(255,255,255,0.08)',
+                                  border: '1px solid var(--border-subtle)',
+                                  color: 'var(--text-primary)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '5px'
+                                }}
+                              >
+                                <Eye size={14} color="#D4AF37" />
+                                <span>{text('Xem Chi Tiết', 'Details')}</span>
+                              </button>
+
                               <button
                                 onClick={() => handleWearOutfitOnMannequin(set)}
                                 style={{
                                   flex: 1,
-                                  padding: '10px 16px',
+                                  padding: '9px 14px',
                                   fontSize: '0.82rem',
                                   fontWeight: 800,
                                   borderRadius: '24px',
@@ -1160,7 +1290,7 @@ export default function AiStylistPage({
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  gap: '7px',
+                                  gap: '6px',
                                   boxShadow: '0 4px 14px rgba(225, 29, 72, 0.35)',
                                   transition: 'all 0.2s ease'
                                 }}
@@ -1173,12 +1303,12 @@ export default function AiStylistPage({
                                 id={`btn-fav-ai-${sIdx}`}
                                 title={isOutfitFavorited(set) ? text("Bỏ khỏi Trang phục yêu thích", "Remove from Favorites") : text("Thêm vào Trang phục yêu thích", "Add to Favorite Outfits")}
                                 style={{
-                                  padding: '10px 16px',
+                                  padding: '9px 12px',
                                   fontSize: '0.82rem',
                                   fontWeight: 700,
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '6px',
+                                  gap: '4px',
                                   borderRadius: '24px',
                                   background: isOutfitFavorited(set) ? 'rgba(244, 63, 94, 0.18)' : 'rgba(255, 255, 255, 0.06)',
                                   border: isOutfitFavorited(set) ? '1.5px solid #F43F5E' : '1px solid var(--border-subtle)',
@@ -1257,6 +1387,351 @@ export default function AiStylistPage({
 
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                                 {displayTrending.map((set, sIdx) => renderOutfitCard(set, sIdx + 10, true))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* FUTURE EVENT OUTFIT PAIR RECOMMENDATION (Gợi Ý 1: Tủ đồ & Gợi Ý 2: Affiliate) */}
+                    {isAi && msg.futureEventOutfits && (() => {
+                      const pair = msg.futureEventOutfits;
+                      const wardrobeSet = pair.wardrobeOutfit;
+                      const affiliateSet = pair.affiliateOutfit;
+                      const isWearingWardrobe = activeOutfitSet?.name === wardrobeSet?.name && showMannequinDrawer;
+                      const isWearingAffiliate = activeOutfitSet?.name === affiliateSet?.name && showMannequinDrawer;
+
+                      return (
+                        <div style={{ marginTop: '20px', borderTop: '2px dashed rgba(212, 175, 55, 0.4)', paddingTop: '18px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                          {/* Event Context Header */}
+                          <div style={{
+                            background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(212, 175, 55, 0.1))',
+                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                            borderRadius: '14px',
+                            padding: '14px 16px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Calendar size={18} color="#D4AF37" />
+                                <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#D4AF37' }}>
+                                  {text('Tư Vấn Phối Đồ Cho Sự Kiện Tương Lai', 'Future Event Styling Consultation')}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '0.72rem', background: 'rgba(212, 175, 55, 0.2)', color: '#D4AF37', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>
+                                2 Phương Án Đề Xuất
+                              </span>
+                            </div>
+
+                            {/* Tags: Event Nature, Job Context, Weather */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                              <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 9px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                🎯 <strong>Dịp:</strong> {pair.eventNature}
+                              </span>
+                              <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 9px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <Briefcase size={12} color="#D4AF37" />
+                                <strong>Vị thế:</strong> {pair.jobContext}
+                              </span>
+                              <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 9px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <CloudSun size={12} color="#60A5FA" />
+                                <strong>Thời tiết:</strong> {pair.eventWeather}
+                              </span>
+                              {pair.eventDate && (
+                                <span style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 9px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  📅 {pair.eventDate}
+                                </span>
+                              )}
+                            </div>
+
+                            {pair.stylistAnalysis && (
+                              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.55 }}>
+                                {pair.stylistAnalysis}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* GỢI Ý 1: OUTFIT TỪ TỦ ĐỒ CÁ NHÂN */}
+                          {wardrobeSet && (
+                            <div 
+                              onClick={() => setSelectedOutfitForDetail(wardrobeSet)}
+                              style={{
+                                background: 'var(--hover-bg)',
+                                border: isWearingWardrobe ? '2px solid #D4AF37' : '1px solid rgba(212, 175, 55, 0.35)',
+                                borderRadius: '14px',
+                                padding: '14px 16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                cursor: 'pointer',
+                                transition: 'all 0.25s ease'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{
+                                    background: 'rgba(212, 175, 55, 0.18)',
+                                    color: '#D4AF37',
+                                    border: '1px solid rgba(212, 175, 55, 0.4)',
+                                    padding: '3px 10px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800
+                                  }}>
+                                    👗 Gợi Ý 1: Tận Dụng Tủ Đồ Cá Nhân
+                                  </span>
+                                  <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    {wardrobeSet.name}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '3px 8px' }}>{wardrobeSet.style}</span>
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 7px', borderRadius: '10px' }}>
+                                    ✓ {wardrobeSet.harmonyScore || '98%'} Hợp dáng
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Wardrobe Garments Grid */}
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: `repeat(${Math.min(wardrobeSet.items?.length || 4, 4)}, minmax(0, 1fr))`,
+                                gap: '8px',
+                              }}>
+                                {(wardrobeSet.items || []).map((it, itI) => (
+                                  <div key={itI} style={{ textAlign: 'center', background: 'rgba(0,0,0,0.18)', padding: '6px', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+                                    <div style={{ width: '100%', aspectRatio: '1/1', overflow: 'hidden', borderRadius: '8px', marginBottom: '5px' }}>
+                                      <img src={it.imageUrl} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&auto=format&fit=crop&q=80'; }} />
+                                    </div>
+                                    <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 700 }}>
+                                      {it.categoryName || 'Item'}
+                                    </span>
+                                    <div title={it.name} style={{ fontSize: '0.7rem', color: 'var(--text-primary)', fontWeight: 600, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {it.name}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setSelectedOutfitForDetail(wardrobeSet)}
+                                  style={{
+                                    padding: '9px 14px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    borderRadius: '24px',
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid var(--border-subtle)',
+                                    color: 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}
+                                >
+                                  <Eye size={14} color="#D4AF37" />
+                                  <span>{text('Xem Chi Tiết Set', 'View Details')}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleWearOutfitOnMannequin(wardrobeSet)}
+                                  style={{
+                                    flex: 1,
+                                    padding: '9px 14px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 800,
+                                    borderRadius: '24px',
+                                    background: isWearingWardrobe ? 'var(--primary)' : 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                                    color: '#FFF',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 4px 14px rgba(225, 29, 72, 0.35)'
+                                  }}
+                                >
+                                  <span>💃 {isWearingWardrobe ? 'Đang Mặc Trên Người Ảo' : 'Mặc Thử Lên Người Ảo'}</span>
+                                </button>
+                                <button
+                                  onClick={() => handleToggleFavorite(wardrobeSet)}
+                                  style={{
+                                    padding: '9px 12px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 700,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    borderRadius: '24px',
+                                    background: isOutfitFavorited(wardrobeSet) ? 'rgba(244, 63, 94, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                                    border: isOutfitFavorited(wardrobeSet) ? '1.5px solid #F43F5E' : '1px solid var(--border-subtle)',
+                                    color: isOutfitFavorited(wardrobeSet) ? '#FB7185' : 'var(--text-secondary)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Heart size={15} color={isOutfitFavorited(wardrobeSet) ? '#F43F5E' : 'currentColor'} fill={isOutfitFavorited(wardrobeSet) ? '#F43F5E' : 'none'} />
+                                  <span>{isOutfitFavorited(wardrobeSet) ? 'Đã Thích' : 'Yêu Thích'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* GỢI Ý 2: BỘ ĐỒ MUA SẮM LIÊN KẾT (AFFILIATE PARTNERSHIP) */}
+                          {affiliateSet && (
+                            <div 
+                              onClick={() => setSelectedOutfitForDetail(affiliateSet)}
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(245, 158, 11, 0.05))',
+                                border: isWearingAffiliate ? '2px solid #EF4444' : '1.5px solid rgba(239, 68, 68, 0.45)',
+                                borderRadius: '14px',
+                                padding: '14px 16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                cursor: 'pointer',
+                                transition: 'all 0.25s ease'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span style={{
+                                    background: 'linear-gradient(135deg, #EF4444, #F97316)',
+                                    color: '#FFF',
+                                    padding: '3px 10px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <Tag size={12} />
+                                    🛒 Gợi Ý 2: Bộ Mua Sắm Đối Tác (Affiliate)
+                                  </span>
+                                  <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    {affiliateSet.name}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {affiliateSet.totalEstimatedPrice && (
+                                    <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#EF4444', background: 'rgba(239, 68, 68, 0.12)', padding: '3px 9px', borderRadius: '10px' }}>
+                                      Trọn bộ ~ {affiliateSet.totalEstimatedPrice}
+                                    </span>
+                                  )}
+                                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#10B981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 7px', borderRadius: '10px' }}>
+                                    ✓ {affiliateSet.harmonyScore || '99%'} Sang trọng
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.74rem', color: '#D4AF37', fontWeight: 700, background: 'rgba(212, 175, 55, 0.12)', padding: '2px 8px', borderRadius: '8px' }}>
+                                  🤝 Đối tác: {affiliateSet.affiliatePartner || 'Shopee Mall x Routine x Uniqlo'}
+                                </span>
+                                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                  {affiliateSet.style}
+                                </span>
+                              </div>
+
+                              {/* Affiliate Items Cards Mini Grid */}
+                              <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: `repeat(${Math.min(affiliateSet.items?.length || 4, 4)}, minmax(0, 1fr))`,
+                                gap: '8px',
+                              }}>
+                                {(affiliateSet.items || []).map((it, itI) => (
+                                  <div key={itI} style={{
+                                    textAlign: 'center',
+                                    background: 'rgba(0,0,0,0.22)',
+                                    padding: '6px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(239, 68, 68, 0.25)'
+                                  }}>
+                                    <div style={{ width: '100%', aspectRatio: '1/1', overflow: 'hidden', borderRadius: '8px', marginBottom: '5px', position: 'relative' }}>
+                                      <img src={it.imageUrl} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&auto=format&fit=crop&q=80'; }} />
+                                      {it.discountBadge && (
+                                        <span style={{ position: 'absolute', top: '3px', right: '3px', background: '#EF4444', color: '#FFF', fontSize: '0.58rem', fontWeight: 800, padding: '1px 4px', borderRadius: '4px' }}>
+                                          {it.discountBadge}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 700 }}>
+                                      {it.categoryName || 'Item'}
+                                    </span>
+                                    <div title={it.name} style={{ fontSize: '0.7rem', color: 'var(--text-primary)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {it.name}
+                                    </div>
+                                    <div style={{ marginTop: '2px', fontSize: '0.74rem', fontWeight: 800, color: '#EF4444' }}>
+                                      {it.price || 'Liên hệ'}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Affiliate Outfit Actions */}
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => setSelectedOutfitForDetail(affiliateSet)}
+                                  style={{
+                                    padding: '9px 14px',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    borderRadius: '24px',
+                                    background: 'rgba(255,255,255,0.08)',
+                                    border: '1px solid var(--border-subtle)',
+                                    color: 'var(--text-primary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                  }}
+                                >
+                                  <Eye size={14} color="#EF4444" />
+                                  <span>{text('Xem Chi Tiết & Giá', 'View Details & Prices')}</span>
+                                </button>
+
+                                <button
+                                  onClick={() => handleWearOutfitOnMannequin(affiliateSet)}
+                                  style={{
+                                    flex: 1,
+                                    padding: '9px 14px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 800,
+                                    borderRadius: '24px',
+                                    background: isWearingAffiliate ? '#EF4444' : 'linear-gradient(135deg, #EF4444, #F59E0B)',
+                                    color: '#FFF',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 4px 14px rgba(239, 68, 68, 0.35)'
+                                  }}
+                                >
+                                  <span>💃 {isWearingAffiliate ? 'Đang Mặc Thử' : 'Mặc Thử Bộ Mua Sắm Trên Người Ảo'}</span>
+                                </button>
+                                <button
+                                  onClick={() => handleToggleFavorite(affiliateSet)}
+                                  style={{
+                                    padding: '9px 12px',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 700,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    borderRadius: '24px',
+                                    background: isOutfitFavorited(affiliateSet) ? 'rgba(244, 63, 94, 0.18)' : 'rgba(255, 255, 255, 0.06)',
+                                    border: isOutfitFavorited(affiliateSet) ? '1.5px solid #F43F5E' : '1px solid var(--border-subtle)',
+                                    color: isOutfitFavorited(affiliateSet) ? '#FB7185' : 'var(--text-secondary)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Heart size={15} color={isOutfitFavorited(affiliateSet) ? '#F43F5E' : 'currentColor'} fill={isOutfitFavorited(affiliateSet) ? '#F43F5E' : 'none'} />
+                                  <span>{isOutfitFavorited(affiliateSet) ? 'Đã Thích' : 'Yêu Thích'}</span>
+                                </button>
                               </div>
                             </div>
                           )}
@@ -1407,6 +1882,32 @@ export default function AiStylistPage({
               scrollbarWidth: 'none',
               marginBottom: '6px'
             }}>
+              {/* Nút bấm mở Modal Gợi Ý Phối Đồ (Bây giờ / Sự kiện tương lai) */}
+              <button
+                type="button"
+                onClick={() => setShowRecommendModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                  border: 'none',
+                  color: '#FFF',
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 2px 8px rgba(225, 29, 72, 0.35)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={12} />
+                <span>{text('✨ Gợi Ý Phối Đồ AI (Bây giờ / Sự kiện)', '✨ AI Recommend (Now / Future Event)')}</span>
+              </button>
+
               {(isEnglish ? [
                 "Style with white shirt",
                 "Wide-leg jeans outfits",
@@ -1745,6 +2246,878 @@ export default function AiStylistPage({
             </div>
           </div>
         </aside>
+      )}
+
+      {/* MODAL GỢI Ý PHỐI ĐỒ: BÂY GIỜ HOẶC SỰ KIỆN TRONG TƯƠNG LAI */}
+      {showRecommendModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1200,
+            background: 'rgba(0, 0, 0, 0.78)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowRecommendModal(false);
+          }}
+        >
+          <div style={{
+            width: '100%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            background: 'var(--bg-modal, #18181B)',
+            border: '1px solid var(--border-subtle, rgba(255,255,255,0.12))',
+            borderRadius: '20px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '18px 22px',
+              borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'rgba(255,255,255,0.02)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFF'
+                }}>
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {text('Gợi Ý Phối Đồ AI Stylist', 'AI Outfit Recommendations')}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                    {text('Chọn thời điểm gợi ý: Mặc ngay hôm nay hoặc Sự kiện tương lai', 'Choose timeframe: Dress now or for a future event')}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowRecommendModal(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 22px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {/* 2 Lựa Chọn Thời Điểm (Segmented Toggle Tabs) */}
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {text('Bạn muốn nhận gợi ý cho khi nào?', 'When do you need outfit advice for?')}
+                </label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '8px',
+                  background: 'rgba(0,0,0,0.25)',
+                  padding: '4px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setRecTimeframe('Now')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: recTimeframe === 'Now' ? 'linear-gradient(135deg, var(--primary), #D4AF37)' : 'transparent',
+                      color: recTimeframe === 'Now' ? '#FFF' : 'var(--text-secondary)',
+                      fontWeight: recTimeframe === 'Now' ? 800 : 600,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: recTimeframe === 'Now' ? '0 2px 10px rgba(225, 29, 72, 0.35)' : 'none'
+                    }}
+                  >
+                    <Sparkles size={15} />
+                    <span>⚡ {text('Bây Giờ (Hôm Nay)', 'Right Now (Today)')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRecTimeframe('FutureEvent')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: recTimeframe === 'FutureEvent' ? 'linear-gradient(135deg, var(--primary), #D4AF37)' : 'transparent',
+                      color: recTimeframe === 'FutureEvent' ? '#FFF' : 'var(--text-secondary)',
+                      fontWeight: recTimeframe === 'FutureEvent' ? 800 : 600,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: recTimeframe === 'FutureEvent' ? '0 2px 10px rgba(225, 29, 72, 0.35)' : 'none'
+                    }}
+                  >
+                    <Calendar size={15} />
+                    <span>📅 {text('1 Sự Kiện Tương Lai', 'A Future Event')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* TRƯỜNG HỢP 1: BÂY GIỜ */}
+              {recTimeframe === 'Now' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{
+                    background: 'rgba(212, 175, 55, 0.08)',
+                    borderLeft: '3.5px solid #D4AF37',
+                    borderRadius: '4px 10px 10px 4px',
+                    padding: '10px 14px',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.55
+                  }}>
+                    <span>🌤️ AI Stylist sẽ kết hợp <strong>thời tiết hiện tại {weather?.temperature ? `(${weather.temperature}°C tại ${weather.city})` : ''}</strong> cùng thông số vóc dáng <strong>({user?.bodyShape || 'Chuẩn'} • {user?.height || 165}cm)</strong> để chọn ra các bộ đồ hoàn hảo từ tủ đồ cho bạn mặc ngay.</span>
+                  </div>
+
+                  {/* Chọn Dịp / Hoàn cảnh */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', display: 'block' }}>
+                      {text('Dịp / Hoàn cảnh hôm nay:', 'Occasion today:')}
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {[
+                        'Đi làm / Công sở',
+                        'Dạo phố cafe cuối tuần',
+                        'Gặp gỡ bạn bè',
+                        'Hẹn hò lãng mạn',
+                        'Đi tiệc nhẹ / Sinh nhật',
+                        'Du lịch / Thể thao năng động'
+                      ].map((occ, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecOccasion(occ)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '16px',
+                            fontSize: '0.76rem',
+                            fontWeight: recOccasion === occ ? 800 : 500,
+                            background: recOccasion === occ ? 'rgba(225, 29, 72, 0.18)' : 'var(--hover-bg)',
+                            border: recOccasion === occ ? '1.5px solid var(--primary)' : '1px solid var(--border-subtle)',
+                            color: recOccasion === occ ? 'var(--primary)' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {occ}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chọn Phong cách */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px', display: 'block' }}>
+                      {text('Phong cách mong muốn:', 'Desired Style:')}
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {[
+                        'Smart Casual',
+                        'Minimalist (Tối giản)',
+                        'Korean Clean Fit (Hàn Quốc)',
+                        'Old Money / Thanh lịch',
+                        'Streetwear Năng Động'
+                      ].map((st, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecStyle(st)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '16px',
+                            fontSize: '0.76rem',
+                            fontWeight: recStyle === st ? 800 : 500,
+                            background: recStyle === st ? 'rgba(212, 175, 55, 0.18)' : 'var(--hover-bg)',
+                            border: recStyle === st ? '1.5px solid #D4AF37' : '1px solid var(--border-subtle)',
+                            color: recStyle === st ? '#D4AF37' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TRƯỜNG HỢP 2: SỰ KIỆN TRONG TƯƠNG LAI */}
+              {recTimeframe === 'FutureEvent' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* Banner giải thích 2 GỢI Ý ĐẶC BIỆT */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(212, 175, 55, 0.1))',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.55
+                  }}>
+                    <div style={{ fontWeight: 800, color: '#D4AF37', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={14} color="#D4AF37" />
+                      <span>AI Stylist sẽ đưa ra 2 gợi ý cho sự kiện này:</span>
+                    </div>
+                    <div>• <strong>Gợi ý 1:</strong> 👗 Outfit tối ưu phối từ <strong>TỦ ĐỒ CÁ NHÂN</strong> của bạn.</div>
+                    <div>• <strong>Gợi ý 2:</strong> 🛒 Bộ đồ đối tác liên kết <strong>AFFILIATE</strong> (Shopee/Uniqlo/Coolmate/Routine/Ivy Moda) có giá ưu đãi & link mua ngay.</div>
+                  </div>
+
+                  {/* 1. Thời gian diễn ra sự kiện (Timeline lên đầu) */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Calendar size={13} color="#D4AF37" />
+                      <span>1. Thời gian diễn ra sự kiện (Timeline):</span>
+                      <span style={{ color: 'var(--primary)' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                      {[
+                        'Hôm nay',
+                        'Tối nay',
+                        'Ngày mai',
+                        'Cuối tuần này',
+                        'Tuần sau',
+                        'Tháng sau'
+                      ].map((tm, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecEventDate(tm)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '14px',
+                            fontSize: '0.72rem',
+                            fontWeight: recEventDate === tm ? 800 : 500,
+                            background: recEventDate === tm ? 'rgba(212, 175, 55, 0.25)' : 'var(--hover-bg)',
+                            border: recEventDate === tm ? '1.5px solid #D4AF37' : '1px solid var(--border-subtle)',
+                            color: recEventDate === tm ? '#D4AF37' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {tm}
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      type="text"
+                      value={recEventDate}
+                      onChange={(e) => setRecEventDate(e.target.value)}
+                      placeholder="Hoặc tự nhập: Tối thứ Bảy tuần này, 20/10 tới, Cuối tháng này..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'var(--hover-bg)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {/* 2. Tính chất sự kiện */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span>🎯 2. Tính chất sự kiện:</span>
+                      <span style={{ color: 'var(--primary)' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                      {[
+                        'Tiệc cưới sang trọng',
+                        'Phỏng vấn xin việc',
+                        'Gala tiệc tối / Kỷ niệm',
+                        'Hẹn hò lãng mạn',
+                        'Gặp gỡ đối tác / Khách hàng',
+                        'Dã ngoại ngoài trời'
+                      ].map((ev, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecEventNature(ev)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '14px',
+                            fontSize: '0.72rem',
+                            fontWeight: recEventNature === ev ? 800 : 500,
+                            background: recEventNature === ev ? 'rgba(225, 29, 72, 0.2)' : 'var(--hover-bg)',
+                            border: recEventNature === ev ? '1.5px solid var(--primary)' : '1px solid var(--border-subtle)',
+                            color: recEventNature === ev ? 'var(--primary)' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {ev}
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      type="text"
+                      value={recEventNature}
+                      onChange={(e) => setRecEventNature(e.target.value)}
+                      placeholder="Hoặc tự nhập: Đám cưới bạn thân, Lễ tốt nghiệp, Ra mắt sản phẩm..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'var(--hover-bg)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {/* 3. Công việc / Bối cảnh nghề nghiệp */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Briefcase size={13} color="#D4AF37" />
+                      <span>3. Công việc / Vị thế trong sự kiện:</span>
+                      <span style={{ color: 'var(--primary)' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                      {[
+                        'Văn phòng / Công sở',
+                        'Lãnh đạo / Quản lý cấp cao',
+                        'Sáng tạo / Designer / Nghệ thuật',
+                        'Kinh doanh / Sales / Đối ngoại',
+                        'Sinh viên / Người trẻ năng động'
+                      ].map((jb, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecJobContext(jb)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '14px',
+                            fontSize: '0.72rem',
+                            fontWeight: recJobContext === jb ? 800 : 500,
+                            background: recJobContext === jb ? 'rgba(212, 175, 55, 0.2)' : 'var(--hover-bg)',
+                            border: recJobContext === jb ? '1.5px solid #D4AF37' : '1px solid var(--border-subtle)',
+                            color: recJobContext === jb ? '#D4AF37' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {jb}
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      type="text"
+                      value={recJobContext}
+                      onChange={(e) => setRecJobContext(e.target.value)}
+                      placeholder="Hoặc tự nhập: Khách VIP, Người dẫn chương trình MC, Nhân viên mới..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'var(--hover-bg)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {/* 4. Thời tiết dự kiến tại sự kiện */}
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <CloudSun size={13} color="#60A5FA" />
+                      <span>4. Thời tiết dự kiến tại nơi tổ chức:</span>
+                      <span style={{ color: 'var(--primary)' }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                      {[
+                        '24°C, se lạnh & phòng máy lạnh',
+                        '32°C, nắng ấm ngoài trời',
+                        '18°C, gió lạnh & có mưa phùn',
+                        '26°C, mát mẻ thoáng đãng'
+                      ].map((wt, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setRecEventWeather(wt)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '14px',
+                            fontSize: '0.72rem',
+                            fontWeight: recEventWeather === wt ? 800 : 500,
+                            background: recEventWeather === wt ? 'rgba(96, 165, 250, 0.2)' : 'var(--hover-bg)',
+                            border: recEventWeather === wt ? '1.5px solid #60A5FA' : '1px solid var(--border-subtle)',
+                            color: recEventWeather === wt ? '#93C5FD' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {wt}
+                        </button>
+                      ))}
+                    </div>
+                    <input 
+                      type="text"
+                      value={recEventWeather}
+                      onChange={(e) => setRecEventWeather(e.target.value)}
+                      placeholder="Hoặc tự nhập: 22 độ C, trời mưa rào, phòng hội nghị máy lạnh rét buốt..."
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'var(--hover-bg)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '14px 22px',
+              borderTop: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '10px',
+              background: 'rgba(255,255,255,0.02)'
+            }}>
+              <button
+                type="button"
+                onClick={() => setShowRecommendModal(false)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '20px',
+                  background: 'var(--hover-bg)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                {text('Hủy', 'Cancel')}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleRecommendSubmit}
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: '20px',
+                  background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                  border: 'none',
+                  color: '#FFF',
+                  fontSize: '0.84rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 16px rgba(225, 29, 72, 0.4)'
+                }}
+              >
+                <Sparkles size={14} />
+                <span>
+                  {recTimeframe === 'Now'
+                    ? text('Gợi Ý Trang Phục Ngay', 'Recommend Outfit Now')
+                    : text('Phân Tích & Đưa Ra 2 Gợi Ý', 'Analyze & Provide 2 Outfits')}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CHI TIẾT SET ĐỒ (Khi người dùng bấm vào 1 set đồ để xem chi tiết) */}
+      {selectedOutfitForDetail && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          animation: 'fadeIn 0.2s ease-out'
+        }}
+        onClick={() => setSelectedOutfitForDetail(null)}
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--card-bg, #1A1A24)',
+              border: '1px solid var(--border-subtle, rgba(255,255,255,0.15))',
+              borderRadius: '20px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '18px 24px',
+              borderBottom: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              position: 'sticky',
+              top: 0,
+              background: 'var(--card-bg, #1A1A24)',
+              zIndex: 10
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: selectedOutfitForDetail.sourceType === 'Affiliate' 
+                    ? 'linear-gradient(135deg, #EF4444, #F97316)' 
+                    : 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFF'
+                }}>
+                  {selectedOutfitForDetail.sourceType === 'Affiliate' ? <ShoppingBag size={18} /> : <Sparkles size={18} />}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    {selectedOutfitForDetail.name}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: selectedOutfitForDetail.sourceType === 'Affiliate' ? '#F87171' : '#D4AF37'
+                    }}>
+                      {selectedOutfitForDetail.sourceBadge || (selectedOutfitForDetail.sourceType === 'Affiliate' ? '🛒 Mua Sắm Affiliate' : '👗 Tủ Đồ Cá Nhân')}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>•</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                      {selectedOutfitForDetail.style}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedOutfitForDetail(null)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Badges & Meta info */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  color: '#10B981',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  padding: '4px 10px',
+                  borderRadius: '12px'
+                }}>
+                  ✓ {selectedOutfitForDetail.harmonyScore || '98%'} Độ Phù Hợp Vóc Dáng
+                </span>
+
+                {selectedOutfitForDetail.totalEstimatedPrice && (
+                  <span style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                    color: '#EF4444',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    padding: '4px 10px',
+                    borderRadius: '12px'
+                  }}>
+                    💰 Trọn bộ ~ {selectedOutfitForDetail.totalEstimatedPrice}
+                  </span>
+                )}
+
+                {selectedOutfitForDetail.affiliatePartner && (
+                  <span style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#D4AF37',
+                    background: 'rgba(212, 175, 55, 0.12)',
+                    padding: '4px 10px',
+                    borderRadius: '12px'
+                  }}>
+                    🤝 {selectedOutfitForDetail.affiliatePartner}
+                  </span>
+                )}
+              </div>
+
+              {/* Phân tích & Lời khuyên Stylist */}
+              {(selectedOutfitForDetail.stylistReason || selectedOutfitForDetail.description) && (
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '14px 16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontWeight: 800, fontSize: '0.82rem', color: '#D4AF37' }}>
+                    <Sparkles size={14} color="#D4AF37" />
+                    <span>{text('Lời Khuyên & Phân Tích Của AI Stylist:', 'Stylist Analysis & Advice:')}</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    {selectedOutfitForDetail.stylistReason || selectedOutfitForDetail.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Tối ưu theo vóc dáng */}
+              {selectedOutfitForDetail.bodyFlatteringNote && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(225, 29, 72, 0.05))',
+                  borderLeft: '4px solid #D4AF37',
+                  borderRadius: '6px 12px 12px 6px',
+                  padding: '12px 16px'
+                }}>
+                  <div style={{ fontWeight: 800, color: '#D4AF37', marginBottom: '4px', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>✦ {text('Bí quyết tôn dáng tối ưu:', 'Flattering Fit Highlights:')}</span>
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                    {selectedOutfitForDetail.bodyFlatteringNote}
+                  </div>
+                </div>
+              )}
+
+              {/* Danh sách từng món đồ */}
+              <div>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>👗 {text('Chi Tiết Từng Món Trong Set:', 'Items in This Outfit:')}</span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                    ({(selectedOutfitForDetail.items || []).length} món)
+                  </span>
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {(selectedOutfitForDetail.items || []).map((it, idx) => (
+                    <div 
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: 'rgba(0, 0, 0, 0.22)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        padding: '10px 14px'
+                      }}
+                    >
+                      <div style={{ width: '64px', height: '64px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+                        <img 
+                          src={it.imageUrl} 
+                          alt={it.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&auto=format&fit=crop&q=80'; }}
+                        />
+                        {it.discountBadge && (
+                          <span style={{ position: 'absolute', top: '2px', right: '2px', background: '#EF4444', color: '#FFF', fontSize: '0.56rem', fontWeight: 800, padding: '1px 4px', borderRadius: '4px' }}>
+                            {it.discountBadge}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '0.66rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 800 }}>
+                            {it.categoryName || 'Item'}
+                          </span>
+                          {it.platform && (
+                            <span style={{ fontSize: '0.64rem', color: '#F97316', fontWeight: 700 }}>
+                              • {it.platform}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {it.name}
+                        </div>
+                        {it.price && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#EF4444' }}>{it.price}</span>
+                            {it.originalPrice && (
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{it.originalPrice}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {it.affiliateUrl && (
+                        <a
+                          href={it.affiliateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '6px 12px',
+                            background: 'linear-gradient(135deg, #EF4444, #EA580C)',
+                            color: '#FFF',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            borderRadius: '8px',
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            flexShrink: 0
+                          }}
+                        >
+                          <ExternalLink size={12} />
+                          <span>{text('Mua Ngay', 'Buy Now')}</span>
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div style={{
+              padding: '14px 24px',
+              borderTop: '1px solid var(--border-subtle, rgba(255,255,255,0.1))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              background: 'rgba(255,255,255,0.02)',
+              position: 'sticky',
+              bottom: 0
+            }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleWearOutfitOnMannequin(selectedOutfitForDetail);
+                    setSelectedOutfitForDetail(null);
+                  }}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '20px',
+                    background: 'linear-gradient(135deg, var(--primary), #D4AF37)',
+                    border: 'none',
+                    color: '#FFF',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>💃 {text('Mặc Thử Trên Người Ảo', 'Try On Virtual Mannequin')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleFavorite(selectedOutfitForDetail)}
+                  style={{
+                    padding: '9px 14px',
+                    borderRadius: '20px',
+                    background: isOutfitFavorited(selectedOutfitForDetail) ? 'rgba(244, 63, 94, 0.18)' : 'var(--hover-bg)',
+                    border: isOutfitFavorited(selectedOutfitForDetail) ? '1.5px solid #F43F5E' : '1px solid var(--border-subtle)',
+                    color: isOutfitFavorited(selectedOutfitForDetail) ? '#FB7185' : 'var(--text-secondary)',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  <Heart size={14} color={isOutfitFavorited(selectedOutfitForDetail) ? '#F43F5E' : 'currentColor'} fill={isOutfitFavorited(selectedOutfitForDetail) ? '#F43F5E' : 'none'} />
+                  <span>{isOutfitFavorited(selectedOutfitForDetail) ? text('Đã Thích', 'Favorited') : text('Yêu Thích', 'Favorite')}</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedOutfitForDetail(null)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: '20px',
+                  background: 'var(--hover-bg)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                {text('Đóng', 'Close')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

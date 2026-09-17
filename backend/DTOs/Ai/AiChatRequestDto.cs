@@ -33,5 +33,12 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Ai
         public double? Chest { get; set; }
         public double? Waist { get; set; }
         public double? Hips { get; set; }
+
+        // Bổ sung thông tin sự kiện tương lai
+        public string? Timeframe { get; set; } = "Now";
+        public string? EventNature { get; set; }
+        public string? JobContext { get; set; }
+        public string? EventWeather { get; set; }
+        public string? EventDate { get; set; }
     }
 }

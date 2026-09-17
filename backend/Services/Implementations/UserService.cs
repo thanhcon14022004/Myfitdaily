@@ -23,7 +23,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 var user = await _context.Users.FindAsync(userId);
                 if (user != null)
                 {
-                    return ApiResponse<UserDto>.Ok(MapToUserDto(user), "Lß║Ñy th├┤ng tin t├ái khoß║ún th├ánh c├┤ng");
+                    return ApiResponse<UserDto>.Ok(MapToUserDto(user), "Lấy thông tin tài khoản thành công");
                 }
             }
             catch (Exception ex)
@@ -31,14 +31,14 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 Console.WriteLine($"[UserService DB Warning]: {ex.Message}");
             }
 
-            // Fallback t├ái khoß║ún demo nß║┐u DB offline
+            // Fallback tài khoản demo nếu DB offline
             var isFemale = userId == 1;
             var fallbackUser = new User
             {
                 Id = userId,
                 Email = isFemale ? "demo@myfitdaily.com" : "test@myfitdaily.com",
-                FullName = isFemale ? "Demo Nß╗» Ch├óu ├ü" : "Demo Nam Ch├óu ├ü",
-                Gender = isFemale ? "Nß╗»" : "Nam",
+                FullName = isFemale ? "Demo Nữ Châu Á" : "Demo Nam Châu Á",
+                Gender = isFemale ? "Nữ" : "Nam",
                 Role = "User",
                 SubscriptionType = "Free",
                 Height = isFemale ? 165 : 178,
@@ -46,13 +46,13 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 Chest = isFemale ? 88 : 98,
                 Waist = isFemale ? 64 : 78,
                 Hips = isFemale ? 92 : 95,
-                BodyShape = isFemale ? "─Éß╗ông hß╗ô c├ít" : "Tam gi├íc ng╞░ß╗úc",
+                BodyShape = isFemale ? "Đồng hồ cát" : "Tam giác ngược",
                 Age = isFemale ? 22 : 24,
                 AgeGroup = "GenZ",
                 CreatedAt = DateTime.UtcNow
             };
 
-            return ApiResponse<UserDto>.Ok(MapToUserDto(fallbackUser), "Lß║Ñy th├┤ng tin t├ái khoß║ún th├ánh c├┤ng (Offline Mode)");
+            return ApiResponse<UserDto>.Ok(MapToUserDto(fallbackUser), "Lấy thông tin tài khoản thành công (Offline Mode)");
         }
 
         public async Task<ApiResponse<UserDto>> UpdateProfileAsync(int userId, UpdateProfileDto request)
@@ -60,7 +60,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
-                return ApiResponse<UserDto>.Fail("Kh├┤ng t├¼m thß║Ñy ng╞░ß╗¥i d├╣ng");
+                return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng");
             }
 
             user.FullName = request.FullName.Trim();
@@ -73,7 +73,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 user.Gender = request.Gender;
             }
 
-            // Cß║¡p nhß║¡t th├┤ng sß╗æ c╞í thß╗â v├á tß╗ë lß╗ç v├│c d├íng
+            // Cập nhật thông số cơ thể và tỉ lệ vóc dáng
             if (request.Height.HasValue)
             {
                 user.Height = request.Height.Value;
@@ -106,16 +106,16 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             await _context.SaveChangesAsync();
 
-            return ApiResponse<UserDto>.Ok(MapToUserDto(user), "Cß║¡p nhß║¡t th├┤ng tin t├ái khoß║ún v├á th├┤ng sß╗æ v├│c d├íng th├ánh c├┤ng");
+            return ApiResponse<UserDto>.Ok(MapToUserDto(user), "Cập nhật thông tin tài khoản và thông số vóc dáng thành công");
         }
 
         private static string? DetermineAgeGroup(int? age)
         {
             if (!age.HasValue) return null;
-            if (age.Value <= 24) return "Gen Z (16 - 24 tuß╗òi)";
-            if (age.Value <= 34) return "Millennials & C├┤ng Sß╗ƒ Trß║╗ (25 - 34 tuß╗òi)";
-            if (age.Value <= 49) return "Chß╗»ng Chß║íc & ─É─⌐nh ─Éß║íc (35 - 49 tuß╗òi)";
-            return "Trung Ni├¬n & Qu├╜ Ph├íi (50+ tuß╗òi)";
+            if (age.Value <= 24) return "Gen Z (16 - 24 tuổi)";
+            if (age.Value <= 34) return "Millennials & Công Sở Trẻ (25 - 34 tuổi)";
+            if (age.Value <= 49) return "Chững Chạc & Đĩnh Đạc (35 - 49 tuổi)";
+            return "Trung Niên & Quý Phái (50+ tuổi)";
         }
 
         private static UserDto MapToUserDto(User user)

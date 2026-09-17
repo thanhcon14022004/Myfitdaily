@@ -28,7 +28,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             if (existingUser)
             {
-                return ApiResponse<AuthResponseDto>.Fail("Email n├áy ─æ├ú ─æ╞░ß╗úc ─æ─âng k├╜ trong hß╗ç thß╗æng");
+                return ApiResponse<AuthResponseDto>.Fail("Email này đã được đăng ký trong hệ thống");
             }
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -57,7 +57,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 User = MapToUserDto(newUser)
             };
 
-            return ApiResponse<AuthResponseDto>.Ok(response, "─É─âng k├╜ t├ái khoß║ún th├ánh c├┤ng");
+            return ApiResponse<AuthResponseDto>.Ok(response, "Đăng ký tài khoản thành công");
         }
 
         public async Task<ApiResponse<AuthResponseDto>> LoginAsync(LoginDto request)
@@ -75,7 +75,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 Console.WriteLine($"[AuthService DB Warning]: {ex.Message}. Falling back to demo check.");
             }
 
-            // Fallback chß║┐ ─æß╗Ö Demo nß║┐u Database kh├┤ng kß║┐t nß╗æi ─æ╞░ß╗úc (do mß║íng tr╞░ß╗¥ng/c├┤ng ty chß║╖n port 5432)
+            // Fallback chế độ Demo nếu Database không kết nối được (do mạng trường/công ty chặn port 5432)
             if (user == null && request.Password == "Password123!")
             {
                 if (normalizedEmail == "demo@myfitdaily.com")
@@ -84,8 +84,8 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                     {
                         Id = 1,
                         Email = "demo@myfitdaily.com",
-                        FullName = "Demo Nß╗» Ch├óu ├ü",
-                        Gender = "Nß╗»",
+                        FullName = "Demo Nữ Châu Á",
+                        Gender = "Nữ",
                         Role = "User",
                         SubscriptionType = "Free",
                         Height = 165,
@@ -93,7 +93,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                         Chest = 88,
                         Waist = 64,
                         Hips = 92,
-                        BodyShape = "─Éß╗ông hß╗ô c├ít",
+                        BodyShape = "Đồng hồ cát",
                         Age = 22,
                         AgeGroup = "GenZ",
                         CreatedAt = DateTime.UtcNow
@@ -105,7 +105,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                     {
                         Id = 2,
                         Email = "test@myfitdaily.com",
-                        FullName = "Demo Nam Ch├óu ├ü",
+                        FullName = "Demo Nam Châu Á",
                         Gender = "Nam",
                         Role = "User",
                         SubscriptionType = "Free",
@@ -114,7 +114,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                         Chest = 98,
                         Waist = 78,
                         Hips = 95,
-                        BodyShape = "Tam gi├íc ng╞░ß╗úc",
+                        BodyShape = "Tam giác ngược",
                         Age = 24,
                         AgeGroup = "GenZ",
                         CreatedAt = DateTime.UtcNow
@@ -124,7 +124,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             if (user == null || (!string.IsNullOrEmpty(user.PasswordHash) && !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash)))
             {
-                return ApiResponse<AuthResponseDto>.Fail("Email hoß║╖c mß║¡t khß║⌐u kh├┤ng ch├¡nh x├íc");
+                return ApiResponse<AuthResponseDto>.Fail("Email hoặc mật khẩu không chính xác");
             }
 
             var (token, expiresAt) = _tokenService.GenerateJwtToken(user);
@@ -137,7 +137,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 User = MapToUserDto(user)
             };
 
-            return ApiResponse<AuthResponseDto>.Ok(response, "─É─âng nhß║¡p th├ánh c├┤ng");
+            return ApiResponse<AuthResponseDto>.Ok(response, "Đăng nhập thành công");
         }
 
         private static UserDto MapToUserDto(User user)
