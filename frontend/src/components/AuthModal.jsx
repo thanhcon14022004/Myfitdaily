@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Lock, Mail, User, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
@@ -10,10 +10,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
-    email: 'tester@myfitdaily.com',
+    email: 'demo@myfitdaily.com',
     password: 'Password123!',
-    fullName: 'Nguyễn Văn Test',
-    gender: 'Male',
+    fullName: 'Fashionista (Demo Nß╗»)',
+    gender: 'Female',
   });
 
   if (!isOpen) return null;
@@ -49,18 +49,40 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       } else {
         // Backend offline fallback option
         setError(text(
-          "Không thể kết nối đến máy chủ API. Bạn có thể nhấn 'Trải Nghiệm Chế Độ Demo' bên dưới!",
+          "Kh├┤ng thß╗â kß║┐t nß╗æi ─æß║┐n m├íy chß╗º API. Bß║ín c├│ thß╗â nhß║Ñn 'Trß║úi Nghiß╗çm Chß║┐ ─Éß╗Ö Demo' b├¬n d╞░ß╗¢i!",
           "Cannot reach the API server. You can click 'Demo Experience' below!"
         ));
       }
     }
   };
 
-  const handleDemoLogin = () => {
-    const demoUser = {
+  const handleDemoLogin = (type = 'female') => {
+    const isMale = type === 'male' || formData.email === 'test@myfitdaily.com';
+    const demoUser = isMale ? {
+      id: 998,
+      fullName: 'Gentleman (Demo Nam)',
+      email: 'test@myfitdaily.com',
+      gender: 'Nam',
+      height: 178,
+      weight: 70,
+      chest: 98,
+      waist: 78,
+      hips: 95,
+      bodyShape: 'Tam gi├íc ng╞░ß╗úc',
+      role: 'User',
+      subscriptionType: 'Premium',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+    } : {
       id: 999,
-      fullName: 'Fashion Lover (Demo)',
+      fullName: 'Fashionista (Demo Nß╗»)',
       email: 'demo@myfitdaily.com',
+      gender: 'Nß╗»',
+      height: 165,
+      weight: 52,
+      chest: 88,
+      waist: 64,
+      hips: 92,
+      bodyShape: '─Éß╗ông hß╗ô c├ít',
       role: 'User',
       subscriptionType: 'Premium',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
@@ -126,12 +148,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <Sparkles size={26} color="#080A0F" />
           </div>
           <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>
-            {isLoginMode ? text('Chào Mừng Trở Lại', 'Welcome Back') : text('Tạo Tài Khoản Mới', 'Create New Account')}
+            {isLoginMode ? text('Ch├áo Mß╗½ng Trß╗ƒ Lß║íi', 'Welcome Back') : text('Tß║ío T├ái Khoß║ún Mß╗¢i', 'Create New Account')}
           </h3>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {isLoginMode 
-              ? text('Đăng nhập để quản lý tủ đồ số và nhận gợi ý từ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
-              : text('Gia nhập cộng đồng thời trang thông minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
+              ? text('─É─âng nhß║¡p ─æß╗â quß║ún l├╜ tß╗º ─æß╗ô sß╗æ v├á nhß║¡n gß╗úi ├╜ tß╗½ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
+              : text('Gia nhß║¡p cß╗Öng ─æß╗ông thß╗¥i trang th├┤ng minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
           </p>
         </div>
 
@@ -159,7 +181,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            {text('Đăng Nhập', 'Sign In')}
+            {text('─É─âng Nhß║¡p', 'Sign In')}
           </button>
           <button
             type="button"
@@ -176,7 +198,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               cursor: 'pointer',
             }}
           >
-            {text('Đăng Ký', 'Register')}
+            {text('─É─âng K├╜', 'Register')}
           </button>
         </div>
 
@@ -199,19 +221,105 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
+        {/* Demo Accounts Quick Select */}
+        {isLoginMode && (
+          <div style={{
+            background: 'rgba(212, 175, 55, 0.08)',
+            border: '1px solid rgba(212, 175, 55, 0.3)',
+            borderRadius: '14px',
+            padding: '12px 14px',
+            marginBottom: '16px',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.78rem',
+              color: '#F3D98A',
+              fontWeight: 700,
+              marginBottom: '10px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Sparkles size={14} color="#D4AF37" />
+                {text('T├ái khoß║ún Demo c├│ sß║╡n (Bß║Ñm ─æß╗â ─æiß╗ün)', 'Available Demo Accounts (Click to fill)')}
+              </span>
+              <span style={{ fontSize: '0.72rem', opacity: 0.85 }}>Pass: Password123!</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                id="btn-fill-demo-female"
+                onClick={() => setFormData({ ...formData, email: 'demo@myfitdaily.com', password: 'Password123!' })}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '9px 11px',
+                  borderRadius: '10px',
+                  background: formData.email === 'demo@myfitdaily.com' ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${formData.email === 'demo@myfitdaily.com' ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)'}`,
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ≡ƒæ⌐ {text('Demo Nß╗»', 'Demo Female')}
+                  </span>
+                  {formData.email === 'demo@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
+                </div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>demo@myfitdaily.com</span>
+                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>165cm ΓÇó 52kg ΓÇó 88-64-92</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-fill-demo-male"
+                onClick={() => setFormData({ ...formData, email: 'test@myfitdaily.com', password: 'Password123!' })}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '9px 11px',
+                  borderRadius: '10px',
+                  background: formData.email === 'test@myfitdaily.com' ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${formData.email === 'test@myfitdaily.com' ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)'}`,
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ≡ƒæ¿ {text('Demo Nam', 'Demo Male')}
+                  </span>
+                  {formData.email === 'test@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
+                </div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>test@myfitdaily.com</span>
+                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>178cm ΓÇó 70kg ΓÇó 98-78-95</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {!isLoginMode && (
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-                {text('Họ và Tên', 'Full Name')}
+                {text('Hß╗ì v├á T├¬n', 'Full Name')}
               </label>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   required
                   id="input-auth-name"
-                  placeholder={text("Nguyễn Văn A", "Alex Morgan")}
+                  placeholder={text("Nguyß╗àn V─ân A", "Alex Morgan")}
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   style={{ width: '100%', paddingLeft: '38px' }}
@@ -223,7 +331,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              {text('Địa chỉ Email', 'Email Address')}
+              {text('─Éß╗ïa chß╗ë Email', 'Email Address')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -241,7 +349,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              {text('Mật khẩu', 'Password')}
+              {text('Mß║¡t khß║⌐u', 'Password')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -249,7 +357,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 required
                 minLength={6}
                 id="input-auth-password"
-                placeholder={text("Ít nhất 6 ký tự", "At least 6 characters")}
+                placeholder={text("├ìt nhß║Ñt 6 k├╜ tß╗▒", "At least 6 characters")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{ width: '100%', paddingLeft: '38px' }}
@@ -272,38 +380,59 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}
           >
             {loading 
-              ? text('Đang xử lý...', 'Processing...') 
-              : (isLoginMode ? text('Đăng Nhập Ngay', 'Sign In Now') : text('Tạo Tài Khoản', 'Create Account'))}
+              ? text('─Éang xß╗¡ l├╜...', 'Processing...') 
+              : (isLoginMode ? text('─É─âng Nhß║¡p Ngay', 'Sign In Now') : text('Tß║ío T├ái Khoß║ún', 'Create Account'))}
           </button>
         </form>
 
         {/* Demo Fast Login */}
         <div style={{
-          marginTop: '20px',
-          paddingTop: '16px',
+          marginTop: '18px',
+          paddingTop: '14px',
           borderTop: '1px solid var(--border-subtle)',
-          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '10px',
         }}>
           <button
             type="button"
-            onClick={handleDemoLogin}
-            id="btn-demo-login"
+            onClick={() => handleDemoLogin('female')}
+            id="btn-quick-female"
             style={{
-              fontSize: '0.84rem',
-              color: '#A78BFA',
+              fontSize: '0.8rem',
+              color: '#F3D98A',
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               padding: '6px 12px',
               borderRadius: 'var(--radius-full)',
-              background: 'rgba(167, 139, 250, 0.1)',
-              border: '1px solid rgba(167, 139, 250, 0.25)',
+              background: 'rgba(212, 175, 55, 0.12)',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
               cursor: 'pointer',
             }}
           >
-            <Sparkles size={14} />
-            <span>{text('Trải Nghiệm Nhanh Bằng Tài Khoản Demo', 'Quick Try with Demo Account')}</span>
+            <span>≡ƒæ⌐ V├áo nhanh Demo Nß╗»</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDemoLogin('male')}
+            id="btn-quick-male"
+            style={{
+              fontSize: '0.8rem',
+              color: '#93C5FD',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(59, 130, 246, 0.12)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              cursor: 'pointer',
+            }}
+          >
+            <span>≡ƒæ¿ V├áo nhanh Demo Nam</span>
           </button>
         </div>
       </div>

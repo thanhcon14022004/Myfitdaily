@@ -1,4 +1,4 @@
-using MYFITDAILY_EXE201_Group6.Common;
+﻿using MYFITDAILY_EXE201_Group6.Common;
 using MYFITDAILY_EXE201_Group6.DTOs.Ai;
 
 namespace MYFITDAILY_EXE201_Group6.Services.Interfaces
@@ -8,5 +8,6 @@ namespace MYFITDAILY_EXE201_Group6.Services.Interfaces
         Task<ApiResponse<AiRecommendResponseDto>> GenerateOutfitRecommendationAsync(int? userId, AiRecommendRequestDto request);
         Task<ApiResponse<AiChatResponseDto>> ChatWithStylistAsync(int? userId, AiChatRequestDto request);
         Task<ApiResponse<ScanClothingResponseDto>> ScanClothingItemAsync(ScanClothingRequestDto request);
+        Task<ApiResponse<ScanOotdResponseDto>> ScanOotdAsync(ScanOotdRequestDto request);
     }
 }
