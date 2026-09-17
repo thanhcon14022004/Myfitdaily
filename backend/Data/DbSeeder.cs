@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -480,14 +480,351 @@ namespace MYFITDAILY_EXE201_Group6.Data
                 {
                     UserId = userId,
                     CategoryId = 6, // Accessories
-                    Name = "T├║i Da Kß║╣p N├ích Baguette ─Éen",
-                    Color = "─Éen",
+                    Name = "Túi Da Kẹp Nách Baguette Đen",
+                    Color = "Đen",
                     Style = "Minimalist",
                     Season = "AllSeason",
                     Brand = "Pedro",
                     Size = "Freesize",
-                    ImageUrl = "assets/clothes/bag_leather.svg",
-                    Description = "T├║i x├ích da kß║╣p n├ích thß╗¥i th╞░ß╗úng, kh├│a kim loß║íi mß║í v├áng sang trß╗ìng.",
+                    ImageUrl = "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&auto=format&fit=crop&q=80",
+                    Description = "Túi xách da kẹp nách thời thượng, khóa kim loại mạ vàng sang trọng.",
+                    CreatedAt = now
+                },
+                // [THÊM MỚI] Bổ sung 25 items nữ đa dạng hơn
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Croptop Cotton Trắng Basic",
+                    Color = "Trắng",
+                    Style = "Casual",
+                    Season = "Summer",
+                    Brand = "Zara",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo croptop cotton mềm mại, form ôm nhẹ, năng động và trẻ trung.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Blouse Lụa Hồng Phấn Cổ V",
+                    Color = "Hồng Phấn",
+                    Style = "Romantic",
+                    Season = "Spring",
+                    Brand = "Mango",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600&auto=format&fit=crop&q=80",
+                    Description = "Blouse lụa mềm rủ ông áo, cổ chữ V thanh lịch, hoàn hảo cho ngày hẹn hò.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Áo Sailor Kẻ Sọc Navy Trắng",
+                    Color = "Navy / Trắng",
+                    Style = "Preppy",
+                    Season = "Summer",
+                    Brand = "Tommy Hilfiger",
+                    Size = "M",
+                    ImageUrl = "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo thun kẻ sọc sailor cổ điển, phong cách hải quân thanh lịch và đáng yêu.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Bodysuit Đen Cổ Tròn Ôm Dáng",
+                    Color = "Đen",
+                    Style = "Minimalist",
+                    Season = "AllSeason",
+                    Brand = "COS",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80",
+                    Description = "Bodysuit đen ôm cơ thể hoàn hảo, không lộ đường viền, phối được với mọi loại quần.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Ribbed Knit Top Kem Cổ Lọ",
+                    Color = "Kem",
+                    Style = "Quiet Luxury",
+                    Season = "Winter",
+                    Brand = "Uniqlo",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo len dệt gân sườn cổ lọ ấm áp, chất liệu cao cấp, phong cách tối giản tinh tế.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Culottes Beige Cạp Cao Ống Rộng",
+                    Color = "Beige",
+                    Style = "Elegant",
+                    Season = "Spring",
+                    Brand = "& Other Stories",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1594938298603-c8148c4b984b?w=600&auto=format&fit=crop&q=80",
+                    Description = "Quần culottes ống rộng cạp cao tôn dáng, màu beige sang trọng dễ phối đồ.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Váy Tennis Trắng Xếp Ly Mini",
+                    Color = "Trắng",
+                    Style = "Sport Chic",
+                    Season = "Summer",
+                    Brand = "Lacoste",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=600&auto=format&fit=crop&q=80",
+                    Description = "Váy tennis ngắn xếp ly, phong cách thể thao năng động, dễ thương và thoải mái.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Váy Midi Floral Hoa Nhí Nền Đen",
+                    Color = "Đen / Hoa Nhí",
+                    Style = "Romantic",
+                    Season = "Spring",
+                    Brand = "Zara",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&auto=format&fit=crop&q=80",
+                    Description = "Váy midi họa tiết hoa nhí nền đen, nhẹ nhàng nữ tính, phong cách vintage cổ điển.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Chân Váy Plissé Tím Lavender",
+                    Color = "Tím Lavender",
+                    Style = "Romantic",
+                    Season = "Spring",
+                    Brand = "Reformation",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&auto=format&fit=crop&q=80",
+                    Description = "Chân váy xếp nếp tím nhạt nhẹ nhàng bay bổng, tôn dáng và đầy nữ tính.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Denim Shorts Rách Nhẹ Cạp Cao",
+                    Color = "Xanh Denim",
+                    Style = "Casual",
+                    Season = "Summer",
+                    Brand = "Levis",
+                    Size = "27",
+                    ImageUrl = "https://images.unsplash.com/photo-1591195853828-11db59a44f43?w=600&auto=format&fit=crop&q=80",
+                    Description = "Quần short denim cạp cao rách nhẹ vintage, năng động và cá tính.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 3,
+                    Name = "Đầm Cocktail Đen Tay Ngắn Sang Trọng",
+                    Color = "Đen",
+                    Style = "Formal",
+                    Season = "AllSeason",
+                    Brand = "Massimo Dutti",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1566206091558-7f218b696731?w=600&auto=format&fit=crop&q=80",
+                    Description = "Đầm cocktail đen cổ điển tay ngắn, form ôm dáng, hoàn hảo cho tiệc tối.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 3,
+                    Name = "Đầm Maxi Trắng Dự Tiệc Biển",
+                    Color = "Trắng",
+                    Style = "Elegance",
+                    Season = "Summer",
+                    Brand = "Reformation",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=600&auto=format&fit=crop&q=80",
+                    Description = "Đầm maxi dài trắng tinh khôi nhẹ nhàng bay, sang trọng cho mọi dịp đặc biệt.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 3,
+                    Name = "Slip Dress Satin Xanh Ánh Bạc Midi",
+                    Color = "Xanh Ánh Bạc",
+                    Style = "Glamour",
+                    Season = "AllSeason",
+                    Brand = "H&M Premium",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&auto=format&fit=crop&q=80",
+                    Description = "Đầm slip satin ánh metallic bắt sáng tuyệt đẹp, hoàn hảo cho sự kiện đặc biệt.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 3,
+                    Name = "Mini Dress Hoa Nhỏ Cổ Vuông",
+                    Color = "Đỏ / Hoa Nhí",
+                    Style = "Romantic",
+                    Season = "Summer",
+                    Brand = "ASOS",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=600&auto=format&fit=crop&q=80",
+                    Description = "Váy mini ngắn cổ vuông hoa nhỏ nền đỏ, trẻ trung và đáng yêu cho ngày hè.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Cardigan Len Kem Cúc Ngọc Trai",
+                    Color = "Kem",
+                    Style = "Quiet Luxury",
+                    Season = "Winter",
+                    Brand = "Mango",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo cardigan len mềm mịn màu kem, cúc ngọc trai tinh tế, ấm áp và sang trọng.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Blazer Camel Tôn Dáng Relaxed Fit",
+                    Color = "Camel",
+                    Style = "Smart Casual",
+                    Season = "Fall",
+                    Brand = "Zara",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&auto=format&fit=crop&q=80",
+                    Description = "Blazer màu camel đặc trưng Old Money, phối với jeans hay váy đều chuẩn.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Teddy Coat Hồng Bơ Ấm Áp",
+                    Color = "Hồng Bơ",
+                    Style = "Y2K",
+                    Season = "Winter",
+                    Brand = "Topshop",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo khoác lông teddy gấu bông hồng bơ siêu ấm và cute, phong cách Y2K.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Denim Jacket Nữ Wash Cổ Điển",
+                    Color = "Xanh Denim",
+                    Style = "Casual",
+                    Season = "Spring",
+                    Brand = "Levis",
+                    Size = "S",
+                    ImageUrl = "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo khoác jeans wash cổ điển dáng rộng, phối đồ cực dễ cho mọi hoàn cảnh.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Mules Da Nâu Clatform Gót Vuông",
+                    Color = "Nâu",
+                    Style = "Elegant",
+                    Season = "AllSeason",
+                    Brand = "Charles & Keith",
+                    Size = "37",
+                    ImageUrl = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&auto=format&fit=crop&q=80",
+                    Description = "Giày mules da nâu gót vuông thanh lịch, tôn dáng và thoải mái cả ngày.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Ankle Boots Da Đen Gót Thấp",
+                    Color = "Đen",
+                    Style = "Smart Casual",
+                    Season = "Winter",
+                    Brand = "Steve Madden",
+                    Size = "37",
+                    ImageUrl = "https://images.unsplash.com/photo-1638247025967-b4e38f787b76?w=600&auto=format&fit=crop&q=80",
+                    Description = "Boots cổ ngắn da đen gót thấp bền đẹp, phối được với quần tây hay váy midi.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Kitten Heels Nude Mũi Nhọn",
+                    Color = "Nude",
+                    Style = "Formal",
+                    Season = "AllSeason",
+                    Brand = "Aldo",
+                    Size = "37",
+                    ImageUrl = "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=600&auto=format&fit=crop&q=80",
+                    Description = "Giày cao gót nhỏ màu nude mũi nhọn tinh tế, kéo dài chân và phù hợp công sở.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Sandal Quai Dây Vàng Thời Thượng",
+                    Color = "Vàng Kim",
+                    Style = "Glamour",
+                    Season = "Summer",
+                    Brand = "Aldo",
+                    Size = "37",
+                    ImageUrl = "https://images.unsplash.com/photo-1562273138-f46be4ebdf33?w=600&auto=format&fit=crop&q=80",
+                    Description = "Sandal quai mảnh màu vàng kim lấp lánh, hoàn hảo cho tiệc hè và dã ngoại.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 6,
+                    Name = "Túi Tote Canvas Chữ In Hàng Ngày",
+                    Color = "Kem / Đen",
+                    Style = "Casual",
+                    Season = "AllSeason",
+                    Brand = "COS",
+                    Size = "Freesize",
+                    ImageUrl = "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&auto=format&fit=crop&q=80",
+                    Description = "Túi tote vải canvas in chữ đơn giản, đựng được nhiều đồ cho ngày bận rộn.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 6,
+                    Name = "Thắt Lưng Da Nâu Bạc Khóa Chữ Nhật",
+                    Color = "Nâu",
+                    Style = "Minimalist",
+                    Season = "AllSeason",
+                    Brand = "Pedro",
+                    Size = "Freesize",
+                    ImageUrl = "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop&q=80",
+                    Description = "Thắt lưng da bò thật màu nâu khóa bạc tối giản, hoàn thiện mọi outfit.",
                     CreatedAt = now
                 }
             };
@@ -670,14 +1007,253 @@ namespace MYFITDAILY_EXE201_Group6.Data
                 {
                     UserId = userId,
                     CategoryId = 6, // Accessories
-                    Name = "T├║i Da ─Éeo Ch├⌐o Messenger Nam Tß╗æi Giß║ún",
-                    Color = "N├óu ─Éß║Ñt",
+                    Name = "Túi Da Đeo Chéo Messenger Nam Tối Giản",
+                    Color = "Nâu Đất",
                     Style = "Minimalist",
                     Season = "AllSeason",
                     Brand = "Coach",
                     Size = "Freesize",
-                    ImageUrl = "assets/clothes/bag_leather.svg",
-                    Description = "T├║i messenger da b├▓ d├íng chß╗» nhß║¡t gß╗ìn g├áng, ─æß╗▒ng vß╗½a iPad, v├¡ tiß╗ün v├á phß╗Ñ kiß╗çn c├┤ng nghß╗ç.",
+                    ImageUrl = "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&auto=format&fit=crop&q=80",
+                    Description = "Túi messenger da bò dáng chữ nhật gọn gàng, đựng vừa iPad và phụ kiện công sở.",
+                    CreatedAt = now
+                },
+                // [THÊM MỚI] Bổ sung 20 items nam đa dạng hơn
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Áo Polo Cotton Trắng Pique",
+                    Color = "Trắng",
+                    Style = "Smart Casual",
+                    Season = "Summer",
+                    Brand = "Lacoste",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo thun có cổ polo dệt pique thoáng mát, dáng regular fit lịch sự tôn vai.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Áo Len Cổ Lọ Turtleneck Đen",
+                    Color = "Đen",
+                    Style = "Quiet Luxury",
+                    Season = "Winter",
+                    Brand = "Massimo Dutti",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1614975058789-41316d0e2e9c?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo len dệt kim mỏng nhẹ cổ lọ đen, phong cách tổng tài Hàn Quốc sang trọng.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Áo Henley Xám Melange Dài Tay",
+                    Color = "Xám",
+                    Style = "Casual",
+                    Season = "Fall",
+                    Brand = "Uniqlo",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo thun dài tay cổ cài cúc Henley khỏe khoắn, nam tính và tôn ngực.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 1,
+                    Name = "Áo Thun Oversize Đồ Họa Vintage Xám",
+                    Color = "Xám Tiêu",
+                    Style = "Streetwear",
+                    Season = "Summer",
+                    Brand = "Local Brand",
+                    Size = "XL",
+                    ImageUrl = "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo thun form rộng graphic tee phong cách đường phố hiphop trẻ trung.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Quần Kaki Chino Slim Olive Xanh Rêu",
+                    Color = "Xanh Rêu",
+                    Style = "Smart Casual",
+                    Season = "AllSeason",
+                    Brand = "Gap",
+                    Size = "32",
+                    ImageUrl = "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&auto=format&fit=crop&q=80",
+                    Description = "Quần chino vải kaki cotton co giãn màu rêu nhã nhặn, đứng form và năng động.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Quần Jogger Nỉ Xám Melange Bo Gấu",
+                    Color = "Xám",
+                    Style = "Streetwear",
+                    Season = "Winter",
+                    Brand = "Nike",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop&q=80",
+                    Description = "Quần jogger nỉ thể thao bo gấu ống, cạp chun thoải mái cho tập luyện hoặc dạo phố.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Quần Short Kaki Cargo Túi Hộp Be",
+                    Color = "Be",
+                    Style = "Casual",
+                    Season = "Summer",
+                    Brand = "Zara Man",
+                    Size = "32",
+                    ImageUrl = "https://images.unsplash.com/photo-1591195853828-11db59a44f43?w=600&auto=format&fit=crop&q=80",
+                    Description = "Quần ngố short túi hộp phong cách dã ngoại outdoor thoải mái và phóng khoáng.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 2,
+                    Name = "Quần Jeans Đen Slim Tối Giản",
+                    Color = "Đen",
+                    Style = "Casual",
+                    Season = "AllSeason",
+                    Brand = "Levis",
+                    Size = "32",
+                    ImageUrl = "https://images.unsplash.com/photo-1542272604-780c96856592?w=600&auto=format&fit=crop&q=80",
+                    Description = "Jeans đen tuyền dáng ôm vừa phải, dễ phối với áo thun trắng hay blazer.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Bộ Suit Tuxedo Navy Dạ Hội",
+                    Color = "Xanh Navy",
+                    Style = "Formal",
+                    Season = "AllSeason",
+                    Brand = "Tailored Luxury",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80",
+                    Description = "Bộ âu phục suit màu xanh navy sang trọng, ve nhung bóng chuẩn tiệc cưới và gala.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Áo Khoác Da Biker Đen Men Lì",
+                    Color = "Đen",
+                    Style = "Streetwear",
+                    Season = "Winter",
+                    Brand = "AllSaints",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo da thật phong cách biker khóa kéo chéo ngực, cực kỳ nam tính và bụi bặm.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Áo Hoodie Zip Nỉ Xám Melange",
+                    Color = "Xám",
+                    Style = "Streetwear",
+                    Season = "Fall / Winter",
+                    Brand = "Champion",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
+                    Description = "Hoodie nỉ khóa zip kéo tiện lợi, có nón ấm áp, chuẩn thời trang đại học.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 4,
+                    Name = "Áo Khoác Kaki Trench Coat Dáng Dài Be",
+                    Color = "Be",
+                    Style = "Quiet Luxury",
+                    Season = "Winter",
+                    Brand = "Burberry Style",
+                    Size = "L",
+                    ImageUrl = "https://images.unsplash.com/photo-1544441893-675973e31985?w=600&auto=format&fit=crop&q=80",
+                    Description = "Áo măng tô kaki dáng dài hai hàng cúc cổ điển, tôn chiều cao vượt trội.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Giày Tây Oxford Da Bò Nâu Classic",
+                    Color = "Nâu Bò",
+                    Style = "Formal",
+                    Season = "AllSeason",
+                    Brand = "Clarks",
+                    Size = "42",
+                    ImageUrl = "https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=600&auto=format&fit=crop&q=80",
+                    Description = "Giày tây buộc dây da bò cao cấp đánh xi nâu chuyển màu patina quý phái.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Chelsea Boots Da Lộn Nâu Cát",
+                    Color = "Nâu Cát",
+                    Style = "Smart Casual",
+                    Season = "Winter",
+                    Brand = "ASOS",
+                    Size = "42",
+                    ImageUrl = "https://images.unsplash.com/photo-1638247025967-b4e38f787b76?w=600&auto=format&fit=crop&q=80",
+                    Description = "Boots da lộn cổ chun tiện lợi, phối tuyệt đẹp cùng quần jeans skinny hoặc chinos.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 5,
+                    Name = "Giày Lười Slip-on Trắng Tối Giản",
+                    Color = "Trắng",
+                    Style = "Casual",
+                    Season = "Summer",
+                    Brand = "Vans",
+                    Size = "42",
+                    ImageUrl = "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&auto=format&fit=crop&q=80",
+                    Description = "Giày lười vải canvas trắng tiện dụng, êm chân và dễ đi hàng ngày.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 6,
+                    Name = "Thắt Lưng Da Bò Đen Khóa Kim Kim Loại",
+                    Color = "Đen",
+                    Style = "Formal",
+                    Season = "AllSeason",
+                    Brand = "Montblanc Style",
+                    Size = "Freesize",
+                    ImageUrl = "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop&q=80",
+                    Description = "Thắt lưng da công sở khóa kim thép không gỉ bóng loáng chuẩn chỉnh.",
+                    CreatedAt = now
+                },
+                new ClothingItem
+                {
+                    UserId = userId,
+                    CategoryId = 6,
+                    Name = "Mũ Lưỡi Trai Classic Baseball Cap Đen",
+                    Color = "Đen",
+                    Style = "Streetwear",
+                    Season = "AllSeason",
+                    Brand = "New Era",
+                    Size = "Freesize",
+                    ImageUrl = "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&auto=format&fit=crop&q=80",
+                    Description = "Mũ lưỡi trai phong cách bóng chày tối giản, phối đồ streetwear năng động.",
                     CreatedAt = now
                 }
             };
