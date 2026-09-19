@@ -28,7 +28,33 @@ namespace MYFITDAILY_EXE201_Group6.Data
                     await context.SaveChangesAsync();
                 }
 
-                // 2. Tß║ío Demo User Nß╗» (demo@myfitdaily.com)
+                // 1.5. Tạo Admin User (admin@myfitdaily.com)
+                var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "admin@myfitdaily.com");
+                if (adminUser == null)
+                {
+                    adminUser = new User
+                    {
+                        Email = "admin@myfitdaily.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                        FullName = "Quản Trị Viên (Admin)",
+                        Gender = "Nam",
+                        Role = "Admin",
+                        SubscriptionType = "PremiumPlus",
+                        Height = 175,
+                        Weight = 68,
+                        Chest = 95,
+                        Waist = 78,
+                        Hips = 94,
+                        BodyShape = "Thước kẻ",
+                        Age = 30,
+                        AgeGroup = "Millennials (25-34)",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    context.Users.Add(adminUser);
+                    await context.SaveChangesAsync();
+                }
+
+                // 2. Tạo Demo User Nữ (demo@myfitdaily.com)
                 var demoFemale = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "demo@myfitdaily.com");
                 if (demoFemale == null)
                 {

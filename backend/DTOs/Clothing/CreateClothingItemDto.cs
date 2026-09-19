@@ -33,5 +33,12 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Clothing
 
         [MaxLength(20)]
         public string? Size { get; set; }
+
+        public decimal? Price { get; set; }
+        public string? PriceFormatted { get; set; }
+        public string? AffiliateUrl { get; set; }
+        public string? OriginalUrl { get; set; }
+        public string? Platform { get; set; }
+        public bool IsAffiliate { get; set; } = false;
     }
 }

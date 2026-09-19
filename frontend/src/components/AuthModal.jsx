@@ -59,7 +59,16 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const handleDemoLogin = (type = 'female') => {
     const isMale = type === 'male' || formData.email === 'test@myfitdaily.com';
-    const demoUser = isMale ? {
+    const isAdmin = type === 'admin' || formData.email === 'admin@myfitdaily.com';
+    const demoUser = isAdmin ? {
+      id: 1,
+      fullName: 'Quản Trị Viên (Admin)',
+      email: 'admin@myfitdaily.com',
+      gender: 'Nam',
+      role: 'Admin',
+      subscriptionType: 'PremiumPlus',
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
+    } : (isMale ? {
       id: 998,
       fullName: 'Gentleman (Demo Nam)',
       email: 'test@myfitdaily.com',
@@ -87,12 +96,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
       role: 'User',
       subscriptionType: 'Premium',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-    };
+    });
     localStorage.setItem('myfitdaily_token', 'demo_jwt_token_2026');
     localStorage.setItem('myfitdaily_user', JSON.stringify(demoUser));
-    const demoClothes = getInitialClothesForGender(demoUser.gender);
+    const demoClothes = getInitialClothesForGender(demoUser.gender || 'Nam');
     localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(demoClothes));
-    const demoOutfits = getInitialOutfitsForGender(demoUser.gender);
+    const demoOutfits = getInitialOutfitsForGender(demoUser.gender || 'Nam');
     localStorage.setItem('myfitdaily_outfits', JSON.stringify(demoOutfits));
     onAuthSuccess(demoUser);
     onClose();
@@ -438,6 +447,26 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}
           >
             <span>👨 Vào nhanh Demo Nam</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDemoLogin('admin')}
+            id="btn-quick-admin"
+            style={{
+              fontSize: '0.8rem',
+              color: '#34D399',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              cursor: 'pointer',
+            }}
+          >
+            <span>🛡️ Demo Admin</span>
           </button>
         </div>
       </div>

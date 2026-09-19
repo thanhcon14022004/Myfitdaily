@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Plus, Sparkles, Check, Heart } from 'lucide-react';
+import { Trash2, Plus, Sparkles, Check, Heart, ExternalLink, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function ClothingCard({ 
@@ -133,7 +133,7 @@ export default function ClothingCard({
           </div>
         )}
 
-        {/* Category & Brand Pill Tags */}
+        {/* Category & Brand & Price Pill Tags */}
         <div style={{
           position: 'absolute',
           top: isSelectionMode ? '48px' : '12px',
@@ -150,6 +150,43 @@ export default function ClothingCard({
           {item.brand && (
             <span className="badge badge-gold" style={{ backdropFilter: 'blur(10px)', fontWeight: 800, fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
               🏷️ {item.brand}
+            </span>
+          )}
+          {(item.priceFormatted || item.price) && (
+            <span style={{
+              background: 'rgba(0, 0, 0, 0.88)',
+              border: '1px solid #D4AF37',
+              color: '#FDE68A',
+              padding: '3px 8px',
+              borderRadius: '6px',
+              fontWeight: 800,
+              fontSize: '0.74rem',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <Tag size={11} color="#D4AF37" />
+              <span>
+                {item.categoryName === 'Tops' ? 'Áo : ' : item.categoryName === 'Bottoms' ? 'Quần : ' : ''}
+                {item.priceFormatted || `${Number(item.price).toLocaleString()}đ`}
+              </span>
+            </span>
+          )}
+          {item.platform && (
+            <span style={{
+              background: item.platform?.toLowerCase().includes('tiktok') ? 'rgba(0, 0, 0, 0.85)' : 'rgba(238, 77, 45, 0.88)',
+              border: item.platform?.toLowerCase().includes('tiktok') ? '1px solid #00F2FE' : '1px solid rgba(255,255,255,0.3)',
+              color: '#FFFFFF',
+              padding: '2px 7px',
+              borderRadius: '4px',
+              fontWeight: 700,
+              fontSize: '0.68rem',
+              letterSpacing: '0.02em',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+            }}>
+              {item.platform === 'TikTokShop' ? '🎵 TikTok' : item.platform}
             </span>
           )}
         </div>
@@ -336,6 +373,52 @@ export default function ClothingCard({
               </>
             )}
           </button>
+        )}
+
+        {/* Action Button: Affiliate Buy Direct Link */}
+        {(item.affiliateUrl || item.originalUrl) && (
+          <a
+            href={item.affiliateUrl || item.originalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              marginTop: '8px',
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              background: item.platform?.toLowerCase().includes('tiktok') 
+                ? '#0F172A' 
+                : 'linear-gradient(135deg, #EA580C, #F97316)',
+              color: '#FFFFFF',
+              textDecoration: 'none',
+              border: item.platform?.toLowerCase().includes('tiktok') 
+                ? '1px solid #00F2FE' 
+                : '1px solid rgba(249, 115, 22, 0.5)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+              transition: 'all 0.2s ease',
+              boxSizing: 'border-box'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(234, 88, 12, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
+            }}
+          >
+            <ExternalLink size={13} />
+            <span>
+              {text('🛒 Mua ngay', '🛒 Buy Now')} {item.priceFormatted ? `· ${item.priceFormatted}` : ''}
+            </span>
+          </a>
         )}
       </div>
     </div>

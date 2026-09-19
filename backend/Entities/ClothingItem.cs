@@ -37,6 +37,16 @@ namespace MYFITDAILY_EXE201_Group6.Entities
         [MaxLength(20)]
         public string? Size { get; set; } // XS, S, M, L, XL, 29, 30, 41, etc.
 
+        // Affiliate Marketing & E-commerce integration
+        public decimal? Price { get; set; }
+        [MaxLength(50)]
+        public string? PriceFormatted { get; set; } // e.g. "263K", "220.000đ"
+        public string? AffiliateUrl { get; set; }
+        public string? OriginalUrl { get; set; }
+        [MaxLength(50)]
+        public string? Platform { get; set; } // Shopee, TikTokShop, Lazada, Zara, etc.
+        public bool IsAffiliate { get; set; } = false;
+
         // Navigation properties
         public User? User { get; set; }
         public Category? Category { get; set; }

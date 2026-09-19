@@ -15,7 +15,9 @@ import {
   Compass,
   Trash2,
   MoreHorizontal,
-  Settings
+  Settings,
+  Shield,
+  Link2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -41,17 +43,21 @@ export default function Sidebar({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
+  const isAdmin = user?.role === 'Admin';
+
   // User display info
-  const displayName = user?.fullName || 'Hà Trung Thành';
+  const displayName = user?.fullName || (isAdmin ? 'Ban Quản Trị MyFitDaily' : 'Hà Trung Thành');
   const displayInitials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase()
-    : 'HT';
+    : (isAdmin ? 'AD' : 'HT');
   const subType = user?.subscriptionType || 'Free';
-  const displayPlan = (subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus')
-    ? '💎 Premium Plus'
-    : subType.toLowerCase() === 'premium'
-      ? '👑 VIP Premium'
-      : 'Gói Free Cơ Bản';
+  const displayPlan = isAdmin
+    ? '🛡️ Quản Trị Viên (Admin)'
+    : (subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus')
+      ? '💎 Premium Plus'
+      : subType.toLowerCase() === 'premium'
+        ? '👑 VIP Premium'
+        : 'Gói Free Cơ Bản';
 
   return (
     <aside
@@ -169,197 +175,331 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Primary CTA: "Đoạn chat mới" */}
-        <button
-          onClick={onNewChat}
-          className="chatgpt-new-chat-btn"
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '9px 12px',
-            borderRadius: '8px',
-            background: currentTab === 'ai-stylist' && !activeSessionId ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-            color: '#ECECEC',
-            fontSize: '0.88rem',
-            fontWeight: 500,
-            border: 'none',
-            cursor: 'pointer',
-            textAlign: 'left',
-            marginBottom: '6px',
-          }}
-        >
-          <SquarePen size={17} color="#ECECEC" />
-          <span style={{ flex: 1 }}>{t('nav_new_chat')}</span>
-        </button>
+        {/* Primary Action Button */}
+        {isAdmin ? (
+          <button
+            onClick={() => setCurrentTab('admin')}
+            className="chatgpt-new-chat-btn"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '9px 12px',
+              borderRadius: '8px',
+              background: currentTab === 'admin' ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(194, 125, 94, 0.25))' : 'rgba(212, 175, 55, 0.12)',
+              color: '#FDE68A',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              cursor: 'pointer',
+              textAlign: 'left',
+              marginBottom: '6px',
+            }}
+          >
+            <Link2 size={17} color="#D4AF37" />
+            <span style={{ flex: 1 }}>{text('🔗 Nhập Link Affiliate', '🔗 Import Product Link')}</span>
+          </button>
+        ) : (
+          <button
+            onClick={onNewChat}
+            className="chatgpt-new-chat-btn"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '9px 12px',
+              borderRadius: '8px',
+              background: currentTab === 'ai-stylist' && !activeSessionId ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+              color: '#ECECEC',
+              fontSize: '0.88rem',
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+              marginBottom: '6px',
+            }}
+          >
+            <SquarePen size={17} color="#ECECEC" />
+            <span style={{ flex: 1 }}>{t('nav_new_chat')}</span>
+          </button>
+        )}
 
         {/* Navigation Items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '8px' }}>
 
-          {/* Tủ Đồ Số (Wardrobe) */}
-          <button
-            onClick={() => setCurrentTab('wardrobe')}
-            className={`sidebar-nav-item ${currentTab === 'wardrobe' ? 'active' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'wardrobe' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-              color: currentTab === 'wardrobe' ? '#FFFFFF' : '#ECECEC',
-              fontSize: '0.88rem',
-              fontWeight: currentTab === 'wardrobe' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
-              <span>{t('nav_wardrobe')}</span>
-            </div>
-            <span style={{
-              fontSize: '0.62rem',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              background: 'rgba(212, 175, 55, 0.15)',
-              color: '#F3D98A',
-              fontWeight: 600,
-              letterSpacing: '0.02em'
-            }}>
-              {language === 'vi' ? 'TỦ ĐỒ' : 'CLOSET'}
-            </span>
-          </button>
+          {isAdmin ? (
+            <>
+              {/* Quản Trị Hệ Thống (Admin Portal) */}
+              <button
+                onClick={() => setCurrentTab('admin')}
+                className={`sidebar-nav-item ${currentTab === 'admin' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'admin' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'admin' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'admin' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Shield size={17} color={currentTab === 'admin' ? '#D4AF37' : '#B4B4B4'} />
+                  <span>{text('Quản Trị Hệ Thống', 'Admin Portal')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.62rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(212, 175, 55, 0.25)',
+                  color: '#FDE68A',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em'
+                }}>
+                  ADMIN
+                </span>
+              </button>
 
-          {/* Atelier Phối Đồ (Outfit Studio) */}
-          <button
-            onClick={() => setCurrentTab('outfits')}
-            className={`sidebar-nav-item ${currentTab === 'outfits' ? 'active' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'outfits' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-              color: currentTab === 'outfits' ? '#FFFFFF' : '#ECECEC',
-              fontSize: '0.88rem',
-              fontWeight: currentTab === 'outfits' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <Layers size={17} color={currentTab === 'outfits' ? '#D4AF37' : '#B4B4B4'} />
-            <span>{t('nav_outfits')}</span>
-          </button>
+              {/* Kho Đồ Toàn Sàn (Catalog) */}
+              <button
+                onClick={() => setCurrentTab('wardrobe')}
+                className={`sidebar-nav-item ${currentTab === 'wardrobe' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'wardrobe' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'wardrobe' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'wardrobe' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
+                  <span>{text('Kho Đồ Toàn Sàn', 'Global Catalog')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.62rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  color: '#38BDF8',
+                  fontWeight: 600,
+                  letterSpacing: '0.02em'
+                }}>
+                  CATALOG
+                </span>
+              </button>
 
-          {/* Trang Phục Yêu Thích (Favorite Outfits) */}
-          <button
-            onClick={() => setCurrentTab('dashboard')}
-            className={`sidebar-nav-item ${currentTab === 'dashboard' ? 'active' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'dashboard' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-              color: currentTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontSize: '0.88rem',
-              fontWeight: currentTab === 'dashboard' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Heart 
-                size={17} 
-                color={currentTab === 'dashboard' ? '#F43F5E' : 'var(--text-muted)'} 
-                fill={currentTab === 'dashboard' ? '#F43F5E' : 'none'} 
-              />
-              <span>{t('nav_dashboard')}</span>
-            </div>
-            {favoriteCount > 0 && (
-              <span style={{
-                fontSize: '0.7rem',
-                background: 'rgba(244, 63, 94, 0.18)',
-                color: '#FB7185',
-                padding: '2px 7px',
-                borderRadius: '10px',
-                fontWeight: 700,
-                border: '1px solid rgba(244, 63, 94, 0.3)'
-              }}>
-                {favoriteCount}
-              </span>
-            )}
-          </button>
+              {/* Mẫu Phối Trang Phục Demo */}
+              <button
+                onClick={() => setCurrentTab('dashboard')}
+                className={`sidebar-nav-item ${currentTab === 'dashboard' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'dashboard' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'dashboard' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Heart 
+                  size={17} 
+                  color={currentTab === 'dashboard' ? '#F43F5E' : 'var(--text-muted)'} 
+                  fill={currentTab === 'dashboard' ? '#F43F5E' : 'none'} 
+                />
+                <span>{text('Mẫu Outfit Demo', 'Lookbook Outfits')}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Tủ Đồ Số (Wardrobe) */}
+              <button
+                onClick={() => setCurrentTab('wardrobe')}
+                className={`sidebar-nav-item ${currentTab === 'wardrobe' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'wardrobe' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'wardrobe' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'wardrobe' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
+                  <span>{t('nav_wardrobe')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.62rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  color: '#F3D98A',
+                  fontWeight: 600,
+                  letterSpacing: '0.02em'
+                }}>
+                  {language === 'vi' ? 'TỦ ĐỒ' : 'CLOSET'}
+                </span>
+              </button>
 
-          {/* AI Stylist */}
-          <button
-            onClick={() => setCurrentTab('ai-stylist')}
-            className={`sidebar-nav-item ${currentTab === 'ai-stylist' ? 'active' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'ai-stylist' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-              color: currentTab === 'ai-stylist' ? '#FFFFFF' : '#ECECEC',
-              fontSize: '0.88rem',
-              fontWeight: currentTab === 'ai-stylist' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={17} color={currentTab === 'ai-stylist' ? '#D4AF37' : '#B4B4B4'} />
-              <span>{t('nav_ai_stylist')}</span>
-            </div>
-            <span style={{
-              fontSize: '0.62rem',
-              background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
-              color: '#080A0F',
-              padding: '1px 6px',
-              borderRadius: '4px',
-              fontWeight: 800,
-            }}>
-              AI
-            </span>
-          </button>
+              {/* Atelier Phối Đồ (Outfit Studio) */}
+              <button
+                onClick={() => setCurrentTab('outfits')}
+                className={`sidebar-nav-item ${currentTab === 'outfits' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'outfits' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'outfits' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'outfits' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Layers size={17} color={currentTab === 'outfits' ? '#D4AF37' : '#B4B4B4'} />
+                <span>{t('nav_outfits')}</span>
+              </button>
 
-          {/* Hội Viên VIP (Premium) */}
-          <button
-            onClick={() => setCurrentTab('premium')}
-            className={`sidebar-nav-item ${currentTab === 'premium' ? 'active' : ''}`}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'premium' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-              color: currentTab === 'premium' ? '#FDE68A' : '#F3D98A',
-              fontSize: '0.88rem',
-              fontWeight: currentTab === 'premium' ? 600 : 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <Crown size={17} color="#D4AF37" />
-            <span>{t('nav_premium', text('Hội Viên VIP', 'VIP Membership'))}</span>
-          </button>
+              {/* Trang Phục Yêu Thích (Favorite Outfits) */}
+              <button
+                onClick={() => setCurrentTab('dashboard')}
+                className={`sidebar-nav-item ${currentTab === 'dashboard' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'dashboard' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'dashboard' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Heart 
+                    size={17} 
+                    color={currentTab === 'dashboard' ? '#F43F5E' : 'var(--text-muted)'} 
+                    fill={currentTab === 'dashboard' ? '#F43F5E' : 'none'} 
+                  />
+                  <span>{t('nav_dashboard')}</span>
+                </div>
+                {favoriteCount > 0 && (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    background: 'rgba(244, 63, 94, 0.18)',
+                    color: '#FB7185',
+                    padding: '2px 7px',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    border: '1px solid rgba(244, 63, 94, 0.3)'
+                  }}>
+                    {favoriteCount}
+                  </span>
+                )}
+              </button>
+
+              {/* AI Stylist */}
+              <button
+                onClick={() => setCurrentTab('ai-stylist')}
+                className={`sidebar-nav-item ${currentTab === 'ai-stylist' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'ai-stylist' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                  color: currentTab === 'ai-stylist' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'ai-stylist' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Sparkles size={17} color={currentTab === 'ai-stylist' ? '#D4AF37' : '#B4B4B4'} />
+                  <span>{t('nav_ai_stylist')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.62rem',
+                  background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
+                  color: '#080A0F',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  fontWeight: 800,
+                }}>
+                  AI
+                </span>
+              </button>
+
+              {/* Hội Viên VIP (Premium) */}
+              <button
+                onClick={() => setCurrentTab('premium')}
+                className={`sidebar-nav-item ${currentTab === 'premium' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'premium' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
+                  color: currentTab === 'premium' ? '#FDE68A' : '#F3D98A',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'premium' ? 600 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <Crown size={17} color="#D4AF37" />
+                <span>{t('nav_premium', text('Hội Viên VIP', 'VIP Membership'))}</span>
+              </button>
+            </>
+          )}
 
           {/* Thêm... (More: Khám phá, Thêm đồ nhanh) */}
           <div style={{ position: 'relative' }}>
@@ -464,113 +604,207 @@ export default function Sidebar({
             gap: '10px',
           }}
         >
-          {/* SECTION: Đoạn chat (Lịch sử cuộc trò chuyện) */}
-          <div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 12px 4px',
-            }}>
-              <span style={{
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                color: '#8E8E8E',
-                letterSpacing: '0.01em',
+          {/* SECTION: Content based on Role */}
+          {isAdmin ? (
+            <div style={{ padding: '4px 6px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Admin Mode Info Badge */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(194, 125, 94, 0.08))',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                borderRadius: '10px',
+                padding: '12px 10px',
+                fontSize: '0.78rem',
+                color: '#E2E8F0',
+                lineHeight: 1.45
               }}>
-                {text('Đoạn chat', 'Chats')}
-              </span>
-              <span style={{ fontSize: '0.68rem', color: '#666' }}>
-                {chatSessions.length}
-              </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#FDE68A', marginBottom: '4px' }}>
+                  <Shield size={14} color="#D4AF37" />
+                  <span>{text('Chế Độ Quản Trị Hệ Thống', 'Admin System Mode')}</span>
+                </div>
+                <p style={{ margin: 0, color: '#A1A1AA', fontSize: '0.74rem' }}>
+                  {text(
+                    'Tài khoản Quản trị chuyên dụng kiểm soát catalog affiliate, phân tích sản phẩm và quản lý người dùng.',
+                    'Dedicated administrative account managing affiliate catalog, AI parsing, and users.'
+                  )}
+                </p>
+                <div style={{
+                  marginTop: '8px',
+                  paddingTop: '6px',
+                  borderTop: '1px dashed rgba(212, 175, 55, 0.2)',
+                  fontSize: '0.7rem',
+                  color: '#CBD5E1'
+                }}>
+                  🔒 {text('Tính năng Stylist & Chat cá nhân đã được ẩn theo quyền hạn.', 'Stylist & personal chat hidden per Admin role.')}
+                </div>
+              </div>
+
+              {/* Admin Quick Action Shortcuts */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: '#8E8E8E',
+                  padding: '4px 6px 2px',
+                  letterSpacing: '0.02em'
+                }}>
+                  {text('THAO TÁC NHANH', 'QUICK ACTIONS')}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentTab('admin')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    padding: '8px 10px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '7px',
+                    color: '#E2E8F0',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+                >
+                  <Link2 size={14} color="#38BDF8" />
+                  <span>{text('Dán Link Shopee / TikTok', 'Import Shopee / TikTok Link')}</span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentTab('wardrobe')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    padding: '8px 10px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '7px',
+                    color: '#E2E8F0',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+                >
+                  <Shirt size={14} color="#F3D98A" />
+                  <span>{text('Xem Kho Hàng & Giá Bán', 'View Products & Price Tags')}</span>
+                </button>
+              </div>
             </div>
+          ) : (
+            <div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '6px 12px 4px',
+              }}>
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  color: '#8E8E8E',
+                  letterSpacing: '0.01em',
+                }}>
+                  {text('Đoạn chat', 'Chats')}
+                </span>
+                <span style={{ fontSize: '0.68rem', color: '#666' }}>
+                  {chatSessions.length}
+                </span>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {chatSessions.map((session) => {
-                const isSelected = activeSessionId === session.id && currentTab === 'ai-stylist';
-                return (
-                  <div
-                    key={session.id}
-                    onClick={() => onSelectChat(session.id)}
-                    className={`sidebar-chat-item ${isSelected ? 'active' : ''}`}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '7px 10px 7px 12px',
-                      borderRadius: '8px',
-                      background: isSelected ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                      color: isSelected ? '#FFFFFF' : '#C7C7C7',
-                      fontSize: '0.86rem',
-                      fontWeight: isSelected ? 500 : 400,
-                      cursor: 'pointer',
-                      transition: 'background 0.15s, color 0.15s',
-                      position: 'relative',
-                    }}
-                    title={session.title}
-                  >
-                    <span style={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                      marginRight: '6px'
-                    }}>
-                      {session.title}
-                    </span>
-
-                    {/* Delete button on hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onDeleteChat) onDeleteChat(session.id);
-                      }}
-                      className="chat-delete-btn"
-                      title={text("Xóa đoạn chat này", "Delete this chat")}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {chatSessions.map((session) => {
+                  const isSelected = activeSessionId === session.id && currentTab === 'ai-stylist';
+                  return (
+                    <div
+                      key={session.id}
+                      onClick={() => onSelectChat(session.id)}
+                      className={`sidebar-chat-item ${isSelected ? 'active' : ''}`}
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#71717A',
-                        cursor: 'pointer',
-                        padding: '2px',
-                        borderRadius: '4px',
+                        width: '100%',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        opacity: isSelected ? 0.9 : 0.4,
-                        transition: 'opacity 0.15s, color 0.15s',
+                        justifyContent: 'space-between',
+                        padding: '7px 10px 7px 12px',
+                        borderRadius: '8px',
+                        background: isSelected ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                        color: isSelected ? '#FFFFFF' : '#C7C7C7',
+                        fontSize: '0.86rem',
+                        fontWeight: isSelected ? 500 : 400,
+                        cursor: 'pointer',
+                        transition: 'background 0.15s, color 0.15s',
+                        position: 'relative',
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#EF4444';
-                        e.currentTarget.style.opacity = '1';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = '#71717A';
-                        e.currentTarget.style.opacity = isSelected ? '0.9' : '0.4';
-                      }}
+                      title={session.title}
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                );
-              })}
+                      <span style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1,
+                        marginRight: '6px'
+                      }}>
+                        {session.title}
+                      </span>
 
-              {chatSessions.length === 0 && (
-                <div style={{
-                  padding: '16px 12px',
-                  textAlign: 'center',
-                  fontSize: '0.78rem',
-                  color: '#71717A',
-                }}>
-                  {text(
-                    'Chưa có lịch sử đoạn chat nào. Hãy bấm Đoạn chat mới để bắt đầu!',
-                    'No chat history yet. Click New Chat to get started!'
-                  )}
-                </div>
-              )}
+                      {/* Delete button on hover */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onDeleteChat) onDeleteChat(session.id);
+                        }}
+                        className="chat-delete-btn"
+                        title={text("Xóa đoạn chat này", "Delete this chat")}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#71717A',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: isSelected ? 0.9 : 0.4,
+                          transition: 'opacity 0.15s, color 0.15s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#EF4444';
+                          e.currentTarget.style.opacity = '1';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#71717A';
+                          e.currentTarget.style.opacity = isSelected ? '0.9' : '0.4';
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {chatSessions.length === 0 && (
+                  <div style={{
+                    padding: '16px 12px',
+                    textAlign: 'center',
+                    fontSize: '0.78rem',
+                    color: '#71717A',
+                  }}>
+                    {text(
+                      'Chưa có lịch sử đoạn chat nào. Hãy bấm Đoạn chat mới để bắt đầu!',
+                      'No chat history yet. Click New Chat to get started!'
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* BOTTOM SECTION: User Profile Card */}
@@ -712,27 +946,51 @@ export default function Sidebar({
                 </span>
               </button>
 
-              <button
-                onClick={() => { setCurrentTab('premium'); setProfileMenuOpen(false); }}
-                className="sidebar-popover-item"
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  color: '#FDE68A',
-                  fontSize: '0.84rem',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <Crown size={15} />
-                <span>{t('upgrade_vip_title')}</span>
-              </button>
+              {isAdmin ? (
+                <button
+                  onClick={() => { setCurrentTab('admin'); setProfileMenuOpen(false); }}
+                  className="sidebar-popover-item"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    color: '#FDE68A',
+                    fontSize: '0.84rem',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Shield size={15} />
+                  <span>{text('Bảng Quản Trị Hệ Thống', 'Admin Portal')}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => { setCurrentTab('premium'); setProfileMenuOpen(false); }}
+                  className="sidebar-popover-item"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    color: '#FDE68A',
+                    fontSize: '0.84rem',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Crown size={15} />
+                  <span>{t('upgrade_vip_title')}</span>
+                </button>
+              )}
 
               <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
 

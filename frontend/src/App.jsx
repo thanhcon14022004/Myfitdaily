@@ -13,6 +13,7 @@ import OutfitStudioPage from './pages/OutfitStudioPage';
 import AiStylistPage from './pages/AiStylistPage';
 import ProfilePage from './pages/ProfilePage';
 import PremiumPage from './pages/PremiumPage';
+import AdminPortalPage from './pages/AdminPortalPage';
 
 import { apiRequest } from './api/apiClient';
 import { 
@@ -28,7 +29,7 @@ import { useLanguage } from './context/LanguageContext';
 
 export default function App() {
   const { text } = useLanguage();
-  // Navigation State: 'landing' | 'dashboard' | 'wardrobe' | 'outfits' | 'ai-stylist' | 'profile' | 'premium'
+  // Navigation State: 'landing' | 'dashboard' | 'wardrobe' | 'outfits' | 'ai-stylist' | 'profile' | 'premium' | 'admin'
   const [currentTab, setCurrentTab] = useState('landing');
 
   // Chat History & Sessions State (ChatGPT dynamic history)
@@ -102,12 +103,23 @@ export default function App() {
     const savedUser = localStorage.getItem('myfitdaily_user');
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        if (parsed?.role === 'Admin') {
+          setCurrentTab('admin');
+        }
       } catch (e) {
         console.error("Failed to parse user session", e);
       }
     }
   }, []);
+
+  // Admin route restriction: Admin role is strictly for managing the platform, affiliate links & catalog
+  useEffect(() => {
+    if (user?.role === 'Admin' && (currentTab === 'ai-stylist' || currentTab === 'outfits' || currentTab === 'landing')) {
+      setCurrentTab('admin');
+    }
+  }, [user, currentTab]);
 
   // Fetch user's real wardrobe from database & sanitize by gender
   useEffect(() => {
@@ -156,7 +168,11 @@ export default function App() {
   // Handlers
   const handleAuthSuccess = (userData) => {
     setUser(userData);
-    setCurrentTab('dashboard');
+    if (userData?.role === 'Admin') {
+      setCurrentTab('admin');
+    } else {
+      setCurrentTab('dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -518,10 +534,20 @@ export default function App() {
               onUpgrade={handleUpgradePremium}
             />
           )}
+
+          {currentTab === 'admin' && (
+            <AdminPortalPage
+              user={user}
+              onNavigate={setCurrentTab}
+              onEquipInStudio={(item) => {
+                setCurrentTab('wardrobe');
+              }}
+            />
+          )}
         </main>
 
-        {/* Footer (hidden on ai-stylist page so chat fits full screen without page scrolling) */}
-        {currentTab !== 'ai-stylist' && (
+        {/* Footer (hidden on ai-stylist and admin portal pages) */}
+        {currentTab !== 'ai-stylist' && currentTab !== 'admin' && (
           <footer style={{
             background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',

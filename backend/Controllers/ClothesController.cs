@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MYFITDAILY_EXE201_Group6.Common;
@@ -102,6 +102,12 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                         Description = c.Description,
                         Brand = c.Brand,
                         Size = c.Size,
+                        Price = c.Price,
+                        PriceFormatted = c.PriceFormatted,
+                        AffiliateUrl = c.AffiliateUrl,
+                        OriginalUrl = c.OriginalUrl,
+                        Platform = c.Platform,
+                        IsAffiliate = c.IsAffiliate,
                         CreatedAt = c.CreatedAt
                     })
                     .ToListAsync();
