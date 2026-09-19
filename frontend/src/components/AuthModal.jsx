@@ -1,7 +1,8 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Lock, Mail, User, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
+import { getInitialClothesForGender, getInitialOutfitsForGender } from '../data/initialWardrobe';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const { text } = useLanguage();
@@ -89,6 +90,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     };
     localStorage.setItem('myfitdaily_token', 'demo_jwt_token_2026');
     localStorage.setItem('myfitdaily_user', JSON.stringify(demoUser));
+    const demoClothes = getInitialClothesForGender(demoUser.gender);
+    localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(demoClothes));
+    const demoOutfits = getInitialOutfitsForGender(demoUser.gender);
+    localStorage.setItem('myfitdaily_outfits', JSON.stringify(demoOutfits));
     onAuthSuccess(demoUser);
     onClose();
   };

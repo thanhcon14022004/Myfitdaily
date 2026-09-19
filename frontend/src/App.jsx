@@ -19,6 +19,7 @@ import {
   INITIAL_CATEGORIES, 
   INITIAL_OUTFITS,
   getCategoriesForGender,
+  getInitialClothesForGender,
   getInitialOutfitsForGender,
   sanitizeClothesForGender
 } from './data/initialWardrobe';
@@ -71,17 +72,29 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {
         console.warn("Failed to parse saved clothes", e);
       }
     }
-    return [];
+    const savedUser = localStorage.getItem('myfitdaily_user');
+    const g = savedUser ? JSON.parse(savedUser)?.gender : 'Nam';
+    return getInitialClothesForGender(g);
   });
 
   const [outfits, setOutfits] = useState(() => {
     const saved = localStorage.getItem('myfitdaily_outfits');
-    return saved ? JSON.parse(saved) : INITIAL_OUTFITS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.warn("Failed to parse saved outfits", e);
+      }
+    }
+    const savedUser = localStorage.getItem('myfitdaily_user');
+    const g = savedUser ? JSON.parse(savedUser)?.gender : 'Nam';
+    return getInitialOutfitsForGender(g);
   });
 
   // Load user on mount
@@ -101,13 +114,16 @@ export default function App() {
     async function loadUserClothes() {
       try {
         const res = await apiRequest('/clothes');
-        if (res.ok && res.data?.data && Array.isArray(res.data.data)) {
+        if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
           setClothes(items);
           localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(items));
+        } else {
+          setClothes(prev => (prev && prev.length > 0) ? prev : getInitialClothesForGender(user?.gender));
         }
       } catch (err) {
         console.warn("Could not sync clothes from backend, using local state", err);
+        setClothes(prev => (prev && prev.length > 0) ? prev : getInitialClothesForGender(user?.gender));
       }
     }
     loadUserClothes();

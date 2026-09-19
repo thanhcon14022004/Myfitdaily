@@ -3,6 +3,39 @@
 
 export const INITIAL_CLOTHING_ITEMS_MALE = [
   {
+    id: 100,
+    name: "Sweatshirt Navy Frozen.HN Nam",
+    categoryId: 1,
+    categoryName: "Tops",
+    color: "Xanh Navy",
+    style: "Streetwear",
+    season: "Fall / Winter",
+    imageUrl: "/assets/clothes/sweatshirt_frozen_navy.png",
+    description: "Áo sweater nỉ cotton 380gsm dày dặn đứng form oversize streetwear, thêu logo Frozen.HN."
+  },
+  {
+    id: 107,
+    name: "Quần Trackpants Sọc Đen Viền Trắng",
+    categoryId: 2,
+    categoryName: "Bottoms",
+    color: "Đen",
+    style: "Streetwear",
+    season: "AllSeason",
+    imageUrl: "/assets/clothes/trackpants_stripe_black.png",
+    description: "Quần thun thể thao sọc trắng đôi hai bên hông phong cách đường phố năng động."
+  },
+  {
+    id: 109,
+    name: "Giày Sneaker Trắng Đen Retro Classic",
+    categoryId: 5,
+    categoryName: "Shoes",
+    color: "Trắng Đen",
+    style: "Streetwear",
+    season: "AllSeason",
+    imageUrl: "/assets/clothes/sneakers_white_black.png",
+    description: "Đôi sneaker retro cổ thấp phối màu trắng đen cổ điển dễ phối mọi set đồ."
+  },
+  {
     id: 101,
     name: "Áo sơ mi Oxford trắng Dài Tay Classic",
     categoryId: 1,
@@ -282,6 +315,16 @@ export const INITIAL_CATEGORIES_FEMALE = [
 export const INITIAL_CATEGORIES = INITIAL_CATEGORIES_FEMALE;
 
 export const INITIAL_OUTFITS_MALE = [
+  {
+    id: 100,
+    name: "Streetwear Frozen.HN Trẻ Trung",
+    occasion: "Casual",
+    season: "Fall / Winter",
+    isFavorite: true,
+    createdByAi: false,
+    itemIds: [100, 107, 109],
+    description: "Sweatshirt Navy Frozen.HN kết hợp quần Trackpants sọc đen viền trắng và giày sneaker retro classic đen trắng năng động đường phố."
+  },
   {
     id: 101,
     name: "Thanh Lịch Quý Ông Thứ Hai",

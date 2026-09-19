@@ -310,7 +310,7 @@ export default function VirtualMannequin({
   // Tùy chọn hiển thị
   const [showMeasurements, setShowMeasurements] = useState(true);
   const [activeSlotFocus, setActiveSlotFocus] = useState(null);
-  const [fittingMode, setFittingMode] = useState('atelier'); // 'atelier' (Phom Chuẩn 3D) hoặc 'flatlay' (Ảnh Bóc Tách)
+  const [fittingMode, setFittingMode] = useState('model3d'); // 'model3d' (3D Avatar GLB), 'atelier' (Phom Chuẩn 3D) hoặc 'flatlay' (Ảnh Thật Bóc Tách)
 
   // =========================================================================
   // HỆ THỐNG XOAY 3D SÂN KHẤU SHOWROOM (3D TURNTABLE ROTATION SYSTEM)
@@ -609,6 +609,14 @@ export default function VirtualMannequin({
   // Vị trí định vị trang phục theo form đã co giãn
   const { sShoulder, sChest, sWaist, sHips } = formModifiers;
 
+  // Mô hình 3D GLB chuẩn đồng bộ từ Mobile
+  const selectedGlbModel = useMemo(() => {
+    if (isMale) {
+      return '/assets/models/outfit_streetwear.glb';
+    }
+    return '/assets/models/avatar_female.glb';
+  }, [isMale]);
+
   return (
     <div style={{
       position: 'relative',
@@ -667,7 +675,7 @@ export default function VirtualMannequin({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Chuyển Chế Độ Thử Đồ: Phom Chuẩn 3D vs Ảnh Bóc Tách */}
+            {/* Chuyển Chế Độ Thử Đồ: 3D Avatar (GLB) vs Phom Chuẩn 3D vs Ảnh Bóc Tách */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -678,11 +686,11 @@ export default function VirtualMannequin({
               border: '1px solid rgba(212, 175, 55, 0.25)'
             }}>
               <button
-                onClick={() => setFittingMode('atelier')}
-                title="Phom Chuẩn 3D: Quần dài chạm mắt cá chân, áo ôm vai vừa vặn, giày xỏ cả 2 chân"
+                onClick={() => setFittingMode('model3d')}
+                title="3D Avatar Thực Tế (GLB): Mô hình 3D Streetwear tương tác giống hệt bản Mobile"
                 style={{
-                  background: fittingMode === 'atelier' ? 'linear-gradient(135deg, #D4AF37, #B8860B)' : 'transparent',
-                  color: fittingMode === 'atelier' ? '#07090E' : 'var(--text-muted)',
+                  background: fittingMode === 'model3d' ? 'linear-gradient(135deg, #10B981, #059669)' : 'transparent',
+                  color: fittingMode === 'model3d' ? '#FFFFFF' : 'var(--text-muted)',
                   border: 'none',
                   padding: '3px 9px',
                   borderRadius: 'var(--radius-full)',
@@ -692,15 +700,16 @@ export default function VirtualMannequin({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '3px',
+                  boxShadow: fittingMode === 'model3d' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Sparkles size={11} />
-                <span>Phom Chuẩn 3D</span>
+                <Compass size={11} />
+                <span>3D Avatar (GLB)</span>
               </button>
               <button
                 onClick={() => setFittingMode('flatlay')}
-                title="Ảnh Bóc Tách: Hiển thị ảnh chụp sản phẩm bóc nền phẳng"
+                title="Ảnh Bóc Tách: Hiển thị ảnh chụp sản phẩm bóc nền phẳng của 3 món đồ"
                 style={{
                   background: fittingMode === 'flatlay' ? 'rgba(212, 175, 55, 0.25)' : 'transparent',
                   color: fittingMode === 'flatlay' ? '#F3D98A' : 'var(--text-muted)',
@@ -717,7 +726,28 @@ export default function VirtualMannequin({
                 }}
               >
                 <Layers size={11} />
-                <span>Ảnh Bóc Tách</span>
+                <span>Ảnh Thật Bóc Tách</span>
+              </button>
+              <button
+                onClick={() => setFittingMode('atelier')}
+                title="Phom Chuẩn 3D: Quần dài chạm mắt cá chân, áo ôm vai vừa vặn, may đo chuẩn vóc dáng"
+                style={{
+                  background: fittingMode === 'atelier' ? 'linear-gradient(135deg, #D4AF37, #B8860B)' : 'transparent',
+                  color: fittingMode === 'atelier' ? '#07090E' : 'var(--text-muted)',
+                  border: 'none',
+                  padding: '3px 9px',
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Sparkles size={11} />
+                <span>Phom May Đo</span>
               </button>
             </div>
 
@@ -848,22 +878,73 @@ export default function VirtualMannequin({
           }} />
         </div>
 
-        {/* 3. KHỐI 3D CHỨA CANVAS & TRANG PHỤC XOAY THEO GÓC NHÌN */}
-        <div style={{
-          position: 'relative',
-          width: '340px',
-          height: '550px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2,
-          transform: `perspective(1000px) rotateY(${rotation}deg)`,
-          transformStyle: 'preserve-3d',
-          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)',
-          filter: `drop-shadow(${Math.sin(rotation * Math.PI / 180) * 16}px 14px 24px rgba(0, 0, 0, 0.85))`
-        }}>
-          {/* 3.1 MẶT TRƯỚC (FRONT FACE) - NGỰC, BỤNG, MẶT, TRANG PHỤC */}
+        {/* 3. KHỐI 3D: HOẶC 3D AVATAR (GLB ĐỒNG BỘ MOBILE) HOẶC CANVAS MA-NƠ-CANH */}
+        {fittingMode === 'model3d' ? (
           <div style={{
+            position: 'relative',
+            width: '340px',
+            height: '550px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3
+          }}>
+            <model-viewer
+              src={selectedGlbModel}
+              alt="3D Avatar Streetwear Outfit"
+              camera-controls
+              auto-rotate={isAutoRotating}
+              rotation-per-second="24deg"
+              shadow-intensity="1.6"
+              shadow-softness="0.5"
+              environment-image="neutral"
+              exposure="1.0"
+              camera-orbit="0deg 75deg 105%"
+              field-of-view="30deg"
+              style={{
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'transparent'
+              }}
+            >
+              <div slot="poster" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#D4AF37', fontSize: '0.8rem' }}>
+                <span>✨ Đang tải 3D Avatar (GLB)...</span>
+              </div>
+            </model-viewer>
+            <div style={{
+              position: 'absolute',
+              bottom: '12px',
+              padding: '4px 12px',
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(5, 8, 15, 0.85)',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              color: '#FDE68A',
+              fontSize: '0.66rem',
+              fontWeight: 600,
+              pointerEvents: 'none',
+              zIndex: 4,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            }}>
+              👕 3D Avatar đang mặc: Sweatshirt Navy + Trackpants Sọc + Retro Sneaker
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            position: 'relative',
+            width: '340px',
+            height: '550px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            transform: `perspective(1000px) rotateY(${rotation}deg)`,
+            transformStyle: 'preserve-3d',
+            transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)',
+            filter: `drop-shadow(${Math.sin(rotation * Math.PI / 180) * 16}px 14px 24px rgba(0, 0, 0, 0.85))`
+          }}>
+            {/* 3.1 MẶT TRƯỚC (FRONT FACE) - NGỰC, BỤNG, MẶT, TRANG PHỤC */}
+            <div style={{
             position: 'absolute',
             inset: 0,
             display: 'flex',
@@ -1294,6 +1375,7 @@ export default function VirtualMannequin({
           )}
         </div>
       </div>
+    )}
 
         {/* Thông báo hướng dẫn nếu chưa chọn đồ */}
         {!resolvedTop && !resolvedBottom && !resolvedOuter && (

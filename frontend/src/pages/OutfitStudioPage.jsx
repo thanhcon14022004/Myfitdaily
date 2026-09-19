@@ -22,7 +22,7 @@ import OutfitCard from '../components/OutfitCard';
 import VirtualMannequin from '../components/VirtualMannequin';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
-import { sanitizeClothesForGender } from '../data/initialWardrobe';
+import { sanitizeClothesForGender, getInitialClothesForGender } from '../data/initialWardrobe';
 
 export default function OutfitStudioPage({ 
   clothes, 
@@ -36,19 +36,31 @@ export default function OutfitStudioPage({
 }) {
   const { text, isEnglish } = useLanguage();
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
-  const effectiveClothes = isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes;
+  const availableClothes = (clothes && clothes.length > 0) ? clothes : getInitialClothesForGender(user?.gender);
+  const effectiveClothes = isMale ? sanitizeClothesForGender(availableClothes, user?.gender) : availableClothes;
 
   const [deleteModalItem, setDeleteModalItem] = useState(null);
 
   // Chế độ xem: 'mannequin' (Người ảo thử đồ 3D/2.5D) | 'flatlay' (Sàn phẳng)
   const [studioMode, setStudioMode] = useState('mannequin');
 
+  // Mặc định chọn ngay bộ 3 món Streetwear từ Mobile: Sweatshirt Navy Frozen.HN + Trackpants + Sneaker
+  const defaultTop = effectiveClothes.find(c => c.id === 100 || c.imageUrl?.includes('sweatshirt_frozen_navy')) 
+    || effectiveClothes.find(c => c.categoryId === 1) 
+    || null;
+  const defaultBottom = effectiveClothes.find(c => c.id === 107 || c.imageUrl?.includes('trackpants_stripe_black')) 
+    || effectiveClothes.find(c => isMale ? c.categoryId === 2 : (c.categoryId === 2 || c.categoryId === 3)) 
+    || null;
+  const defaultShoes = effectiveClothes.find(c => c.id === 109 || c.imageUrl?.includes('sneakers_white_black')) 
+    || effectiveClothes.find(c => c.categoryId === 5) 
+    || null;
+
   // Flat-Lay & Try-On Garment Slots
-  const [selectedTop, setSelectedTop] = useState(effectiveClothes.find(c => c.categoryId === 1) || null);
-  const [selectedOuter, setSelectedOuter] = useState(effectiveClothes.find(c => c.categoryId === 4) || null);
-  const [selectedBottom, setSelectedBottom] = useState(effectiveClothes.find(c => isMale ? c.categoryId === 2 : (c.categoryId === 2 || c.categoryId === 3)) || null);
-  const [selectedShoes, setSelectedShoes] = useState(effectiveClothes.find(c => c.categoryId === 5) || null);
-  const [selectedAccessory, setSelectedAccessory] = useState(effectiveClothes.find(c => c.categoryId === 6) || null);
+  const [selectedTop, setSelectedTop] = useState(defaultTop);
+  const [selectedOuter, setSelectedOuter] = useState(null);
+  const [selectedBottom, setSelectedBottom] = useState(defaultBottom);
+  const [selectedShoes, setSelectedShoes] = useState(defaultShoes);
+  const [selectedAccessory, setSelectedAccessory] = useState(null);
 
   // Active drawer filter tab
   const [drawerCategory, setDrawerCategory] = useState('Tops'); // 'Tops' | 'Outerwear' | 'Bottoms' | 'Shoes' | 'Accessories'
@@ -81,6 +93,51 @@ export default function OutfitStudioPage({
     else if (drawerCategory === 'Bottoms') setSelectedBottom(item);
     else if (drawerCategory === 'Shoes') setSelectedShoes(item);
     else if (drawerCategory === 'Accessories') setSelectedAccessory(item);
+  };
+
+  const handleApplyStreetwearSet = () => {
+    const swTop = effectiveClothes.find(c => c.id === 100 || c.imageUrl?.includes('sweatshirt_frozen_navy')) || effectiveClothes.find(c => c.categoryId === 1);
+    const swBottom = effectiveClothes.find(c => c.id === 107 || c.imageUrl?.includes('trackpants_stripe_black')) || effectiveClothes.find(c => c.categoryId === 2);
+    const swShoes = effectiveClothes.find(c => c.id === 109 || c.imageUrl?.includes('sneakers_white_black')) || effectiveClothes.find(c => c.categoryId === 5);
+    
+    if (swTop) setSelectedTop(swTop);
+    if (swBottom) setSelectedBottom(swBottom);
+    if (swShoes) setSelectedShoes(swShoes);
+    setSelectedOuter(null);
+    setSelectedAccessory(null);
+    setOutfitName('Streetwear Frozen.HN Trẻ Trung');
+    setOutfitOccasion('Casual');
+    setOutfitDescription('Set đồ Streetwear Mobile gồm Áo Sweatshirt Navy Frozen.HN + Quần Trackpants sọc trắng + Giày Retro Classic.');
+  };
+
+  const handleApplySmartCasualSet = () => {
+    const scTop = effectiveClothes.find(c => c.id === 101 || c.name?.includes('Oxford')) || effectiveClothes.find(c => c.categoryId === 1);
+    const scOuter = effectiveClothes.find(c => c.categoryId === 4);
+    const scBottom = effectiveClothes.find(c => c.id === 103 || c.name?.includes('tây') || c.name?.includes('âu')) || effectiveClothes.find(c => c.categoryId === 2);
+    const scShoes = effectiveClothes.find(c => c.id === 108 || c.name?.includes('Loafer')) || effectiveClothes.find(c => c.categoryId === 5);
+    
+    if (scTop) setSelectedTop(scTop);
+    if (scOuter) setSelectedOuter(scOuter);
+    if (scBottom) setSelectedBottom(scBottom);
+    if (scShoes) setSelectedShoes(scShoes);
+    setSelectedAccessory(null);
+    setOutfitName('Thanh Lịch Quý Ông Thứ Hai');
+    setOutfitOccasion('Work');
+  };
+
+  const handleApplyWeekendSet = () => {
+    const wTop = effectiveClothes.find(c => c.id === 102 || c.name?.includes('thun')) || effectiveClothes.find(c => c.categoryId === 1);
+    const wBottom = effectiveClothes.find(c => c.id === 104 || c.name?.includes('Jeans')) || effectiveClothes.find(c => c.categoryId === 2);
+    const wShoes = effectiveClothes.find(c => c.id === 109 || c.name?.includes('Sneaker')) || effectiveClothes.find(c => c.categoryId === 5);
+    const wAcc = effectiveClothes.find(c => c.categoryId === 6);
+
+    if (wTop) setSelectedTop(wTop);
+    if (wBottom) setSelectedBottom(wBottom);
+    if (wShoes) setSelectedShoes(wShoes);
+    if (wAcc) setSelectedAccessory(wAcc);
+    setSelectedOuter(null);
+    setOutfitName('Weekend Coffee Chill');
+    setOutfitOccasion('Casual');
   };
 
   const handleConfirmDeleteClothing = async (id) => {
@@ -214,6 +271,95 @@ export default function OutfitStudioPage({
                 🖼️ {text('Sàn Flat-Lay', 'Flat-Lay Canvas')}
               </button>
             </div>
+          </div>
+
+          {/* Quick Outfit Presets Bar (Set phối sẵn 1-click) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            overflowX: 'auto',
+            padding: '8px 12px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            width: '100%'
+          }}>
+            <span style={{ fontSize: '0.74rem', color: '#D4AF37', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+              <Sparkles size={14} color="#D4AF37" /> {text('Mặc Thử Nhanh:', 'Quick Try-On:')}
+            </span>
+            <button
+              type="button"
+              onClick={handleApplyStreetwearSet}
+              style={{
+                background: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black')) 
+                  ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(194, 125, 94, 0.35))'
+                  : 'rgba(212, 175, 55, 0.12)',
+                border: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black'))
+                  ? '1px solid #D4AF37'
+                  : '1px solid rgba(212, 175, 55, 0.3)',
+                color: '#FDE68A',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black'))
+                  ? '0 0 12px rgba(212, 175, 55, 0.25)'
+                  : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>🔥</span>
+              <span>{text('Set Streetwear Mobile (Sweatshirt + Trackpants + Sneaker)', 'Mobile Streetwear Set')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleApplySmartCasualSet}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: 'var(--text-secondary)',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>👔</span>
+              <span>{text('Quý Ông Lịch Lãm', 'Smart Casual')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyWeekendSet}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: 'var(--text-secondary)',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>☕</span>
+              <span>{text('Weekend Chill', 'Weekend Chill')}</span>
+            </button>
           </div>
 
           {/* Missing body metrics warning banner if user hasn't set custom dimensions */}
