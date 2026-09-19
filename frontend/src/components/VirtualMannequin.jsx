@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 /**
- * Danh sách Người Mẫu Thời Trang AI Người Thật (Bóc Nền Trong Suốt)
- * Hòa quyện hoàn toàn vào nền tối sang trọng của MyFitDaily
+ * Danh sách Người Mẫu Thời Trang AI Người Thật
+ * Phông nền đen studio sang trọng, hòa quyện hoàn hảo vào giao diện MyFitDaily
  */
 const REAL_MODELS = [
   {
@@ -11,24 +11,16 @@ const REAL_MODELS = [
     gender: 'Nam',
     name: 'Mẫu Nam',
     heightStr: '1m78',
-    defaultImage: '/assets/fits/model_male_sweat_cream_clean.png',
-    defaultFallback: '/assets/fits/model_male_sweat_cream.jpg',
-    tankImage: '/assets/fits/model_male_tank_cream_clean.png',
-    tankFallback: '/assets/fits/model_male_tank_cream.jpg',
-    sweatImage: '/assets/fits/model_male_sweat_cream_clean.png',
-    sweatFallback: '/assets/fits/model_male_sweat_cream.jpg'
+    sweatImage: '/assets/fits/model_male_sweat_dark.jpg',
+    tankImage: '/assets/fits/model_male_tank_dark.jpg'
   },
   {
     id: 'female',
     gender: 'Nữ',
     name: 'Mẫu Nữ',
     heightStr: '1m65',
-    defaultImage: '/assets/fits/model_female_clean.png',
-    defaultFallback: '/assets/fits/fits_female_model.jpg',
-    tankImage: '/assets/fits/model_female_clean.png',
-    tankFallback: '/assets/fits/fits_female_model.jpg',
-    sweatImage: '/assets/fits/model_female_clean.png',
-    sweatFallback: '/assets/fits/fits_female_model.jpg'
+    sweatImage: '/assets/fits/fits_female_model.jpg',
+    tankImage: '/assets/fits/fits_female_model.jpg'
   }
 ];
 
@@ -56,13 +48,12 @@ export default function VirtualMannequin({
 
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
 
-  // Quyết định ảnh hiển thị dựa trên món đồ người dùng chọn
+  // Kiểm tra áo đang chọn để hiển thị người mẫu mặc áo tương ứng
   const isTankTop = top?.name?.toLowerCase().includes('ba lỗ') || 
                     top?.name?.toLowerCase().includes('tank') ||
                     top?.id === 201;
 
   const currentModelImage = isTankTop ? activeModel.tankImage : activeModel.sweatImage;
-  const currentModelFallback = isTankTop ? activeModel.tankFallback : activeModel.sweatFallback;
 
   return (
     <div style={{
@@ -116,60 +107,29 @@ export default function VirtualMannequin({
         })}
       </div>
 
-      {/* 2. SÂN KHẤU NGƯỜI MẪU THẬT - TỰ ĐỘNG THAY ĐỒ VỪA KHÍT KHI CHỌN */}
+      {/* 2. SÂN KHẤU NGƯỜI MẪU THẬT - QUẦN ÁO NGUYÊN VẸN, KHÔNG BỊ RÁCH / LỖI PHÔNG */}
       <div style={{
         position: 'relative',
         width: compact ? '290px' : '340px',
         height: compact ? '480px' : '540px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 20px 45px rgba(0, 0, 0, 0.65)'
       }}>
-        {/* Ánh sáng Spotlight nhẹ từ trên đỉnh */}
-        <div style={{
-          position: 'absolute',
-          top: '-15px',
-          width: '260px',
-          height: '140px',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at top, rgba(212, 175, 55, 0.22) 0%, rgba(212, 175, 55, 0.05) 55%, transparent 80%)',
-          filter: 'blur(20px)',
-          pointerEvents: 'none',
-          zIndex: 1
-        }} />
-
-        {/* Bóng đổ tự nhiên trên mặt sàn tối */}
-        <div style={{
-          position: 'absolute',
-          bottom: '12px',
-          width: '220px',
-          height: '35px',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, rgba(212, 175, 55, 0.2) 45%, transparent 75%)',
-          filter: 'blur(10px)',
-          zIndex: 1,
-          pointerEvents: 'none'
-        }} />
-
-        {/* Ảnh Người Mẫu Thật Mặc Đồ Tương Ứng Đã Bóc Nền Sạch Sẽ */}
+        {/* Ảnh Người Mẫu Thật Mặc Quần Áo Đầy Đủ, Nét Căng */}
         <img
           key={currentModelImage}
           src={currentModelImage}
           alt={activeModel.name}
-          onError={(e) => {
-            if (e.target.src !== currentModelFallback) {
-              e.target.src = currentModelFallback;
-            }
-          }}
           style={{
-            position: 'relative',
-            maxHeight: '100%',
-            maxWidth: '100%',
-            objectFit: 'contain',
-            zIndex: 2,
-            filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.75))',
-            transition: 'opacity 0.3s ease, transform 0.3s ease',
-            animation: 'fadeIn 0.3s ease'
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center top',
+            transition: 'opacity 0.25s ease'
           }}
         />
       </div>
