@@ -229,7 +229,7 @@ export default function OutfitStudioPage({
               <Layers size={18} color="#D4AF37" />
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
                 {studioMode === 'mannequin' 
-                  ? text('Phòng Thử Đồ Người Mẫu 2D (Lookbook)', '2D Human Model Live Fitting') 
+                  ? text('Phòng Thử Đồ AI Người Mẫu Thật (Fits Studio)', 'AI Virtual Try-On Studio (Fits VTON)') 
                   : text('Sàn Phối Đồ Flat-Lay', 'Flat-Lay Studio Canvas')}
               </h3>
             </div>
@@ -250,7 +250,7 @@ export default function OutfitStudioPage({
                   transition: 'var(--transition)'
                 }}
               >
-                💃 {text('Người Mẫu 2D (Thử Đồ Trực Tiếp)', '2D Human Model (Live Fitting)')}
+                ✨ {text('AI Người Mẫu Thật (Fits VTON)', 'Real AI Model (Fits VTON)')}
               </button>
 
               <button
@@ -362,39 +362,6 @@ export default function OutfitStudioPage({
             </button>
           </div>
 
-          {/* Missing body metrics warning banner if user hasn't set custom dimensions */}
-          {(!user?.height || !user?.weight) && onNavigate && (
-            <div style={{
-              background: 'rgba(212, 175, 55, 0.1)',
-              border: '1px solid rgba(212, 175, 55, 0.3)',
-              borderRadius: 'var(--radius-sm)',
-              padding: '8px 14px',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.76rem',
-              gap: '8px'
-            }}>
-              <span style={{ color: '#F3D98A' }}>
-                💡 Bạn đang xem mô hình người mẫu mặc định (165cm, 52kg). Hãy cập nhật số đo riêng để người ảo co giãn chuẩn vóc dáng của bạn!
-              </span>
-              <button
-                onClick={() => onNavigate('profile')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#FFF',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Cập nhật số đo →
-              </button>
-            </div>
-          )}
 
           {/* MODE 1: 2D HUMAN MODEL LIVE FITTING ROOM */}
           {studioMode === 'mannequin' && (

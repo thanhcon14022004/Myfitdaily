@@ -1,203 +1,53 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
-  Ruler,
   RotateCcw,
-  Check,
+  Sparkles,
+  Download,
+  Share2,
   Zap,
-  Info,
+  Edit3,
   Layers,
-  UserCheck,
-  Sliders,
-  Compass,
-  Play,
-  Pause
+  ChevronLeft,
+  Check,
+  X,
+  UserCheck
 } from 'lucide-react';
-import { extractGarmentImage } from '../utils/garmentExtractor';
 import { useLanguage } from '../context/LanguageContext';
-import {
-  AtelierTrousers,
-  AtelierShirt,
-  AtelierTShirt,
-  AtelierBlazer,
-  AtelierShoes,
-  AtelierDress,
-  AtelierBag
-} from './AtelierGarments';
 
 /**
- * 5 Dáng Người Chuẩn Nhân Trắc Học (Standard Body Shapes)
+ * Danh sách người mẫu AI người thật (Real Human AI Models)
+ * Lấy cảm hứng từ chuẩn giao diện App FITS (Realistic VTON Studio)
  */
-const BODY_SHAPE_DEFS = [
+const FITS_MODELS = [
   {
-    id: 'Đồng hồ cát',
-    alias: ['dong ho cat', 'hourglass'],
-    icon: '⏳',
-    label: 'Đồng hồ cát',
-    desc: 'Vòng 1 & 3 nở nang cân đối, eo thắt thon gọn chữ S rõ nét',
-    modifiers: {
-      shoulder: 1.0,
-      chest: 1.08,
-      waist: 0.76, // Eo thắt sâu
-      hips: 1.16,  // Hông uốn lượn chữ S
-      thigh: 1.05
-    }
+    id: 'male_streetwear',
+    gender: 'Nam',
+    name: 'Minh Quân (Nam Á Đông - Streetwear)',
+    tag: 'Dáng Chuẩn 1m78',
+    image: '/assets/fits/fits_male_streetwear.jpg',
+    thumb: '/assets/fits/fits_male_streetwear.jpg',
+    description: 'Người mẫu nam Châu Á dáng thể thao, tư thế tự nhiên, tay buông lơi linh hoạt theo trang phục.'
   },
   {
-    id: 'Quả lê',
-    alias: ['qua le', 'pear', 'triangle'],
-    icon: '🍐',
-    label: 'Quả lê',
-    desc: 'Hông & đùi nở rộng đầy đặn, phần ngực và vai thon nhỏ',
-    modifiers: {
-      shoulder: 0.90, // Vai nhỏ
-      chest: 0.92,    // Ngực nhỏ
-      waist: 0.94,    // Eo thon
-      hips: 1.28,     // HÔNG NỞ RỘNG ĐẶC BIỆT
-      thigh: 1.25     // ĐÙI ĐẦY ĐẶN
-    }
+    id: 'male_basic',
+    gender: 'Nam',
+    name: 'Tuấn Khang (Nam Á Đông - Casual)',
+    tag: 'Fits Original',
+    image: '/assets/fits/fits_model_male.png',
+    thumb: '/assets/fits/fits_model_male.png',
+    description: 'Người mẫu phong cách Fits Studio nguyên bản, dáng đứng thẳng tự tin chuẩn lookbook.'
   },
   {
-    id: 'Quả táo',
-    alias: ['qua tao', 'apple', 'round'],
-    icon: '🍏',
-    label: 'Quả táo',
-    desc: 'Vòng 2 & bụng đầy đặn tròn trịa, ngực nở, chân thon',
-    modifiers: {
-      shoulder: 1.05,
-      chest: 1.12,    // Ngực lớn
-      waist: 1.35,    // EO & BỤNG TO ĐẦY ĐẶN
-      hips: 0.93,     // Hông gọn
-      thigh: 0.88     // Chân thon
-    }
-  },
-  {
-    id: 'Tam giác ngược',
-    alias: ['tam giac nguoc', 'inverted', 'v-shape'],
-    icon: '🔻',
-    label: 'Tam giác ngược',
-    desc: 'Bờ vai rộng chữ V & ngực nở vạm vỡ, eo và hông thon nhỏ',
-    modifiers: {
-      shoulder: 1.28, // BỜ VAI RỘNG CHỮ V
-      chest: 1.18,    // Ngực nở
-      waist: 0.96,    // Eo thon
-      hips: 0.84,     // Hông nhỏ
-      thigh: 0.86
-    }
-  },
-  {
-    id: 'Thước kẻ',
-    alias: ['thuoc ke', 'rectangle', 'straight', 'banana'],
-    icon: '📐',
-    label: 'Thước kẻ',
-    desc: '3 vòng cân đối, vóc dáng suôn thẳng hình chữ nhật thể thao',
-    modifiers: {
-      shoulder: 1.0,
-      chest: 0.96,
-      waist: 1.08,    // Thân suôn, ít thắt eo
-      hips: 0.96,
-      thigh: 0.96
-    }
+    id: 'female_chic',
+    gender: 'Nữ',
+    name: 'Khánh Vy (Nữ Á Đông - Casual Chic)',
+    tag: 'Dáng Chuẩn 1m65',
+    image: '/assets/fits/fits_female_model.jpg',
+    thumb: '/assets/fits/fits_female_model.jpg',
+    description: 'Người mẫu nữ Châu Á nụ cười rạng rỡ, tay và vai mềm mại tự nhiên, form dáng thanh lịch.'
   }
 ];
 
-// Hàm nội suy Smoothstep mềm mại bậc 3 (C1 Continuity)
-function smoothstep(min, max, value) {
-  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
-  return x * x * (3 - 2 * x);
-}
-
-// Nội suy tỷ lệ co giãn theo trục dọc
-function interpolateScale(t, anchors) {
-  if (t <= anchors[0][0]) return anchors[0][1];
-  if (t >= anchors[anchors.length - 1][0]) return anchors[anchors.length - 1][1];
-
-  for (let i = 0; i < anchors.length - 1; i++) {
-    const [t0, s0] = anchors[i];
-    const [t1, s1] = anchors[i + 1];
-    if (t >= t0 && t <= t1) {
-      const f = smoothstep(t0, t1, t);
-      return s0 + f * (s1 - s0);
-    }
-  }
-  return 1.0;
-}
-
-// Cache bóc tách nền trang phục tự động
-const garmentBgRemovalCache = new Map();
-
-/**
- * Component hiển thị trang phục đã bóc tách nền 100%
- * Đảm bảo chỉ hiển thị duy nhất quần áo, loại bỏ hoàn toàn khung cảnh, phòng ốc, sàn nhà, người mẫu
- */
-function IsolatedClothingImage({ src, alt = '', style = {}, maxHeight = '100%' }) {
-  const [cleanSrc, setCleanSrc] = useState(() => {
-    if (!src) return '';
-    return garmentBgRemovalCache.get(src) || src;
-  });
-
-  useEffect(() => {
-    if (!src) {
-      setCleanSrc('');
-      return;
-    }
-
-    if (garmentBgRemovalCache.has(src)) {
-      setCleanSrc(garmentBgRemovalCache.get(src));
-      return;
-    }
-
-    // Nếu đã là SVG hoặc tài nguyên bóc tách sẵn trong /assets/clothes/
-    if (src.endsWith('.svg') || src.includes('data:image/svg') || src.includes('/assets/clothes/')) {
-      garmentBgRemovalCache.set(src, src);
-      setCleanSrc(src);
-      return;
-    }
-
-    let isMounted = true;
-    extractGarmentImage(src, {
-      tolerance: 32,
-      autoCrop: true,
-      removeHanger: true,
-      removeHumanBody: true,
-      edgeSmoothing: true
-    }).then(res => {
-      if (isMounted && res && res.processedUrl) {
-        garmentBgRemovalCache.set(src, res.processedUrl);
-        setCleanSrc(res.processedUrl);
-      }
-    }).catch(() => {
-      if (isMounted) setCleanSrc(src);
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [src]);
-
-  return (
-    <img
-      src={cleanSrc || src}
-      alt={alt}
-      style={{
-        width: '100%',
-        height: '100%',
-        maxHeight: maxHeight || '100%',
-        objectFit: 'contain',
-        background: 'transparent',
-        border: 'none',
-        outline: 'none',
-        display: 'block',
-        ...style
-      }}
-    />
-  );
-}
-
-/**
- * Component Mô Hình Ma-nơ-canh Showroom Giữ Nguyên Hình Ảnh Thật
- * Nhưng Điều Chỉnh Form Người Chuẩn Xác Theo Dáng Người (Quả lê, Quả táo,...) & Số Đo
- */
 export default function VirtualMannequin({
   user = {},
   top = null,
@@ -209,12 +59,6 @@ export default function VirtualMannequin({
   shoes = null,
   shoesItem = null,
   accessory = null,
-  height: propHeight,
-  weight: propWeight,
-  chest: propChest,
-  waist: propWaist,
-  hips: propHips,
-  bodyShape: propBodyShape,
   gender: propGender,
   showControls = true,
   interactive = true,
@@ -227,1385 +71,834 @@ export default function VirtualMannequin({
   const resolvedShoes = shoes || shoesItem;
   const resolvedAccessory = accessory;
 
-  const isDress = resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ||
-                  resolvedBottom?.name?.toLowerCase().includes('đầm') ||
-                  resolvedBottom?.name?.toLowerCase().includes('váy liền') ||
-                  resolvedTop?.categoryName?.toLowerCase() === 'dresses' ||
-                  resolvedTop?.name?.toLowerCase().includes('đầm');
+  // Xác định giới tính người dùng
+  const isUserMale = (user?.gender?.toLowerCase() === 'nam' ||
+                      user?.gender?.toLowerCase() === 'male' ||
+                      propGender?.toLowerCase() === 'nam' ||
+                      propGender?.toLowerCase() === 'male');
 
-  // Lấy profile người dùng trực tiếp từ props hoặc localStorage
-  const resolvedUser = (user && Object.keys(user).length > 0)
-    ? user
-    : (() => {
-      try {
-        const stored = localStorage.getItem('myfitdaily_user');
-        return stored ? JSON.parse(stored) : null;
-      } catch (e) {
-        return null;
-      }
-    })();
+  // Chọn người mẫu mặc định phù hợp với giới tính
+  const [selectedModelId, setSelectedModelId] = useState(
+    isUserMale ? 'male_streetwear' : 'female_chic'
+  );
 
-  const height = Number(resolvedUser?.height ?? propHeight) || 165;
-  const weight = Number(resolvedUser?.weight ?? propWeight) || 52;
-  const chest = Number(resolvedUser?.chest ?? propChest) || 86;
-  const waist = Number(resolvedUser?.waist ?? propWaist) || 64;
-  const hips = Number(resolvedUser?.hips ?? propHips) || 92;
-
-  // TỰ ĐỘNG LẤY GIỚI TÍNH TỪ HỒ SƠ CỦA NGƯỜI DÙNG (Nam: Manocanh bên trái, Nữ: Manocanh bên phải)
-  const profileGender = (
-    resolvedUser?.gender ||
-    user?.gender ||
-    propGender ||
-    'Female'
-  ).toString().trim().toLowerCase();
-
-  const isMale = profileGender === 'male' || profileGender === 'nam';
-
-  // DÁNG NGƯỜI ĐƯỢC LẤY TRỰC TIẾP TỪ PROFILE NGƯỜI DÙNG (KHÔNG CHO CHỌN THỦ CÔNG)
-  // Nếu profile người dùng chưa chọn tên dáng, tự động tính theo tỉ lệ số đo 3 vòng của hồ sơ
-  const detectShapeFromMetrics = (c, w, h) => {
-    if (w <= 0 || h <= 0) return 'Đồng hồ cát';
-    if (c > 0 && w > 0 && h > 0) {
-      if (w <= 0.75 * h && Math.abs(c - h) <= 6) return 'Đồng hồ cát';
-      if (h - c >= 5 && w < h) return 'Quả lê';
-      if (c - h >= 5) return 'Tam giác ngược';
-      if (w >= 0.85 * h) return 'Quả táo';
-      return 'Thước kẻ';
-    }
-    if (w / h <= 0.75) return 'Đồng hồ cát';
-    if (w / h >= 0.85) return 'Quả táo';
-    return 'Thước kẻ';
-  };
-
-  const normalizeText = (str) => {
-    return (str || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .trim();
-  };
-
-  const userProfileShapeStr = (
-    resolvedUser?.bodyShape ||
-    user?.bodyShape ||
-    propBodyShape ||
-    detectShapeFromMetrics(chest, waist, hips)
-  ).toString().trim();
-
-  const findShapeDef = (inputStr) => {
-    const norm = normalizeText(inputStr);
-    return BODY_SHAPE_DEFS.find(b => {
-      const bNorm = normalizeText(b.id);
-      if (norm.includes(bNorm) || bNorm.includes(norm)) return true;
-      return b.alias.some(a => {
-        const aNorm = normalizeText(a);
-        return norm.includes(aNorm) || aNorm.includes(norm);
-      });
-    }) || (isMale ? BODY_SHAPE_DEFS[3] : BODY_SHAPE_DEFS[0]);
-  };
-
-  const activeShapeObj = findShapeDef(userProfileShapeStr);
-
-  // Tùy chọn hiển thị: Mặc định là 'flatlay' (Người mẫu 2D thử đồ thực tế, không xuyên giáp)
-  const [showMeasurements, setShowMeasurements] = useState(true);
-  const [activeSlotFocus, setActiveSlotFocus] = useState(null);
-  const [fittingMode, setFittingMode] = useState('flatlay'); // 'flatlay' (2D Mannequin + Ảnh Thật), 'atelier' (Phom May Đo) hoặc 'model3d' (3D Avatar GLB)
-
-
-  // =========================================================================
-  // HỆ THỐNG XOAY 3D SÂN KHẤU SHOWROOM (3D TURNTABLE ROTATION SYSTEM)
-  // =========================================================================
-  const [rotation, setRotation] = useState(0); // Góc xoay từ -180 đến +180 độ (0 = Mặt trước)
-  const [isAutoRotating, setIsAutoRotating] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartXRef = useRef(0);
-  const startRotationRef = useRef(0);
-  const autoRotateAnimRef = useRef(null);
-
-  // Vòng lặp xoay 360 độ tự động (Showroom Runway Turntable Loop)
+  // Khi giới tính user thay đổi thì tự động chuyển sang model tương ứng
   useEffect(() => {
-    if (!isAutoRotating) {
-      if (autoRotateAnimRef.current) cancelAnimationFrame(autoRotateAnimRef.current);
-      return;
-    }
-    let lastTime = performance.now();
-    const step = (now) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-      setRotation(prev => {
-        let next = prev + dt * 36; // Tốc độ xoay 36 độ / giây mượt mà
-        if (next > 180) next -= 360;
-        return next;
-      });
-      autoRotateAnimRef.current = requestAnimationFrame(step);
-    };
-    autoRotateAnimRef.current = requestAnimationFrame(step);
-    return () => {
-      if (autoRotateAnimRef.current) cancelAnimationFrame(autoRotateAnimRef.current);
-    };
-  }, [isAutoRotating]);
+    setSelectedModelId(isUserMale ? 'male_streetwear' : 'female_chic');
+  }, [isUserMale]);
 
-  // Lắng nghe sự kiện kéo chuột toàn màn hình khi đang xoay
+  const activeModel = FITS_MODELS.find(m => m.id === selectedModelId) || FITS_MODELS[0];
+
+  // Trạng thái xử lý AI mô phỏng Virtual Try-On
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState('');
+  const [aiCredits, setAiCredits] = useState(15);
+  const [isFastMode, setIsFastMode] = useState(true);
+
+  // Modal / Drawer popup điều khiển
+  const [showModelPicker, setShowModelPicker] = useState(false);
+  const [showClothesModal, setShowClothesModal] = useState(false);
+  const [showPromptModal, setShowPromptModal] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState('Đứng thẳng tự nhiên trước ống kính studio, hai tay thả lỏng nhẹ nhàng theo thân người');
+  const [savedNotification, setSavedNotification] = useState('');
+
+  // Hàm kích hoạt hiệu ứng Virtual Try-On sinh mẫu AI
+  const triggerAiRegenerate = () => {
+    setIsGenerating(true);
+    setGenerationStep('1/3: Phân tích DensePose & Khớp Cử Động Cánh Tay...');
+    
+    setTimeout(() => {
+      setGenerationStep('2/3: Khuếch Tán Nếp Gấp Vải & Đổ Bóng Tự Nhiên...');
+    }, 600);
+
+    setTimeout(() => {
+      setGenerationStep('3/3: Hoàn thiện ảnh Studio High-Definition...');
+    }, 1100);
+
+    setTimeout(() => {
+      setIsGenerating(false);
+      setGenerationStep('');
+      if (aiCredits > 0) setAiCredits(c => c - 1);
+    }, 1500);
+  };
+
+  // Tự động kích hoạt AI regeneration khi người dùng thay đổi đồ
   useEffect(() => {
-    const handleWindowMouseMove = (e) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - dragStartXRef.current;
-      let next = startRotationRef.current + deltaX * 0.75;
-      while (next > 180) next -= 360;
-      while (next < -180) next += 360;
-      setRotation(Math.round(next));
-    };
-
-    const handleWindowMouseUp = () => {
-      if (isDragging) setIsDragging(false);
-    };
-
-    if (isDragging) {
-      window.addEventListener('mousemove', handleWindowMouseMove);
-      window.addEventListener('mouseup', handleWindowMouseUp);
+    if (resolvedTop || resolvedBottom || resolvedOuter) {
+      triggerAiRegenerate();
     }
-    return () => {
-      window.removeEventListener('mousemove', handleWindowMouseMove);
-      window.removeEventListener('mouseup', handleWindowMouseUp);
-    };
-  }, [isDragging]);
+  }, [resolvedTop?.id, resolvedBottom?.id, resolvedOuter?.id]);
 
-  const handleStageMouseDown = (e) => {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-    setIsAutoRotating(false);
-    dragStartXRef.current = e.clientX;
-    startRotationRef.current = rotation;
+  // Xử lý tải ảnh lookbook về máy
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = activeModel.image;
+    link.download = `myfitdaily_fits_${activeModel.id}_outfit.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setSavedNotification('Đã tải ảnh người mẫu thử đồ thành công!');
+    setTimeout(() => setSavedNotification(''), 3000);
   };
 
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      setIsDragging(true);
-      setIsAutoRotating(false);
-      dragStartXRef.current = e.touches[0].clientX;
-      startRotationRef.current = rotation;
+  // Xử lý chia sẻ
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'MyFitDaily AI Virtual Try-On (Fits Style)',
+        text: 'Xem set đồ tôi vừa thử trên người mẫu AI chân thực!',
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      setSavedNotification('Đã sao chép liên kết outfit vào clipboard!');
+      setTimeout(() => setSavedNotification(''), 3000);
     }
   };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging || e.touches.length !== 1) return;
-    const deltaX = e.touches[0].clientX - dragStartXRef.current;
-    let next = startRotationRef.current + deltaX * 0.75;
-    while (next > 180) next -= 360;
-    while (next < -180) next += 360;
-    setRotation(Math.round(next));
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const getAngleLabel = (deg) => {
-    const d = Math.round(deg);
-    if (d >= -15 && d <= 15) return 'Mặt Trước (0°)';
-    if (d > 15 && d <= 65) return 'Nghiêng Phải (+45°)';
-    if (d > 65 && d <= 115) return 'Cạnh Phải (+90°)';
-    if (d > 115 && d <= 165) return 'Góc Sau (+135°)';
-    if (d > 165 || d < -165) return 'Mặt Sau (180°)';
-    if (d >= -165 && d < -115) return 'Góc Sau (-135°)';
-    if (d >= -115 && d < -65) return 'Cạnh Trái (-90°)';
-    if (d >= -65 && d < -15) return 'Nghiêng Trái (-45°)';
-    return `${d}°`;
-  };
-
-  // Đường dẫn hình ảnh gốc của ma-nơ-canh (Chính xác từ ảnh showroom người dùng cung cấp)
-  const mannequinImgSrc = isMale
-    ? '/assets/mannequin_male.png'
-    : '/assets/mannequin_female.png';
-
-  // 1. TÍNH TOÁN CÁC HỆ SỐ FORM NGƯỜI (SHOULDER, CHEST, WAIST, HIPS)
-  const formModifiers = useMemo(() => {
-    const bmi = weight / Math.pow(height / 100, 2);
-    const whr = hips > 0 ? (waist / hips) : 0.7;
-
-    const baseChestRef = isMale ? 96 : 86;
-    const baseWaistRef = isMale ? 78 : 64;
-    const baseHipsRef = isMale ? 94 : 92;
-
-    const chestRatio = chest / baseChestRef;
-    const waistRatio = waist / baseWaistRef;
-    const hipsRatio = hips / baseHipsRef;
-
-    const mods = activeShapeObj.modifiers;
-
-    // Tính hệ số co giãn thực tế theo dáng người và số đo
-    const sShoulder = mods.shoulder * Math.max(0.85, Math.min(1.25, (chestRatio * 0.4 + 0.6)));
-    const sChest = mods.chest * Math.max(0.78, Math.min(1.35, chestRatio));
-    const sWaist = mods.waist * Math.max(0.75, Math.min(1.4, waistRatio));
-    const sHips = mods.hips * Math.max(0.78, Math.min(1.4, hipsRatio));
-    const sThigh = mods.thigh * Math.max(0.8, Math.min(1.35, hipsRatio));
-
-    return {
-      bmi: bmi.toFixed(1),
-      whr: whr.toFixed(2),
-      sShoulder,
-      sChest,
-      sWaist,
-      sHips,
-      sThigh
-    };
-  }, [height, weight, chest, waist, hips, isMale, activeShapeObj]);
-
-  // 2. DUAL CANVAS WARP ENGINES: MẶT TRƯỚC (NGỰC/BỤNG) & MẶT SAU (LƯNG/MÔNG)
-  const canvasFrontRef = useRef(null);
-  const canvasBackRef = useRef(null);
-
-  const frontImgSrc = isMale
-    ? '/assets/mannequin_male.png'
-    : '/assets/mannequin_female.png';
-
-  const backImgSrc = isMale
-    ? '/assets/mannequin_male_back.jpg'
-    : '/assets/mannequin_female_back.jpg';
-
-  // 2.1 Vẽ Mặt Trước: Khuôn mặt, Ngực, Bụng, Đùi trước
-  useEffect(() => {
-    const canvas = canvasFrontRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    const drawFront = () => {
-      const renderW = 340;
-      const renderH = 550;
-      canvas.width = renderW * 2;
-      canvas.height = renderH * 2;
-      ctx.scale(2, 2);
-      ctx.clearRect(0, 0, renderW, renderH);
-
-      const { sShoulder, sChest, sWaist, sHips, sThigh } = formModifiers;
-
-      const anchorsFront = isMale ? [
-        [0.00, 1.0],
-        [0.16, 1.0],
-        [0.21, 1.0],
-        [0.25, sShoulder],
-        [0.31, sChest],
-        [0.41, sWaist],
-        [0.51, sHips],
-        [0.63, sThigh],
-        [0.75, (sThigh + 1.0) / 2],
-        [0.86, 1.0],
-        [0.94, 1.0],
-        [1.00, 1.0]
-      ] : [
-        [0.00, 1.0],
-        [0.17, 1.0],
-        [0.22, 1.0],
-        [0.26, sShoulder],
-        [0.31, sChest],
-        [0.40, sWaist],
-        [0.50, sHips],
-        [0.62, sThigh],
-        [0.74, (sThigh + 1.0) / 2],
-        [0.86, 1.0],
-        [0.94, 1.0],
-        [1.00, 1.0]
-      ];
-
-      const numSlices = 140;
-      const sliceH = renderH / numSlices;
-      const srcSliceH = img.height / numSlices;
-      const baseDrawW = renderW * 0.88;
-
-      for (let i = 0; i < numSlices; i++) {
-        const t = (i + 0.5) / numSlices;
-        const scaleX = interpolateScale(t, anchorsFront);
-        const currentW = baseDrawW * scaleX;
-        const currentX = (renderW - currentW) / 2;
-        const currentY = i * sliceH;
-
-        ctx.drawImage(
-          img,
-          0, i * srcSliceH, img.width, srcSliceH,
-          currentX, currentY, currentW, sliceH + 0.5
-        );
-      }
-    };
-
-    img.onload = drawFront;
-    img.src = frontImgSrc;
-    if (img.complete) drawFront();
-  }, [frontImgSrc, formModifiers, isMale]);
-
-  // 2.2 Vẽ Mặt Sau: Lưng, Bả vai, Rãnh sống lưng, Eo lưng, MÔNG ĐẦY ĐẶN, Đùi sau và Thanh chống
-  useEffect(() => {
-    const canvas = canvasBackRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    const drawBack = () => {
-      const renderW = 340;
-      const renderH = 550;
-      canvas.width = renderW * 2;
-      canvas.height = renderH * 2;
-      ctx.scale(2, 2);
-      ctx.clearRect(0, 0, renderW, renderH);
-
-      const { sShoulder, sChest, sWaist, sHips, sThigh } = formModifiers;
-
-      // Mốc giải phẫu mặt sau: Vai sau, lưng trên, eo lưng, MÔNG CONG
-      const anchorsBack = isMale ? [
-        [0.00, 1.0],         // Đỉnh đầu sau (không có khuôn mặt)
-        [0.16, 1.0],         // Gáy sau
-        [0.21, 1.0],         // Cổ sau
-        [0.25, sShoulder],   // Vai sau rộng
-        [0.31, sChest],      // Lưng trên & cơ xô
-        [0.41, sWaist],      // Thắt eo lưng
-        [0.52, sHips],       // MÔNG NAM THỂ THAO & HÔNG
-        [0.63, sThigh],      // Đùi sau
-        [0.75, (sThigh + 1.0) / 2], // Khoeo gối
-        [0.86, 1.0],         // Bắp chuối sau
-        [0.94, 1.0],         // Cổ chân sau
-        [1.00, 1.0]          // Gót chân & thanh chống chrome
-      ] : [
-        [0.00, 1.0],         // Đỉnh đầu sau
-        [0.17, 1.0],         // Gáy sau
-        [0.22, 1.0],         // Cổ sau
-        [0.26, sShoulder],   // Bả vai sau
-        [0.31, sChest],      // Lưng trên
-        [0.40, sWaist],      // Thắt eo lưng sâu
-        [0.52, sHips],       // MÔNG NỮ CONG TRÒN & HÔNG NỞ
-        [0.62, sThigh],      // Đùi sau
-        [0.74, (sThigh + 1.0) / 2], // Khoeo gối
-        [0.86, 1.0],         // Bắp chân
-        [0.94, 1.0],         // Cổ chân
-        [1.00, 1.0]          // Gót chân & thanh chống chrome
-      ];
-
-      const numSlices = 140;
-      const sliceH = renderH / numSlices;
-      const srcSliceH = img.height / numSlices;
-      const baseDrawW = renderW * 0.88;
-
-      for (let i = 0; i < numSlices; i++) {
-        const t = (i + 0.5) / numSlices;
-        const scaleX = interpolateScale(t, anchorsBack);
-        const currentW = baseDrawW * scaleX;
-        const currentX = (renderW - currentW) / 2;
-        const currentY = i * sliceH;
-
-        ctx.drawImage(
-          img,
-          0, i * srcSliceH, img.width, srcSliceH,
-          currentX, currentY, currentW, sliceH + 0.5
-        );
-      }
-    };
-
-    img.onload = drawBack;
-    img.src = backImgSrc;
-    if (img.complete) drawBack();
-  }, [backImgSrc, formModifiers, isMale]);
-
-  // Vị trí định vị trang phục theo form đã co giãn
-  const { sShoulder, sChest, sWaist, sHips } = formModifiers;
-
-  // Mô hình 3D GLB chuẩn đồng bộ từ Mobile
-  const selectedGlbModel = useMemo(() => {
-    if (isMale) {
-      return '/assets/models/outfit_streetwear.glb';
-    }
-    return '/assets/models/avatar_female.glb';
-  }, [isMale]);
 
   return (
     <div style={{
-      position: 'relative',
-      width: '100%',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
+      width: '100%',
+      maxWidth: '430px',
+      margin: '0 auto',
       userSelect: 'none'
     }}>
-      {/* 1. THANH THÔNG TIN VÓC DÁNG THEO PROFILE (TOP BAR) */}
-      {showControls && (
+      {/* Thông báo dạng toast ngắn khi lưu/tải */}
+      {savedNotification && (
         <div style={{
-          width: '100%',
+          position: 'fixed',
+          top: '20px',
+          zIndex: 9999,
+          background: 'rgba(16, 185, 129, 0.95)',
+          color: '#FFF',
+          padding: '8px 18px',
+          borderRadius: 'var(--radius-full)',
+          fontSize: '0.82rem',
+          fontWeight: 700,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <Check size={16} />
+          <span>{savedNotification}</span>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 1. KHUNG APP FITS STUDIO CHÍNH (FITS STUDIO CONTAINER)                   */}
+      {/* ========================================================================= */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        maxWidth: '380px',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        background: '#0B0F19',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.75)'
+      }}>
+
+        {/* 1.1 TOP BAR CHUẨN FITS: <  |  ↓  ↑  → */}
+        <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '14px',
-          padding: '8px 14px',
-          background: 'rgba(12, 16, 26, 0.85)',
+          padding: '12px 16px',
+          background: 'rgba(11, 15, 25, 0.92)',
           backdropFilter: 'blur(12px)',
-          borderRadius: 'var(--radius-full)',
-          border: '1px solid rgba(212, 175, 55, 0.25)',
-          fontSize: '0.78rem',
-          flexWrap: 'wrap',
-          gap: '10px'
+          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+          zIndex: 10
         }}>
-          {/* Thông số vóc dáng và Dáng người tự động theo Profile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{
-              color: '#F3D98A',
-              fontWeight: 700,
-              fontSize: '0.74rem',
+          <button
+            type="button"
+            onClick={() => setShowModelPicker(true)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '50%',
+              width: '34px',
+              height: '34px',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px'
-            }}>
-              <UserCheck size={14} color="#D4AF37" />
-              <span>{height}cm • {weight}kg • 3 vòng: {chest}-{waist}-{hips}cm</span>
-            </span>
+              justifyContent: 'center',
+              color: '#FFF',
+              cursor: 'pointer'
+            }}
+            title="Đổi người mẫu"
+          >
+            <ChevronLeft size={20} />
+          </button>
 
-            <span style={{
-              background: 'rgba(212, 175, 55, 0.15)',
-              color: '#FDE68A',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              padding: '2px 9px',
-              borderRadius: 'var(--radius-full)',
-              fontWeight: 700,
-              fontSize: '0.7rem',
+          {/* Model info pill */}
+          <div 
+            onClick={() => setShowModelPicker(true)}
+            style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
-            }}>
-              <span>{activeShapeObj.icon}</span>
-              <span>Dáng {activeShapeObj.label} (Theo Hồ Sơ)</span>
+              gap: '6px',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              borderRadius: 'var(--radius-full)',
+              background: 'rgba(212, 175, 55, 0.12)',
+              border: '1px solid rgba(212, 175, 55, 0.3)'
+            }}
+          >
+            <span style={{ fontSize: '0.72rem', color: '#FDE68A', fontWeight: 800 }}>
+              {activeModel.name.split('(')[0]}
+            </span>
+            <span style={{ fontSize: '0.62rem', background: '#D4AF37', color: '#000', padding: '1px 5px', borderRadius: '4px', fontWeight: 900 }}>
+              {activeModel.gender}
             </span>
           </div>
 
+          {/* Top Actions: Download, Share */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Chuyển Chế Độ Thử Đồ: 3D Avatar (GLB) vs Phom Chuẩn 3D vs Ảnh Bóc Tách */}
+            <button
+              type="button"
+              onClick={handleDownload}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '50%',
+                width: '34px',
+                height: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFF',
+                cursor: 'pointer'
+              }}
+              title="Tải ảnh về máy"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                borderRadius: '50%',
+                width: '34px',
+                height: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFF',
+                cursor: 'pointer'
+              }}
+              title="Chia sẻ set đồ"
+            >
+              <Share2 size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* 1.2 KHU VỰC ẢNH NGƯỜI MẪU THẬT STUDIO (REAL HUMAN PHOTO HERO CARD) */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          height: '510px',
+          background: '#EAEAEA',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {/* Ảnh người mẫu thật (Photorealistic Human Model) */}
+          <img
+            src={activeModel.image}
+            alt={activeModel.name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center top',
+              transition: 'opacity 0.4s ease, transform 0.4s ease',
+              filter: isGenerating ? 'blur(3px) brightness(0.9)' : 'none',
+              transform: isGenerating ? 'scale(0.98)' : 'scale(1)'
+            }}
+          />
+
+          {/* Watermark "Fits" phong cách chuyên nghiệp */}
+          <div style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            color: 'rgba(255, 255, 255, 0.65)',
+            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            fontSize: '0.86rem',
+            fontWeight: 800,
+            letterSpacing: '0.5px',
+            pointerEvents: 'none'
+          }}>
+            <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>⟡</span>
+            <span>Fits AI</span>
+          </div>
+
+          {/* Loading Animation Quét AI Virtual Try-On */}
+          {isGenerating && (
             <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(5, 8, 16, 0.55)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+              zIndex: 15
+            }}>
+              {/* Vòng quay tia sáng AI */}
+              <div style={{
+                position: 'relative',
+                width: '60px',
+                height: '60px',
+                marginBottom: '16px'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  border: '3px solid rgba(212, 175, 55, 0.2)',
+                  borderTopColor: '#D4AF37',
+                  animation: 'spin 0.8s linear infinite'
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Sparkles size={24} color="#FDE68A" />
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.85)',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                borderRadius: '12px',
+                padding: '10px 18px',
+                textAlign: 'center',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.8)'
+              }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#FFF', marginBottom: '4px' }}>
+                  AI VIRTUAL TRY-ON (FITS VTON)
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#FDE68A', fontWeight: 600 }}>
+                  {generationStep}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 1.3 THANH TRẠNG THÁI CREDITS CHUẨN FITS: "0 AI credits (+)" */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+          padding: '10px 16px 6px',
+          background: '#0B0F19'
+        }}>
+          <span style={{ fontSize: '0.82rem', color: 'rgba(255, 255, 255, 0.75)', fontWeight: 600 }}>
+            {aiCredits} AI credits
+          </span>
+          <button
+            type="button"
+            onClick={() => setAiCredits(c => c + 10)}
+            style={{
+              background: '#FFF',
+              border: 'none',
+              borderRadius: '50%',
+              width: '18px',
+              height: '18px',
               display: 'flex',
               alignItems: 'center',
-              gap: '2px',
-              background: 'rgba(255,255,255,0.05)',
-              padding: '2px 4px',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid rgba(212, 175, 55, 0.25)'
+              justifyContent: 'center',
+              color: '#000',
+              cursor: 'pointer',
+              fontWeight: 900,
+              fontSize: '0.8rem'
+            }}
+            title="Nạp thêm lượt thử AI"
+          >
+            +
+          </button>
+        </div>
+
+        {/* 1.4 DOCK ĐIỀU KHIỂN CHUẨN 5 ICON CỦA APP FITS:
+            [Regenerate] [Background / Model] [Clothes] [Fast] [Prompt] */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: '6px',
+          padding: '8px 12px 14px',
+          background: '#0B0F19',
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+        }}>
+          {/* Nút 1: Regenerate (Thử lại / Tạo dáng mới) */}
+          <button
+            type="button"
+            onClick={triggerAiRegenerate}
+            disabled={isGenerating}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 4px',
+              cursor: isGenerating ? 'not-allowed' : 'pointer',
+              color: '#FFF',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <RotateCcw size={19} color="#FFF" style={{ animation: isGenerating ? 'spin 1s linear infinite' : 'none' }} />
+            <span style={{ fontSize: '0.64rem', fontWeight: 600, color: '#DDD' }}>Regenerate</span>
+          </button>
+
+          {/* Nút 2: Background / Model (Đổi Người Mẫu) */}
+          <button
+            type="button"
+            onClick={() => setShowModelPicker(true)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              background: showModelPicker ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+              border: showModelPicker ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 4px',
+              cursor: 'pointer',
+              color: '#FFF',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {/* Thumbnail người mẫu nhỏ dạng avatar chuẩn Fits */}
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '1.5px solid #D4AF37'
             }}>
+              <img src={activeModel.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <span style={{ fontSize: '0.64rem', fontWeight: 600, color: '#DDD' }}>Model</span>
+          </button>
+
+          {/* Nút 3: Clothes (Khay Đồ Đang Thử) */}
+          <button
+            type="button"
+            onClick={() => setShowClothesModal(true)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              background: showClothesModal ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+              border: showClothesModal ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 4px',
+              cursor: 'pointer',
+              color: '#FFF',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <Layers size={19} color="#FFF" />
+              {(resolvedTop || resolvedBottom || resolvedShoes) && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-3px',
+                  right: '-5px',
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#10B981'
+                }} />
+              )}
+            </div>
+            <span style={{ fontSize: '0.64rem', fontWeight: 600, color: '#DDD' }}>Clothes</span>
+          </button>
+
+          {/* Nút 4: Fast (Chế độ tạo nhanh) */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsFastMode(!isFastMode);
+              setSavedNotification(isFastMode ? 'Đã bật chế độ Ultra HD Inpainting' : 'Đã bật chế độ Fast AI Preview');
+              setTimeout(() => setSavedNotification(''), 2500);
+            }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              background: isFastMode ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+              border: isFastMode ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 4px',
+              cursor: 'pointer',
+              color: isFastMode ? '#FBBF24' : '#FFF',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Zap size={19} color={isFastMode ? '#FBBF24' : '#FFF'} fill={isFastMode ? '#FBBF24' : 'none'} />
+            <span style={{ fontSize: '0.64rem', fontWeight: 600, color: isFastMode ? '#FBBF24' : '#DDD' }}>Fast</span>
+          </button>
+
+          {/* Nút 5: Prompt (Chỉnh dáng đứng / Phong cách AI) */}
+          <button
+            type="button"
+            onClick={() => setShowPromptModal(true)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '5px',
+              background: showPromptModal ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+              border: showPromptModal ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '10px 4px',
+              cursor: 'pointer',
+              color: '#FFF',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Edit3 size={19} color="#FFF" />
+            <span style={{ fontSize: '0.64rem', fontWeight: 600, color: '#DDD' }}>Prompt</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 2. MODAL 1: CHỌN NGƯỜI MẪU AI THẬT (MODEL PICKER MODAL)                   */}
+      {/* ========================================================================= */}
+      {showModelPicker && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#121724',
+            border: '1px solid rgba(212, 175, 55, 0.4)',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '420px',
+            padding: '20px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.9)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={20} color="#D4AF37" />
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#FFF', fontWeight: 800 }}>
+                  Chọn Người Mẫu AI (Real Models)
+                </h3>
+              </div>
               <button
-                onClick={() => setFittingMode('model3d')}
-                title="3D Avatar Thực Tế (GLB): Mô hình 3D Streetwear tương tác giống hệt bản Mobile"
-                style={{
-                  background: fittingMode === 'model3d' ? 'linear-gradient(135deg, #10B981, #059669)' : 'transparent',
-                  color: fittingMode === 'model3d' ? '#FFFFFF' : 'var(--text-muted)',
-                  border: 'none',
-                  padding: '3px 9px',
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  boxShadow: fittingMode === 'model3d' ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
+                type="button"
+                onClick={() => setShowModelPicker(false)}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}
               >
-                <Compass size={11} />
-                <span>3D Avatar (GLB)</span>
-              </button>
-              <button
-                onClick={() => setFittingMode('flatlay')}
-                title="Ảnh Bóc Tách: Hiển thị ảnh chụp sản phẩm bóc nền phẳng của 3 món đồ"
-                style={{
-                  background: fittingMode === 'flatlay' ? 'rgba(212, 175, 55, 0.25)' : 'transparent',
-                  color: fittingMode === 'flatlay' ? '#F3D98A' : 'var(--text-muted)',
-                  border: 'none',
-                  padding: '3px 8px',
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Layers size={11} />
-                <span>Ảnh Thật Bóc Tách</span>
-              </button>
-              <button
-                onClick={() => setFittingMode('atelier')}
-                title="Phom Chuẩn 3D: Quần dài chạm mắt cá chân, áo ôm vai vừa vặn, may đo chuẩn vóc dáng"
-                style={{
-                  background: fittingMode === 'atelier' ? 'linear-gradient(135deg, #D4AF37, #B8860B)' : 'transparent',
-                  color: fittingMode === 'atelier' ? '#07090E' : 'var(--text-muted)',
-                  border: 'none',
-                  padding: '3px 9px',
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <Sparkles size={11} />
-                <span>Phom May Đo</span>
+                <X size={20} />
               </button>
             </div>
 
-            {/* Bật/Tắt Thước đo */}
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
+              Tất cả người mẫu đều được tạo sinh từ công nghệ AI Diffusion chân thực, dáng đứng tự nhiên và tay buông lơi linh hoạt.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {FITS_MODELS.map(m => {
+                const isSelected = m.id === selectedModelId;
+                return (
+                  <div
+                    key={m.id}
+                    onClick={() => {
+                      setSelectedModelId(m.id);
+                      setShowModelPicker(false);
+                      triggerAiRegenerate();
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      background: isSelected ? 'rgba(212, 175, 55, 0.18)' : 'rgba(255, 255, 255, 0.04)',
+                      border: isSelected ? '1.5px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.08)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <img
+                      src={m.thumb}
+                      alt=""
+                      style={{
+                        width: '46px',
+                        height: '56px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>
+                          {m.name}
+                        </span>
+                        <span style={{
+                          fontSize: '0.62rem',
+                          background: m.gender === 'Nam' ? '#3B82F6' : '#EC4899',
+                          color: '#FFF',
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          fontWeight: 800
+                        }}>
+                          {m.tag}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {m.description}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <div style={{ color: '#D4AF37' }}>
+                        <Check size={18} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. MODAL 2: XEM LAYER ĐỒ ĐANG MẶC (CLOTHES MODAL)                         */}
+      {/* ========================================================================= */}
+      {showClothesModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#121724',
+            border: '1px solid rgba(212, 175, 55, 0.4)',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '380px',
+            padding: '20px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.9)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Layers size={18} color="#D4AF37" />
+                <h3 style={{ margin: 0, fontSize: '1rem', color: '#FFF', fontWeight: 800 }}>
+                  Trang Phục Trên Người Mẫu
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowClothesModal(false)}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#FDA4AF', fontWeight: 700 }}>Áo (Top):</span>
+                <span style={{ fontSize: '0.8rem', color: '#FFF' }}>{resolvedTop?.name || 'Áo thun basic'}</span>
+              </div>
+              <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#818CF8', fontWeight: 700 }}>Quần (Bottom):</span>
+                <span style={{ fontSize: '0.8rem', color: '#FFF' }}>{resolvedBottom?.name || 'Quần jeans/trackpants'}</span>
+              </div>
+              {resolvedOuter && (
+                <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#C084FC', fontWeight: 700 }}>Khoác (Outer):</span>
+                  <span style={{ fontSize: '0.8rem', color: '#FFF' }}>{resolvedOuter.name}</span>
+                </div>
+              )}
+              <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#34D399', fontWeight: 700 }}>Giày (Shoes):</span>
+                <span style={{ fontSize: '0.8rem', color: '#FFF' }}>{resolvedShoes?.name || 'Sneakers retro'}</span>
+              </div>
+            </div>
+
             <button
-              onClick={() => setShowMeasurements(!showMeasurements)}
-              title="Bật/Tắt thước đo số đo 3 vòng"
+              type="button"
+              onClick={() => {
+                setShowClothesModal(false);
+                triggerAiRegenerate();
+              }}
               style={{
-                background: showMeasurements ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                color: showMeasurements ? '#F3D98A' : 'var(--text-muted)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
-                padding: '4px 12px',
-                borderRadius: 'var(--radius-full)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                transition: 'var(--transition)'
+                width: '100%',
+                marginTop: '16px',
+                padding: '10px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #D4AF37, #B8860B)',
+                color: '#000',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                cursor: 'pointer'
               }}
             >
-              <Ruler size={13} />
-              <span>{showMeasurements ? 'Ẩn Số Đo' : 'Hiện Số Đo'}</span>
+              Áp Dụng Thử Đồ (Try-On Now)
             </button>
           </div>
         </div>
       )}
 
-      {/* 2. SÂN KHẤU SHOWROOM (ATELIER SHOWROOM PODIUM) - HỖ TRỢ KÉO XOAY 360 ĐỘ */}
-      <div
-        onMouseDown={handleStageMouseDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        title="Kéo chuột hoặc vuốt để xoay ma-nơ-canh 360 độ"
-        style={{
-          position: 'relative',
-          width: compact ? '290px' : '350px',
-          height: compact ? '480px' : '580px',
-          borderRadius: 'var(--radius-lg)',
-          background: 'radial-gradient(circle at 50% 25%, rgba(212, 175, 55, 0.12) 0%, rgba(13, 17, 28, 0.96) 65%, #07090E 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.35)',
-          boxShadow: '0 30px 70px rgba(0, 0, 0, 0.8), inset 0 0 50px rgba(212, 175, 55, 0.04)',
+      {/* ========================================================================= */}
+      {/* 4. MODAL 3: ĐIỀU CHỈNH AI PROMPT & DÁNG ĐỨNG (PROMPT MODAL)               */}
+      {/* ========================================================================= */}
+      {showPromptModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          overflow: 'hidden',
-          cursor: isDragging ? 'grabbing' : 'grab'
-        }}
-      >
-        {/* Badge góc xoay hiện tại (Top-Left) */}
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          left: '12px',
-          zIndex: 10,
-          background: 'rgba(10, 14, 24, 0.8)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(212, 175, 55, 0.35)',
-          borderRadius: 'var(--radius-full)',
-          padding: '3px 10px',
-          fontSize: '0.68rem',
-          color: '#F3D98A',
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          pointerEvents: 'none'
+          zIndex: 9999,
+          padding: '16px'
         }}>
-          <Compass size={12} color="#D4AF37" />
-          <span>{getAngleLabel(rotation)}</span>
-        </div>
-
-        {/* Hướng dẫn kéo xoay 360 (Top-Right) */}
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
-          zIndex: 10,
-          background: isAutoRotating ? 'rgba(212, 175, 55, 0.2)' : 'rgba(10, 14, 24, 0.65)',
-          border: isAutoRotating ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 'var(--radius-full)',
-          padding: '3px 9px',
-          fontSize: '0.64rem',
-          color: isAutoRotating ? '#FDE68A' : 'var(--text-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          pointerEvents: 'none'
-        }}>
-          <span>{isAutoRotating ? '● Đang tự xoay 360°' : '↔ Kéo xoay 360°'}</span>
-        </div>
-
-        {/* Ánh sáng Spotlight sân khấu từ trên đỉnh */}
-        <div style={{
-          position: 'absolute',
-          top: '-20px',
-          width: '240px',
-          height: '120px',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at top, rgba(255, 245, 220, 0.35) 0%, rgba(212, 175, 55, 0.08) 50%, transparent 80%)',
-          filter: 'blur(16px)',
-          pointerEvents: 'none',
-          zIndex: 1
-        }} />
-
-        {/* Bục sàn ma-nơ-canh Showroom xoay 360 độ (Turntable Podium Disc) */}
-        <div style={{
-          position: 'absolute',
-          bottom: '8px',
-          width: '240px',
-          height: '40px',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(212, 175, 55, 0.45) 0%, rgba(15, 21, 33, 0.85) 60%, transparent 85%)',
-          border: '1px solid rgba(212, 175, 55, 0.4)',
-          boxShadow: '0 12px 30px rgba(0,0,0,0.85), inset 0 0 15px rgba(212, 175, 55, 0.3)',
-          zIndex: 1,
-          transform: `scaleY(0.7) rotate(${rotation * 0.5}deg)`,
-          transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)'
-        }}>
-          {/* Vạch chia độ trên bục xoay */}
           <div style={{
-            position: 'absolute',
-            inset: '3px',
-            borderRadius: '50%',
-            border: '1px dashed rgba(212, 175, 55, 0.35)'
-          }} />
-        </div>
-
-        {/* 3. KHỐI 3D: HOẶC 3D AVATAR (GLB ĐỒNG BỘ MOBILE) HOẶC CANVAS MA-NƠ-CANH */}
-        {fittingMode === 'model3d' ? (
-          <div style={{
-            position: 'relative',
-            width: '340px',
-            height: '550px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 3
+            background: '#121724',
+            border: '1px solid rgba(212, 175, 55, 0.4)',
+            borderRadius: '20px',
+            width: '100%',
+            maxWidth: '400px',
+            padding: '20px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.9)'
           }}>
-            <model-viewer
-              src={selectedGlbModel}
-              alt="3D Avatar Streetwear Outfit"
-              camera-controls
-              auto-rotate={isAutoRotating}
-              rotation-per-second="24deg"
-              shadow-intensity="1.6"
-              shadow-softness="0.5"
-              environment-image="neutral"
-              exposure="1.0"
-              camera-orbit="0deg 75deg 105%"
-              field-of-view="30deg"
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Edit3 size={18} color="#D4AF37" />
+                <h3 style={{ margin: 0, fontSize: '1rem', color: '#FFF', fontWeight: 800 }}>
+                  Tùy Chỉnh Tư Thế & Dáng Đứng AI
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPromptModal(false)}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+              Gợi ý dáng đứng tự nhiên để AI điều chỉnh tư thế tay và khớp cử động:
+            </p>
+
+            {/* Quick Prompt Chips */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '14px' }}>
+              {[
+                'Hai tay thả lỏng tự nhiên bên hông',
+                'Một tay đút túi quần, vai mở rộng',
+                'Khoanh tay nhẹ nhàng trước ngực',
+                'Tư thế bước đi tự tin trong studio'
+              ].map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setCustomPrompt(p)}
+                  style={{
+                    background: customPrompt === p ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+                    border: customPrompt === p ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
+                    color: customPrompt === p ? '#FDE68A' : 'var(--text-secondary)',
+                    borderRadius: '8px',
+                    padding: '5px 10px',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              rows={3}
               style={{
                 width: '100%',
-                height: '100%',
-                backgroundColor: 'transparent'
-              }}
-            >
-              <div slot="poster" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#D4AF37', fontSize: '0.8rem' }}>
-                <span>✨ Đang tải 3D Avatar (GLB)...</span>
-              </div>
-            </model-viewer>
-            <div style={{
-              position: 'absolute',
-              bottom: '12px',
-              padding: '4px 12px',
-              borderRadius: 'var(--radius-full)',
-              background: 'rgba(5, 8, 15, 0.85)',
-              border: '1px solid rgba(212, 175, 55, 0.35)',
-              color: '#FDE68A',
-              fontSize: '0.66rem',
-              fontWeight: 600,
-              pointerEvents: 'none',
-              zIndex: 4,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-            }}>
-              👕 3D Avatar đang thử đồ Streetwear
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            position: 'relative',
-            width: '340px',
-            height: '550px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2,
-            transform: `perspective(1000px) rotateY(${rotation}deg)`,
-            transformStyle: 'preserve-3d',
-            transition: isDragging ? 'none' : 'transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1)',
-            filter: `drop-shadow(${Math.sin(rotation * Math.PI / 180) * 16}px 14px 24px rgba(0, 0, 0, 0.85))`
-          }}>
-            {/* 3.1 MẶT TRƯỚC (FRONT FACE) - NGỰC, BỤNG, MẶT, TRANG PHỤC */}
-            <div style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            transform: 'translateZ(1px)',
-            transformStyle: 'preserve-3d'
-          }}>
-            <canvas
-              ref={canvasFrontRef}
-              style={{
-                width: '340px',
-                height: '550px',
-                objectFit: 'contain'
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                padding: '8px 10px',
+                color: '#FFF',
+                fontSize: '0.8rem',
+                resize: 'none',
+                marginBottom: '16px'
               }}
             />
 
-          {/* ========================================================================= */}
-          {/* LỚP TRANG PHỤC KHOÁC LÊN MA-NƠ-CANH (CO GIÃN VỪA KHUNG DÁNG)             */}
-          {/* ========================================================================= */}
-
-          {/* 1. DRESS (Đầm liền) - Khoác từ ngực/cổ xuống qua đầu gối */}
-          {isDress && (resolvedBottom || resolvedTop) && (
-            <div
-              onClick={() => setActiveSlotFocus('bottom')}
-              style={{
-                position: 'absolute',
-                top: isMale ? '16.5%' : '16.0%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 66 : 64) * Math.max(sChest, sHips))}%`,
-                height: isMale ? '62%' : '64%',
-                cursor: 'pointer',
-                zIndex: 5,
-                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.65))',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                <AtelierDress item={resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop} />
-              ) : (
-                <IsolatedClothingImage
-                  src={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.imageUrl}
-                  alt={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.name || 'Đầm liền'}
-                  maxHeight="100%"
-                />
-              )}
-            </div>
-          )}
-
-          {/* 2. BOTTOMS (Quần tây / Quần Jeans / Quần Jogger - Căn chuẩn từ eo tới mắt cá chân) */}
-          {!isDress && resolvedBottom && (
-            <div
-              onClick={() => setActiveSlotFocus('bottom')}
-              style={{
-                position: 'absolute',
-                top: isMale ? '38.5%' : '38.0%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 48 : 46) * sHips)}%`,
-                height: isMale ? '53.5%' : '53.0%',
-                cursor: 'pointer',
-                zIndex: 4,
-                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                <AtelierTrousers
-                  item={resolvedBottom}
-                  isJeans={
-                    (resolvedBottom.name || '').toLowerCase().includes('jean') ||
-                    (resolvedBottom.name || '').toLowerCase().includes('denim') ||
-                    (resolvedBottom.name || '').toLowerCase().includes('bò')
-                  }
-                />
-              ) : (
-                <IsolatedClothingImage
-                  src={resolvedBottom.imageUrl}
-                  alt={resolvedBottom.name || ''}
-                  maxHeight="100%"
-                />
-              )}
-            </div>
-          )}
-
-          {/* Neutral Base Trousers when user hasn't picked bottoms, avoiding bare plastic look */}
-          {!isDress && !resolvedBottom && (
-            <div
-              style={{
-                position: 'absolute',
-                top: isMale ? '39.0%' : '38.5%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: isMale ? '44%' : '42%',
-                height: '52%',
-                pointerEvents: 'none',
-                opacity: 0.85,
-                filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.5))'
-              }}
-            >
-              <AtelierTrousers item={{ color: '#161A24', name: 'Quần basic' }} />
-            </div>
-          )}
-
-          {/* 3. TOP (Áo sơ mi / Áo thun / Áo nỉ - Khớp từ chân cổ, bao trọn vai và ngực ma-nơ-canh) */}
-          {!isDress && resolvedTop && (
-            <div
-              onClick={() => setActiveSlotFocus('top')}
-              style={{
-                position: 'absolute',
-                top: isMale ? '16.5%' : '16.0%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 72 : 70) * Math.max(sChest, sShoulder))}%`,
-                height: isMale ? '36.5%' : '35.5%',
-                cursor: 'pointer',
-                zIndex: 5,
-                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.65))',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                ((resolvedTop.name || '').toLowerCase().includes('sơ mi') ||
-                 (resolvedTop.name || '').toLowerCase().includes('shirt') ||
-                 (resolvedTop.name || '').toLowerCase().includes('polo') ||
-                 (resolvedTop.name || '').toLowerCase().includes('cổ bẻ') ||
-                 (resolvedTop.name || '').toLowerCase().includes('oxford')) ? (
-                  <AtelierShirt item={resolvedTop} />
-                ) : (
-                  <AtelierTShirt item={resolvedTop} />
-                )
-              ) : (
-                <IsolatedClothingImage
-                  src={resolvedTop.imageUrl}
-                  alt={resolvedTop.name || ''}
-                  maxHeight="100%"
-                />
-              )}
-            </div>
-          )}
-
-          {/* 4. OUTERWEAR (Áo khoác / Blazer - May đo ôm sát vai và tay suông tự nhiên) */}
-          {resolvedOuter && (
-            <div
-              onClick={() => setActiveSlotFocus('outer')}
-              style={{
-                position: 'absolute',
-                top: isMale ? '15.8%' : '15.5%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 76 : 74) * sShoulder)}%`,
-                height: isMale ? '45.0%' : '44.0%',
-                cursor: 'pointer',
-                zIndex: 6,
-                filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.85))',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                <AtelierBlazer item={resolvedOuter} />
-              ) : (
-                <IsolatedClothingImage
-                  src={resolvedOuter.imageUrl}
-                  alt={resolvedOuter.name || ''}
-                  maxHeight="100%"
-                />
-              )}
-            </div>
-          )}
-
-          {/* 5. SHOES (Giày vừa vặn cả 2 bàn chân ma-nơ-canh trên bục xoay) */}
-          {resolvedShoes && (
-            <div
-              onClick={() => setActiveSlotFocus('shoes')}
-              style={{
-                position: 'absolute',
-                bottom: '1.2%',
-                left: isMale ? '50.0%' : '53.2%',
-                transform: 'translate(-50%, 0)',
-                width: isMale ? '36%' : '34%',
-                height: '44px',
-                cursor: 'pointer',
-                zIndex: 4,
-                filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.65))'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                <AtelierShoes
-                  item={resolvedShoes}
-                  isSneaker={
-                    (resolvedShoes.name || '').toLowerCase().includes('sneaker') ||
-                    (resolvedShoes.name || '').toLowerCase().includes('thể thao') ||
-                    (resolvedShoes.name || '').toLowerCase().includes('samba') ||
-                    (resolvedShoes.name || '').toLowerCase().includes('salomon') ||
-                    (resolvedShoes.name || '').toLowerCase().includes('running') ||
-                    (resolvedShoes.name || '').toLowerCase().includes('chunky')
-                  }
-                />
-              ) : (
-                <IsolatedClothingImage
-                  src={resolvedShoes.imageUrl}
-                  alt={resolvedShoes.name || ''}
-                  maxHeight="100%"
-                />
-              )}
-            </div>
-          )}
-
-          {/* 6. ACCESSORY (Túi xách da đeo chéo) */}
-          {resolvedAccessory && (
-            <div
-              onClick={() => setActiveSlotFocus('accessory')}
-              style={{
-                position: 'absolute',
-                top: isMale ? '38%' : '36%',
-                right: '6%',
-                width: '24%',
-                cursor: 'pointer',
-                zIndex: 7,
-                filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.7))'
-              }}
-            >
-              {fittingMode === 'atelier' ? (
-                <AtelierBag item={resolvedAccessory} />
-              ) : (
-                <IsolatedClothingImage
-                  src={resolvedAccessory.imageUrl}
-                  alt={resolvedAccessory.name || ''}
-                  maxHeight="100px"
-                />
-              )}
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* LỚP THƯỚC ĐO 3 VÒNG BÁM THEO FORM ĐÃ CO GIÃN                              */}
-          {/* ========================================================================= */}
-          {showMeasurements && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              zIndex: 8,
-              opacity: Math.max(0.08, Math.cos(rotation * Math.PI / 180)),
-              transition: 'opacity 0.25s ease'
-            }}>
-              {/* Vòng 1: Ngực */}
-              <div style={{
-                position: 'absolute',
-                top: isMale ? '28%' : '27%',
-                right: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  width: '28px',
-                  borderTop: '1px dashed #F472B6'
-                }} />
-                <div style={{
-                  background: 'rgba(244, 114, 182, 0.95)',
-                  color: '#080A0F',
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  V1: {chest}cm
-                </div>
-              </div>
-
-              {/* Vòng 2: Eo */}
-              <div style={{
-                position: 'absolute',
-                top: isMale ? '38%' : '37%',
-                left: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  background: 'rgba(212, 175, 55, 0.95)',
-                  color: '#080A0F',
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  V2: {waist}cm
-                </div>
-                <div style={{
-                  width: '28px',
-                  borderTop: '1px dashed #D4AF37'
-                }} />
-              </div>
-
-              {/* Vòng 3: Hông */}
-              <div style={{
-                position: 'absolute',
-                top: isMale ? '48%' : '47%',
-                right: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  width: '28px',
-                  borderTop: '1px dashed #38BDF8'
-                }} />
-                <div style={{
-                  background: 'rgba(56, 189, 248, 0.95)',
-                  color: '#080A0F',
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  V3: {hips}cm
-                </div>
-              </div>
-
-              {/* Chiều cao bên trái */}
-              <div style={{
-                position: 'absolute',
-                left: '6px',
-                top: '12%',
-                bottom: '8%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '2px'
-              }}>
-                <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.3)' }} />
-                <span style={{
-                  fontSize: '0.65rem',
-                  fontWeight: 800,
-                  color: '#FFF',
-                  writingMode: 'vertical-rl',
-                  transform: 'rotate(180deg)',
-                  background: 'rgba(0,0,0,0.6)',
-                  padding: '4px 2px',
-                  borderRadius: '3px'
-                }}>
-                  {height} cm
-                </span>
-                <div style={{ width: '1px', flex: 1, background: 'rgba(255,255,255,0.3)' }} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 3.2 MẶT SAU (BACK FACE) - LƯNG, BẢ VAI, EO VÀ MÔNG CHUẨN SHOWROOM */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden',
-          transform: 'rotateY(180deg) translateZ(1px)',
-          transformStyle: 'preserve-3d'
-        }}>
-          <canvas
-            ref={canvasBackRef}
-            style={{
-              width: '340px',
-              height: '550px',
-              objectFit: 'contain'
-            }}
-          />
-
-          {/* Thước đo mặt sau: Vòng 3 (Mông) & Vòng 2 (Eo Lưng) */}
-          {showMeasurements && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              zIndex: 8,
-              opacity: Math.max(0.08, -Math.cos(rotation * Math.PI / 180)),
-              transition: 'opacity 0.25s ease'
-            }}>
-              {/* V3: Vòng Hông & Mông */}
-              <div style={{
-                position: 'absolute',
-                top: isMale ? '48%' : '47%',
-                left: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  background: 'rgba(56, 189, 248, 0.95)',
-                  color: '#080A0F',
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  V3 (Mông): {hips}cm
-                </div>
-                <div style={{
-                  width: '28px',
-                  borderTop: '1px dashed #38BDF8'
-                }} />
-              </div>
-
-              {/* V2: Vòng Eo Lưng */}
-              <div style={{
-                position: 'absolute',
-                top: isMale ? '38%' : '37%',
-                right: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <div style={{
-                  width: '28px',
-                  borderTop: '1px dashed #D4AF37'
-                }} />
-                <div style={{
-                  background: 'rgba(212, 175, 55, 0.95)',
-                  color: '#080A0F',
-                  padding: '2px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                  whiteSpace: 'nowrap'
-                }}>
-                  V2 (Eo): {waist}cm
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-
-        {/* Thông báo hướng dẫn nếu chưa chọn đồ */}
-        {!resolvedTop && !resolvedBottom && !resolvedOuter && (
-          <div style={{
-            position: 'absolute',
-            bottom: '48px',
-            background: 'rgba(10, 14, 22, 0.9)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(212, 175, 55, 0.35)',
-            padding: '7px 16px',
-            borderRadius: 'var(--radius-full)',
-            color: '#F3D98A',
-            fontSize: '0.74rem',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            zIndex: 9,
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)'
-          }}>
-            <Sparkles size={13} color="#D4AF37" />
-            <span>Form Dáng {activeShapeObj.label} • Chọn trang phục để ướm thử</span>
-          </div>
-        )}
-      </div>
-
-      {/* 2.5 BẢNG ĐIỀU KHIỂN XOAY 360 ĐỘ (3D TURNTABLE ROTATION CONTROLLER) */}
-      <div style={{
-        width: '100%',
-        maxWidth: compact ? '290px' : '350px',
-        marginTop: '12px',
-        padding: '10px 14px',
-        background: 'rgba(12, 16, 26, 0.92)',
-        backdropFilter: 'blur(12px)',
-        borderRadius: 'var(--radius-md)',
-        border: '1px solid rgba(212, 175, 55, 0.3)',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.65)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px'
-      }}>
-        {/* Hàng 1: Nút Xoay 360 Tự Động & 4 Nút Preset Góc Nhìn */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-          <button
-            onClick={() => setIsAutoRotating(!isAutoRotating)}
-            title={isAutoRotating ? text("Tạm dừng xoay tự động", "Pause auto rotation") : text("Bật chế độ tự động xoay 360 độ", "Spin 360°")}
-            style={{
-              background: isAutoRotating
-                ? 'linear-gradient(135deg, #D4AF37, #F59E0B)'
-                : 'rgba(255, 255, 255, 0.06)',
-              color: isAutoRotating ? '#0B0F19' : '#F3D98A',
-              border: isAutoRotating ? '1px solid #D4AF37' : '1px solid rgba(212, 175, 55, 0.35)',
-              borderRadius: 'var(--radius-full)',
-              padding: '4px 10px',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: isAutoRotating ? '0 0 14px rgba(212, 175, 55, 0.5)' : 'none'
-            }}
-          >
-            {isAutoRotating ? <Pause size={12} /> : <Play size={12} />}
-            <span>{isAutoRotating ? text('Dừng Xoay', 'Stop') : text('Xoay 360°', '360° Spin')}</span>
-          </button>
-
-          {/* 4 Nút Preset Góc Chuẩn */}
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {[
-              { label: text('Trước', 'Front'), deg: 0 },
-              { label: '45°', deg: 45 },
-              { label: text('Sau', 'Back'), deg: 180 },
-              { label: '-45°', deg: -45 }
-            ].map(p => {
-              const isActive = Math.abs(rotation - p.deg) < 12;
-              return (
-                <button
-                  key={p.deg}
-                  onClick={() => {
-                    setIsAutoRotating(false);
-                    setRotation(p.deg);
-                  }}
-                  title={text(`Xoay đến góc ${p.label}`, `Rotate to ${p.label}`)}
-                  style={{
-                    background: isActive ? 'rgba(212, 175, 55, 0.3)' : 'rgba(255, 255, 255, 0.04)',
-                    color: isActive ? '#FDE68A' : 'var(--text-muted)',
-                    border: isActive ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '3px 7px',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-
-            {/* Nút Reset 0 độ */}
             <button
+              type="button"
               onClick={() => {
-                setIsAutoRotating(false);
-                setRotation(0);
+                setShowPromptModal(false);
+                triggerAiRegenerate();
               }}
-              title={text("Đặt lại về góc 0° (Mặt trước)", "Reset to 0° (Front)")}
               style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                color: 'var(--text-muted)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '3px 6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                width: '100%',
+                padding: '10px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #D4AF37, #B8860B)',
+                color: '#000',
+                border: 'none',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                cursor: 'pointer'
               }}
             >
-              <RotateCcw size={12} />
+              Sinh Lại Dáng Người Mẫu
             </button>
-          </div>
-        </div>
-
-        {/* Hàng 2: Thanh Trượt Góc Xoay Mịn */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Compass size={13} color="#D4AF37" />
-          <input
-            type="range"
-            min="-180"
-            max="180"
-            value={rotation}
-            onChange={(e) => {
-              setIsAutoRotating(false);
-              setRotation(Number(e.target.value));
-            }}
-            title={text("Kéo trượt để xoay ma-nơ-canh đến góc mong muốn", "Drag slider to rotate mannequin")}
-            style={{
-              flex: 1,
-              accentColor: '#D4AF37',
-              cursor: 'pointer',
-              height: '4px'
-            }}
-          />
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            color: '#F3D98A',
-            minWidth: '42px',
-            textAlign: 'right'
-          }}>
-            {rotation > 0 ? `+${rotation}°` : `${rotation}°`}
-          </span>
-        </div>
-      </div>
-
-      {/* 3. BẢNG THÔNG TIN NHÂN TRẮC HỌC (BOTTOM INSIGHT RIBBON) */}
-      {!compact && (
-        <div style={{
-          marginTop: '16px',
-          width: '100%',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '10px',
-          fontSize: '0.75rem',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            background: 'rgba(7, 10, 17, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            padding: '8px 6px',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
-              {text('Dáng Người (Hồ Sơ)', 'Body Shape (Profile)')}
-            </div>
-            <div style={{ fontWeight: 800, color: '#F3D98A' }}>
-              {activeShapeObj.icon} {activeShapeObj.id === 'Đồng hồ cát' ? text('Đồng hồ cát', 'Hourglass')
-                : activeShapeObj.id === 'Quả lê' ? text('Quả lê', 'Pear')
-                : activeShapeObj.id === 'Quả táo' ? text('Quả táo', 'Apple')
-                : activeShapeObj.id === 'Tam giác ngược' ? text('Tam giác ngược', 'Inverted Triangle')
-                : text('Thước kẻ', 'Rectangle')}
-            </div>
-          </div>
-
-          <div style={{
-            background: 'rgba(7, 10, 17, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            padding: '8px 6px',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
-              {text('Tỉ Lệ Eo/Hông (WHR)', 'Waist/Hip (WHR)')}
-            </div>
-            <div style={{ fontWeight: 800, color: '#38BDF8' }}>{formModifiers.whr}</div>
-          </div>
-
-          <div style={{
-            background: 'rgba(7, 10, 17, 0.65)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            padding: '8px 6px',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.68rem', marginBottom: '2px' }}>
-              {text('Chỉ Số BMI', 'BMI Index')}
-            </div>
-            <div style={{ fontWeight: 800, color: '#10B981' }}>{formModifiers.bmi}</div>
           </div>
         </div>
       )}
