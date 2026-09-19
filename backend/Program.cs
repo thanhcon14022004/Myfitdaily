@@ -63,6 +63,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddHttpClient("Fashn", client => client.BaseAddress = new Uri("https://api.fashn.ai"));
 
 // 5. Cấu hình Swagger OpenAPI hỗ trợ nút Authorize (JWT Bearer)
 builder.Services.AddEndpointsApiExplorer();
@@ -149,6 +150,8 @@ _ = Task.Run(async () =>
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""ImageUrl"" TYPE text;
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""Description"" TYPE text;
         ");
+        // Replace the legacy wardrobe catalogue with the approved four-piece Stylist Edit.
+        await DbSeeder.SeedDemoDataAsync(dbContext);
         Console.WriteLine("[DB Auto-Migration]: Supabase database schema verified successfully.");
     }
     catch (Exception ex)

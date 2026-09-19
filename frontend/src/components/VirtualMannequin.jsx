@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, UserCheck } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 /**
@@ -8,62 +7,62 @@ import { useLanguage } from '../context/LanguageContext';
  */
 const REAL_MODELS = [
   {
-    id: 'male_streetwear',
+    id: 'male',
     gender: 'Nam',
-    name: 'Người Mẫu Nam (Dáng Thể Thao)',
-    image: '/assets/fits/model_male_cutout.png',
-    fallback: '/assets/fits/fits_male_streetwear.jpg',
+    name: 'Mẫu Nam',
     heightStr: '1m78',
-    description: 'Dáng đứng thẳng tự nhiên, hai tay buông lơi linh hoạt, vai mở rộng'
+    defaultImage: '/assets/fits/model_male_sweat_cream_clean.png',
+    defaultFallback: '/assets/fits/model_male_sweat_cream.jpg',
+    tankImage: '/assets/fits/model_male_tank_cream_clean.png',
+    tankFallback: '/assets/fits/model_male_tank_cream.jpg',
+    sweatImage: '/assets/fits/model_male_sweat_cream_clean.png',
+    sweatFallback: '/assets/fits/model_male_sweat_cream.jpg'
   },
   {
-    id: 'female_chic',
+    id: 'female',
     gender: 'Nữ',
-    name: 'Người Mẫu Nữ (Dáng Thanh Lịch)',
-    image: '/assets/fits/model_female_cutout.png',
-    fallback: '/assets/fits/fits_female_model.jpg',
+    name: 'Mẫu Nữ',
     heightStr: '1m65',
-    description: 'Dáng đứng mềm mại, bờ vai và cánh tay tự nhiên chuẩn lookbook'
+    defaultImage: '/assets/fits/model_female_clean.png',
+    defaultFallback: '/assets/fits/fits_female_model.jpg',
+    tankImage: '/assets/fits/model_female_clean.png',
+    tankFallback: '/assets/fits/fits_female_model.jpg',
+    sweatImage: '/assets/fits/model_female_clean.png',
+    sweatFallback: '/assets/fits/fits_female_model.jpg'
   }
 ];
 
 export default function VirtualMannequin({
   user = {},
   top = null,
-  topItem = null,
-  outer = null,
-  outerwearItem = null,
   bottom = null,
-  bottomItem = null,
   shoes = null,
-  shoesItem = null,
-  accessory = null,
   gender: propGender,
-  showControls = true,
-  interactive = true,
   compact = false
 }) {
   const { text } = useLanguage();
-  const resolvedTop = top || topItem;
-  const resolvedOuter = outer || outerwearItem;
-  const resolvedBottom = bottom || bottomItem;
-  const resolvedShoes = shoes || shoesItem;
 
-  // Xác định giới tính người dùng để chọn người mẫu phù hợp
+  // Xác định giới tính người dùng
   const isUserMale = (user?.gender?.toLowerCase() === 'nam' ||
                       user?.gender?.toLowerCase() === 'male' ||
                       propGender?.toLowerCase() === 'nam' ||
                       propGender?.toLowerCase() === 'male');
 
-  const [selectedModelId, setSelectedModelId] = useState(
-    isUserMale ? 'male_streetwear' : 'female_chic'
-  );
+  const [selectedGender, setSelectedGender] = useState(isUserMale ? 'Nam' : 'Nữ');
 
   useEffect(() => {
-    setSelectedModelId(isUserMale ? 'male_streetwear' : 'female_chic');
+    setSelectedGender(isUserMale ? 'Nam' : 'Nữ');
   }, [isUserMale]);
 
-  const activeModel = REAL_MODELS.find(m => m.id === selectedModelId) || REAL_MODELS[0];
+  const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
+
+  // Quyết định ảnh hiển thị dựa trên món đồ người dùng chọn
+  const isTankTop = top?.name?.toLowerCase().includes('ba lỗ') || 
+                    top?.name?.toLowerCase().includes('tank') ||
+                    top?.id === 201;
+
+  const currentModelImage = isTankTop ? activeModel.tankImage : activeModel.sweatImage;
+  const currentModelFallback = isTankTop ? activeModel.tankFallback : activeModel.sweatFallback;
 
   return (
     <div style={{
@@ -80,19 +79,19 @@ export default function VirtualMannequin({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        marginBottom: '16px',
+        marginBottom: '14px',
         background: 'rgba(255, 255, 255, 0.04)',
         padding: '3px 6px',
         borderRadius: 'var(--radius-full)',
         border: '1px solid rgba(255, 255, 255, 0.08)'
       }}>
         {REAL_MODELS.map(m => {
-          const isSelected = m.id === selectedModelId;
+          const isSelected = m.gender === selectedGender;
           return (
             <button
               key={m.id}
               type="button"
-              onClick={() => setSelectedModelId(m.id)}
+              onClick={() => setSelectedGender(m.gender)}
               style={{
                 background: isSelected 
                   ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(194, 125, 94, 0.3))' 
@@ -111,13 +110,13 @@ export default function VirtualMannequin({
               }}
             >
               <span>{m.gender === 'Nam' ? '👨' : '👩'}</span>
-              <span>{m.gender === 'Nam' ? 'Mẫu Nam' : 'Mẫu Nữ'} ({m.heightStr})</span>
+              <span>{m.name} ({m.heightStr})</span>
             </button>
           );
         })}
       </div>
 
-      {/* 2. SÂN KHẤU NGƯỜI MẪU THẬT - BÓC NỀN TRONG SUỐT HOÀN TOÀN, KHÔNG PHÔNG HỘP CHỮ NHẬT */}
+      {/* 2. SÂN KHẤU NGƯỜI MẪU THẬT - TỰ ĐỘNG THAY ĐỒ VỪA KHÍT KHI CHỌN */}
       <div style={{
         position: 'relative',
         width: compact ? '290px' : '340px',
@@ -126,7 +125,7 @@ export default function VirtualMannequin({
         alignItems: 'center',
         justifyContent: 'center'
       }}>
-        {/* Ánh sáng Spotlight sân khấu từ đỉnh rọi xuống */}
+        {/* Ánh sáng Spotlight nhẹ từ trên đỉnh */}
         <div style={{
           position: 'absolute',
           top: '-15px',
@@ -139,7 +138,7 @@ export default function VirtualMannequin({
           zIndex: 1
         }} />
 
-        {/* Bóng đổ chân thực trên mặt sàn Showroom tối */}
+        {/* Bóng đổ tự nhiên trên mặt sàn tối */}
         <div style={{
           position: 'absolute',
           bottom: '12px',
@@ -152,14 +151,14 @@ export default function VirtualMannequin({
           pointerEvents: 'none'
         }} />
 
-        {/* Ảnh Người Mẫu Thật Đã Bóc Nền Sạch Sẽ (Transparent Cutout) */}
+        {/* Ảnh Người Mẫu Thật Mặc Đồ Tương Ứng Đã Bóc Nền Sạch Sẽ */}
         <img
-          src={activeModel.image}
+          key={currentModelImage}
+          src={currentModelImage}
           alt={activeModel.name}
           onError={(e) => {
-            // Fallback sang ảnh gốc nếu trình duyệt chưa load kịp ảnh png
-            if (e.target.src !== activeModel.fallback) {
-              e.target.src = activeModel.fallback;
+            if (e.target.src !== currentModelFallback) {
+              e.target.src = currentModelFallback;
             }
           }}
           style={{
@@ -169,7 +168,8 @@ export default function VirtualMannequin({
             objectFit: 'contain',
             zIndex: 2,
             filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.75))',
-            transition: 'opacity 0.3s ease, transform 0.3s ease'
+            transition: 'opacity 0.3s ease, transform 0.3s ease',
+            animation: 'fadeIn 0.3s ease'
           }}
         />
       </div>

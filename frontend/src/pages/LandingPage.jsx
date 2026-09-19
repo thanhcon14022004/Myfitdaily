@@ -36,10 +36,10 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
     },
     {
       icon: Layers,
-      title: text("Atelier Phối Đồ Flat-Lay Ảo", "Virtual Flat-Lay Atelier"),
+      title: text("Studio Phối Trên Người Mẫu", "Real Model Styling Studio"),
       desc: text(
-        "Tự do mix & match trang phục trực quan dạng layout tạp chí phẳng mà không cần mất công mặc thử đồ lộn xộn trong phòng.",
-        "Freely mix & match garments on a magazine-style visual flat-lay canvas without messy room try-ons."
+        "Chọn từng món trong Stylist Edit và xem outfit trong trải nghiệm người mẫu thật.",
+        "Choose pieces from the Stylist Edit and build a look in a real-model experience."
       ),
       badge: "Lookbook Studio",
       color: "#818CF8"
@@ -201,17 +201,17 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 </div>
               </div>
 
-              {/* 4-Item Lookbook Flat-lay Row */}
+              {/* Curated four-piece Stylist Edit */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: '16px',
               }}>
                 {[
-                  { name: text("Áo Sơ Mi Lụa Oversized", "Oversized Silk Shirt"), cat: "Tops", color: text("Trắng Nhã Nhặn", "Elegant White"), img: "/assets/clothes/shirt_white.svg" },
-                  { name: text("Áo Blazer Dạ Nâu Cacao", "Cocoa Wool Blazer"), cat: "Outerwear", color: text("Nâu Đất", "Earthy Brown"), img: "/assets/clothes/blazer_brown.svg" },
-                  { name: text("Quần Tây Xếp Ly Đen Tinh Tế", "Pleated Trousers"), cat: "Bottoms", color: text("Đen Tối Giản", "Minimalist Black"), img: "/assets/clothes/pants_black.svg" },
-                  { name: text("Giày Loafer Da Khóa Ngựa", "Horsebit Leather Loafers"), cat: "Shoes", color: text("Đen Bóng", "Glossy Black"), img: "/assets/clothes/shoes_loafer.svg" },
+                  { name: text("Áo ba lỗ Coolmate Relaxed", "Coolmate Relaxed Tank"), cat: "Tops", color: text("Nâu Taupe", "Taupe Brown"), img: "/assets/stylist/coolmate-tank-top.png" },
+                  { name: text("Sweatshirt Frozen.HN Studio", "Frozen.HN Studio Sweatshirt"), cat: "Tops", color: text("Đen", "Black"), img: "/assets/stylist/frozen-sweatshirt.png" },
+                  { name: text("Quần suông dây rút Cream", "Cream Relaxed Pants"), cat: "Bottoms", color: text("Kem", "Cream"), img: "/assets/stylist/cream-relaxed-pants.png" },
+                  { name: text("Sneaker Retro Cream / Black", "Retro Cream / Black Sneaker"), cat: "Shoes", color: text("Kem / Đen", "Cream / Black"), img: "/assets/stylist/retro-sneakers.png" },
                 ].map((item, i) => (
                   <div 
                     key={i}

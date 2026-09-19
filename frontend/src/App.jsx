@@ -68,50 +68,9 @@ export default function App() {
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
   const categories = getCategoriesForGender(user?.gender);
 
-  const [clothes, setClothes] = useState(() => {
-    const saved = localStorage.getItem('myfitdaily_user_clothes');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map(item => {
-            if (!item.priceFormatted && !item.price) {
-              const defaultP = item.categoryName === 'Tops' ? 263000 : (item.categoryName === 'Bottoms' ? 220000 : (item.categoryName === 'Shoes' ? 450000 : 350000));
-              return {
-                ...item,
-                price: defaultP,
-                priceFormatted: `${Math.round(defaultP / 1000)}K`,
-                platform: item.platform || (item.id % 2 === 0 ? 'Shopee' : 'TikTokShop'),
-                isAffiliate: true,
-                affiliateUrl: item.affiliateUrl || 'https://shopee.vn'
-              };
-            }
-            return item;
-          });
-        }
-      } catch (e) {
-        console.warn("Failed to parse saved clothes", e);
-      }
-    }
-    const savedUser = localStorage.getItem('myfitdaily_user');
-    const g = savedUser ? JSON.parse(savedUser)?.gender : 'Nam';
-    return getInitialClothesForGender(g);
-  });
+  const [clothes, setClothes] = useState(() => getInitialClothesForGender('Nam'));
 
-  const [outfits, setOutfits] = useState(() => {
-    const saved = localStorage.getItem('myfitdaily_outfits');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.warn("Failed to parse saved outfits", e);
-      }
-    }
-    const savedUser = localStorage.getItem('myfitdaily_user');
-    const g = savedUser ? JSON.parse(savedUser)?.gender : 'Nam';
-    return getInitialOutfitsForGender(g);
-  });
+  const [outfits, setOutfits] = useState(() => getInitialOutfitsForGender('Nam'));
 
   // Load user on mount
   useEffect(() => {
