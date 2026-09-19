@@ -130,7 +130,7 @@ const garmentBgRemovalCache = new Map();
  * Component hiển thị trang phục đã bóc tách nền 100%
  * Đảm bảo chỉ hiển thị duy nhất quần áo, loại bỏ hoàn toàn khung cảnh, phòng ốc, sàn nhà, người mẫu
  */
-function IsolatedClothingImage({ src, alt = '', style = {}, maxHeight = '250px' }) {
+function IsolatedClothingImage({ src, alt = '', style = {}, maxHeight = '100%' }) {
   const [cleanSrc, setCleanSrc] = useState(() => {
     if (!src) return '';
     return garmentBgRemovalCache.get(src) || src;
@@ -181,8 +181,8 @@ function IsolatedClothingImage({ src, alt = '', style = {}, maxHeight = '250px' 
       alt={alt}
       style={{
         width: '100%',
-        height: 'auto',
-        maxHeight,
+        height: '100%',
+        maxHeight: maxHeight || '100%',
         objectFit: 'contain',
         background: 'transparent',
         border: 'none',
@@ -891,72 +891,6 @@ export default function VirtualMannequin({
             justifyContent: 'center',
             zIndex: 3
           }}>
-            {/* Floating Lookbook Price Tags (Concept TikTok Screenshot) */}
-            <div style={{
-              position: 'absolute',
-              top: '16px',
-              left: '12px',
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              pointerEvents: 'none'
-            }}>
-              <div style={{
-                background: 'rgba(0, 0, 0, 0.9)',
-                border: '1px solid #D4AF37',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                color: '#FDE68A',
-                fontWeight: 800,
-                fontSize: '0.82rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ color: '#FFF' }}>Áo :</span>
-                <span>{resolvedTop?.priceFormatted || '263K'}</span>
-                <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
-              </div>
-
-              <div style={{
-                background: 'rgba(0, 0, 0, 0.9)',
-                border: '1px solid #D4AF37',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                color: '#FDE68A',
-                fontWeight: 800,
-                fontSize: '0.82rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ color: '#FFF' }}>Quần :</span>
-                <span>{resolvedBottom?.priceFormatted || '220K'}</span>
-                <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
-              </div>
-
-              <div style={{
-                background: 'rgba(0, 0, 0, 0.9)',
-                border: '1px solid #D4AF37',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                color: '#FDE68A',
-                fontWeight: 800,
-                fontSize: '0.82rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}>
-                <span style={{ color: '#FFF' }}>Giày :</span>
-                <span>{resolvedShoes?.priceFormatted || '450K'}</span>
-                <span style={{ fontSize: '0.62rem', background: '#0F172A', border: '1px solid #00F2FE', color: '#00F2FE', padding: '1px 5px', borderRadius: '3px' }}>TikTok</span>
-              </div>
-            </div>
-
             <model-viewer
               src={selectedGlbModel}
               alt="3D Avatar Streetwear Outfit"
@@ -993,7 +927,7 @@ export default function VirtualMannequin({
               zIndex: 4,
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}>
-              👕 3D Avatar đang mặc: Sweatshirt Navy (263K) + Trackpants Sọc (220K) + Sneaker (450K)
+              👕 3D Avatar đang thử đồ Streetwear
             </div>
           </div>
         ) : (
@@ -1022,78 +956,6 @@ export default function VirtualMannequin({
             transform: 'translateZ(1px)',
             transformStyle: 'preserve-3d'
           }}>
-            {/* Floating Lookbook Price Tags on Mannequin (Concept TikTok) */}
-            {(resolvedTop || resolvedBottom || resolvedShoes) && (
-              <div style={{
-                position: 'absolute',
-                top: '16px',
-                left: '12px',
-                zIndex: 10,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px',
-                pointerEvents: 'none'
-              }}>
-                {resolvedTop && (
-                  <div style={{
-                    background: 'rgba(0, 0, 0, 0.9)',
-                    border: '1px solid #D4AF37',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    color: '#FDE68A',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}>
-                    <span style={{ color: '#FFF' }}>Áo :</span>
-                    <span>{resolvedTop.priceFormatted || '263K'}</span>
-                    <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
-                  </div>
-                )}
-                {resolvedBottom && (
-                  <div style={{
-                    background: 'rgba(0, 0, 0, 0.9)',
-                    border: '1px solid #D4AF37',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    color: '#FDE68A',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}>
-                    <span style={{ color: '#FFF' }}>Quần :</span>
-                    <span>{resolvedBottom.priceFormatted || '220K'}</span>
-                    <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
-                  </div>
-                )}
-                {resolvedShoes && (
-                  <div style={{
-                    background: 'rgba(0, 0, 0, 0.9)',
-                    border: '1px solid #D4AF37',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    color: '#FDE68A',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}>
-                    <span style={{ color: '#FFF' }}>Giày :</span>
-                    <span>{resolvedShoes.priceFormatted || '450K'}</span>
-                    <span style={{ fontSize: '0.62rem', background: '#0F172A', border: '1px solid #00F2FE', color: '#00F2FE', padding: '1px 5px', borderRadius: '3px' }}>TikTok</span>
-                  </div>
-                )}
-              </div>
-            )}
-
             <canvas
               ref={canvasFrontRef}
               style={{
@@ -1113,14 +975,14 @@ export default function VirtualMannequin({
               onClick={() => setActiveSlotFocus('bottom')}
               style={{
                 position: 'absolute',
-                top: isMale ? '20.0%' : '19.5%',
-                left: '50.0%',
+                top: isMale ? '16.5%' : '16.0%',
+                left: isMale ? '50.0%' : '53.2%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 40 : 38) * Math.max(sChest, sHips))}%`,
-                height: isMale ? '56%' : '58%',
+                width: `${Math.round((isMale ? 66 : 64) * Math.max(sChest, sHips))}%`,
+                height: isMale ? '62%' : '64%',
                 cursor: 'pointer',
                 zIndex: 5,
-                filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.65))',
+                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.65))',
                 transition: 'all 0.3s ease'
               }}
             >
@@ -1130,26 +992,26 @@ export default function VirtualMannequin({
                 <IsolatedClothingImage
                   src={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.imageUrl}
                   alt={(resolvedBottom?.categoryName?.toLowerCase() === 'dresses' ? resolvedBottom : resolvedTop)?.name || 'Đầm liền'}
-                  maxHeight={compact ? '300px' : '360px'}
+                  maxHeight="100%"
                 />
               )}
             </div>
           )}
 
-          {/* 2. BOTTOMS (Quần tây / Quần Jeans - Kéo dài thẳng tắp từ eo xuống sát mắt cá chân) */}
+          {/* 2. BOTTOMS (Quần tây / Quần Jeans / Quần Jogger - Căn chuẩn từ eo tới mắt cá chân) */}
           {!isDress && resolvedBottom && (
             <div
               onClick={() => setActiveSlotFocus('bottom')}
               style={{
                 position: 'absolute',
-                top: isMale ? '40.6%' : '39.8%',
-                left: '50.0%',
+                top: isMale ? '38.5%' : '38.0%',
+                left: isMale ? '50.0%' : '53.2%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 38 : 36) * sHips)}%`,
-                height: isMale ? '52.5%' : '53.0%',
+                width: `${Math.round((isMale ? 48 : 46) * sHips)}%`,
+                height: isMale ? '53.5%' : '53.0%',
                 cursor: 'pointer',
                 zIndex: 4,
-                filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.75))',
+                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.75))',
                 transition: 'all 0.3s ease'
               }}
             >
@@ -1166,26 +1028,45 @@ export default function VirtualMannequin({
                 <IsolatedClothingImage
                   src={resolvedBottom.imageUrl}
                   alt={resolvedBottom.name || ''}
-                  maxHeight={compact ? '235px' : '275px'}
+                  maxHeight="100%"
                 />
               )}
             </div>
           )}
 
-          {/* 3. TOP (Áo sơ mi / Áo thun - Ôm vừa vặn vai và ngực ma-nơ-canh, phủ kín bụng) */}
+          {/* Neutral Base Trousers when user hasn't picked bottoms, avoiding bare plastic look */}
+          {!isDress && !resolvedBottom && (
+            <div
+              style={{
+                position: 'absolute',
+                top: isMale ? '39.0%' : '38.5%',
+                left: isMale ? '50.0%' : '53.2%',
+                transform: 'translate(-50%, 0)',
+                width: isMale ? '44%' : '42%',
+                height: '52%',
+                pointerEvents: 'none',
+                opacity: 0.85,
+                filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.5))'
+              }}
+            >
+              <AtelierTrousers item={{ color: '#161A24', name: 'Quần basic' }} />
+            </div>
+          )}
+
+          {/* 3. TOP (Áo sơ mi / Áo thun / Áo nỉ - Khớp từ chân cổ, bao trọn vai và ngực ma-nơ-canh) */}
           {!isDress && resolvedTop && (
             <div
               onClick={() => setActiveSlotFocus('top')}
               style={{
                 position: 'absolute',
-                top: isMale ? '19.8%' : '19.5%',
-                left: '50.0%',
+                top: isMale ? '16.5%' : '16.0%',
+                left: isMale ? '50.0%' : '53.2%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 46 : 44) * Math.max(sChest, sShoulder))}%`,
-                height: isMale ? '28.5%' : '27.5%',
+                width: `${Math.round((isMale ? 72 : 70) * Math.max(sChest, sShoulder))}%`,
+                height: isMale ? '36.5%' : '35.5%',
                 cursor: 'pointer',
                 zIndex: 5,
-                filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.7))',
+                filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.65))',
                 transition: 'all 0.3s ease'
               }}
             >
@@ -1203,7 +1084,7 @@ export default function VirtualMannequin({
                 <IsolatedClothingImage
                   src={resolvedTop.imageUrl}
                   alt={resolvedTop.name || ''}
-                  maxHeight={compact ? '130px' : '155px'}
+                  maxHeight="100%"
                 />
               )}
             </div>
@@ -1215,14 +1096,14 @@ export default function VirtualMannequin({
               onClick={() => setActiveSlotFocus('outer')}
               style={{
                 position: 'absolute',
-                top: isMale ? '19.5%' : '19.2%',
-                left: '50.0%',
+                top: isMale ? '15.8%' : '15.5%',
+                left: isMale ? '50.0%' : '53.2%',
                 transform: 'translate(-50%, 0)',
-                width: `${Math.round((isMale ? 50 : 47) * sShoulder)}%`,
-                height: isMale ? '44%' : '42%',
+                width: `${Math.round((isMale ? 76 : 74) * sShoulder)}%`,
+                height: isMale ? '45.0%' : '44.0%',
                 cursor: 'pointer',
                 zIndex: 6,
-                filter: 'drop-shadow(0 10px 22px rgba(0,0,0,0.85))',
+                filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.85))',
                 transition: 'all 0.3s ease'
               }}
             >
@@ -1232,7 +1113,7 @@ export default function VirtualMannequin({
                 <IsolatedClothingImage
                   src={resolvedOuter.imageUrl}
                   alt={resolvedOuter.name || ''}
-                  maxHeight={compact ? '210px' : '240px'}
+                  maxHeight="100%"
                 />
               )}
             </div>
@@ -1245,10 +1126,10 @@ export default function VirtualMannequin({
               style={{
                 position: 'absolute',
                 bottom: '1.2%',
-                left: '50.0%',
+                left: isMale ? '50.0%' : '53.2%',
                 transform: 'translate(-50%, 0)',
-                width: isMale ? '32%' : '30%',
-                height: '38px',
+                width: isMale ? '36%' : '34%',
+                height: '44px',
                 cursor: 'pointer',
                 zIndex: 4,
                 filter: 'drop-shadow(0 6px 14px rgba(0,0,0,0.65))'
@@ -1270,7 +1151,7 @@ export default function VirtualMannequin({
                 <IsolatedClothingImage
                   src={resolvedShoes.imageUrl}
                   alt={resolvedShoes.name || ''}
-                  maxHeight="34px"
+                  maxHeight="100%"
                 />
               )}
             </div>
