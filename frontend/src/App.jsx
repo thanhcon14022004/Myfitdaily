@@ -73,7 +73,22 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(item => {
+            if (!item.priceFormatted && !item.price) {
+              const defaultP = item.categoryName === 'Tops' ? 263000 : (item.categoryName === 'Bottoms' ? 220000 : (item.categoryName === 'Shoes' ? 450000 : 350000));
+              return {
+                ...item,
+                price: defaultP,
+                priceFormatted: `${Math.round(defaultP / 1000)}K`,
+                platform: item.platform || (item.id % 2 === 0 ? 'Shopee' : 'TikTokShop'),
+                isAffiliate: true,
+                affiliateUrl: item.affiliateUrl || 'https://shopee.vn'
+              };
+            }
+            return item;
+          });
+        }
       } catch (e) {
         console.warn("Failed to parse saved clothes", e);
       }
@@ -128,8 +143,22 @@ export default function App() {
         const res = await apiRequest('/clothes');
         if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
-          setClothes(items);
-          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(items));
+          const enriched = items.map(item => {
+            if (!item.priceFormatted && !item.price) {
+              const defaultP = item.categoryName === 'Tops' ? 263000 : (item.categoryName === 'Bottoms' ? 220000 : (item.categoryName === 'Shoes' ? 450000 : 350000));
+              return {
+                ...item,
+                price: defaultP,
+                priceFormatted: `${Math.round(defaultP / 1000)}K`,
+                platform: item.platform || 'Shopee',
+                isAffiliate: true,
+                affiliateUrl: item.affiliateUrl || 'https://shopee.vn'
+              };
+            }
+            return item;
+          });
+          setClothes(enriched);
+          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(enriched));
         } else {
           setClothes(prev => (prev && prev.length > 0) ? prev : getInitialClothesForGender(user?.gender));
         }
@@ -539,6 +568,9 @@ export default function App() {
             <AdminPortalPage
               user={user}
               onNavigate={setCurrentTab}
+              onAddAffiliateProduct={(newItem) => {
+                setClothes(prev => [newItem, ...prev]);
+              }}
               onEquipInStudio={(item) => {
                 setCurrentTab('wardrobe');
               }}

@@ -16,7 +16,7 @@ import {
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function AdminPortalPage({ user, onNavigate, onEquipInStudio }) {
+export default function AdminPortalPage({ user, onNavigate, onEquipInStudio, onAddAffiliateProduct }) {
   const { text } = useLanguage();
   const [activeTab, setActiveTab] = useState('importer');
   const [productUrl, setProductUrl] = useState('');
@@ -235,7 +235,19 @@ export default function AdminPortalPage({ user, onNavigate, onEquipInStudio }) {
       }
 
       setAffiliateProducts([newItem, ...affiliateProducts]);
-      setSuccessMessage(`Đã cào & bóc tách thành công: "${newItem.name}" (${newItem.priceFormatted}) từ sàn ${newItem.platform}!`);
+      if (onAddAffiliateProduct) {
+        onAddAffiliateProduct(newItem);
+      }
+      // Also update myfitdaily_user_clothes in localStorage so it appears in Wardrobe immediately
+      try {
+        const existingRaw = localStorage.getItem('myfitdaily_user_clothes');
+        const existing = existingRaw ? JSON.parse(existingRaw) : [];
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify([newItem, ...existing]));
+      } catch (e) {
+        console.warn(e);
+      }
+
+      setSuccessMessage(`Đã cào & bóc tách thành công: "${newItem.name}" (${newItem.priceFormatted}) từ sàn ${newItem.platform}! Đã thêm vào Tủ đồ & Kho toàn sàn.`);
       setProductUrl('');
       setCustomPrice('');
       setCustomTitle('');

@@ -16,7 +16,8 @@ import {
   User,
   Ruler,
   ChevronRight,
-  X
+  X,
+  Tag
 } from 'lucide-react';
 import OutfitCard from '../components/OutfitCard';
 import VirtualMannequin from '../components/VirtualMannequin';
@@ -437,6 +438,11 @@ export default function OutfitStudioPage({
                     {selectedTop ? selectedTop.name : '+ Chọn Áo'}
                   </span>
                   {selectedTop && (
+                    <span style={{ fontSize: '0.66rem', color: '#FDE68A', fontWeight: 700, marginTop: '2px' }}>
+                      {selectedTop.priceFormatted || '263K'}
+                    </span>
+                  )}
+                  {selectedTop && (
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); setSelectedTop(null); }}
@@ -463,6 +469,11 @@ export default function OutfitStudioPage({
                   <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
                     {selectedOuter ? selectedOuter.name : '+ Chọn Khoác'}
                   </span>
+                  {selectedOuter && (
+                    <span style={{ fontSize: '0.66rem', color: '#FDE68A', fontWeight: 700, marginTop: '2px' }}>
+                      {selectedOuter.priceFormatted || '580K'}
+                    </span>
+                  )}
                   {selectedOuter && (
                     <button 
                       type="button" 
@@ -491,6 +502,11 @@ export default function OutfitStudioPage({
                     {selectedBottom ? selectedBottom.name : (isMale ? '+ Chọn Quần' : '+ Chọn Đồ')}
                   </span>
                   {selectedBottom && (
+                    <span style={{ fontSize: '0.66rem', color: '#FDE68A', fontWeight: 700, marginTop: '2px' }}>
+                      {selectedBottom.priceFormatted || '220K'}
+                    </span>
+                  )}
+                  {selectedBottom && (
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); setSelectedBottom(null); }}
@@ -517,6 +533,11 @@ export default function OutfitStudioPage({
                   <span style={{ fontSize: '0.72rem', color: '#FFF', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>
                     {selectedShoes ? selectedShoes.name : '+ Chọn Giày'}
                   </span>
+                  {selectedShoes && (
+                    <span style={{ fontSize: '0.66rem', color: '#FDE68A', fontWeight: 700, marginTop: '2px' }}>
+                      {selectedShoes.priceFormatted || '450K'}
+                    </span>
+                  )}
                   {selectedShoes && (
                     <button 
                       type="button" 
@@ -545,6 +566,11 @@ export default function OutfitStudioPage({
                     {selectedAccessory ? selectedAccessory.name : '+ Chọn Túi'}
                   </span>
                   {selectedAccessory && (
+                    <span style={{ fontSize: '0.66rem', color: '#FDE68A', fontWeight: 700, marginTop: '2px' }}>
+                      {selectedAccessory.priceFormatted || '250K'}
+                    </span>
+                  )}
+                  {selectedAccessory && (
                     <button 
                       type="button" 
                       onClick={(e) => { e.stopPropagation(); setSelectedAccessory(null); }}
@@ -555,6 +581,52 @@ export default function OutfitStudioPage({
                   )}
                 </div>
               </div>
+
+              {/* Total Set Price Banner with Lookbook Pricing */}
+              {(selectedTop || selectedBottom || selectedShoes || selectedOuter) && (
+                <div style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  padding: '10px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(194, 125, 94, 0.12))',
+                  border: '1px solid rgba(212, 175, 55, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.4)'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.74rem', color: '#F3D98A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Tag size={13} color="#D4AF37" />
+                      <span>{text('Tổng Giá Set Đang Thử:', 'Total Outfit Price:')}</span>
+                    </div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#FFFFFF', marginTop: '2px' }}>
+                      {((selectedTop?.price || 263000) + (selectedBottom?.price || 220000) + (selectedShoes ? (selectedShoes.price || 450000) : 0)).toLocaleString('vi-VN')} đ
+                    </div>
+                  </div>
+                  <a
+                    href={(selectedTop?.affiliateUrl || selectedBottom?.affiliateUrl || 'https://shopee.vn')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-full)',
+                      background: 'linear-gradient(135deg, #EE4D2D, #FF7337)',
+                      color: '#FFF',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 12px rgba(238, 77, 45, 0.35)'
+                    }}
+                  >
+                    🛒 Mua Nguyên Set
+                  </a>
+                </div>
+              )}
             </div>
           )}
 

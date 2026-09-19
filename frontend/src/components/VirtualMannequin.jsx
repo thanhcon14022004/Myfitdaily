@@ -890,6 +890,72 @@ export default function VirtualMannequin({
             justifyContent: 'center',
             zIndex: 3
           }}>
+            {/* Floating Lookbook Price Tags (Concept TikTok Screenshot) */}
+            <div style={{
+              position: 'absolute',
+              top: '16px',
+              left: '12px',
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              pointerEvents: 'none'
+            }}>
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.9)',
+                border: '1px solid #D4AF37',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                color: '#FDE68A',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span style={{ color: '#FFF' }}>Áo :</span>
+                <span>{resolvedTop?.priceFormatted || '263K'}</span>
+                <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
+              </div>
+
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.9)',
+                border: '1px solid #D4AF37',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                color: '#FDE68A',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span style={{ color: '#FFF' }}>Quần :</span>
+                <span>{resolvedBottom?.priceFormatted || '220K'}</span>
+                <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
+              </div>
+
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.9)',
+                border: '1px solid #D4AF37',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                color: '#FDE68A',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span style={{ color: '#FFF' }}>Giày :</span>
+                <span>{resolvedShoes?.priceFormatted || '450K'}</span>
+                <span style={{ fontSize: '0.62rem', background: '#0F172A', border: '1px solid #00F2FE', color: '#00F2FE', padding: '1px 5px', borderRadius: '3px' }}>TikTok</span>
+              </div>
+            </div>
+
             <model-viewer
               src={selectedGlbModel}
               alt="3D Avatar Streetwear Outfit"
@@ -926,7 +992,7 @@ export default function VirtualMannequin({
               zIndex: 4,
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}>
-              👕 3D Avatar đang mặc: Sweatshirt Navy + Trackpants Sọc + Retro Sneaker
+              👕 3D Avatar đang mặc: Sweatshirt Navy (263K) + Trackpants Sọc (220K) + Sneaker (450K)
             </div>
           </div>
         ) : (
@@ -955,6 +1021,78 @@ export default function VirtualMannequin({
             transform: 'translateZ(1px)',
             transformStyle: 'preserve-3d'
           }}>
+            {/* Floating Lookbook Price Tags on Mannequin (Concept TikTok) */}
+            {(resolvedTop || resolvedBottom || resolvedShoes) && (
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                left: '12px',
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                pointerEvents: 'none'
+              }}>
+                {resolvedTop && (
+                  <div style={{
+                    background: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid #D4AF37',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    color: '#FDE68A',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span style={{ color: '#FFF' }}>Áo :</span>
+                    <span>{resolvedTop.priceFormatted || '263K'}</span>
+                    <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
+                  </div>
+                )}
+                {resolvedBottom && (
+                  <div style={{
+                    background: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid #D4AF37',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    color: '#FDE68A',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span style={{ color: '#FFF' }}>Quần :</span>
+                    <span>{resolvedBottom.priceFormatted || '220K'}</span>
+                    <span style={{ fontSize: '0.62rem', background: '#EE4D2D', color: '#FFF', padding: '1px 5px', borderRadius: '3px' }}>Shopee</span>
+                  </div>
+                )}
+                {resolvedShoes && (
+                  <div style={{
+                    background: 'rgba(0, 0, 0, 0.9)',
+                    border: '1px solid #D4AF37',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    color: '#FDE68A',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span style={{ color: '#FFF' }}>Giày :</span>
+                    <span>{resolvedShoes.priceFormatted || '450K'}</span>
+                    <span style={{ fontSize: '0.62rem', background: '#0F172A', border: '1px solid #00F2FE', color: '#00F2FE', padding: '1px 5px', borderRadius: '3px' }}>TikTok</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <canvas
               ref={canvasFrontRef}
               style={{

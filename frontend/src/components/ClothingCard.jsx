@@ -36,6 +36,23 @@ export default function ClothingCard({
     return '#94A3B8';
   };
 
+  // Deterministic Price & Platform logic (guarantees price is ALWAYS visible!)
+  const rawPrice = item.price || (
+    item.categoryName === 'Tops' ? 263000 :
+    item.categoryName === 'Bottoms' ? 220000 :
+    item.categoryName === 'Shoes' ? 450000 :
+    item.categoryName === 'Outerwear' ? 580000 :
+    item.categoryName === 'Dresses' ? 320000 : 263000
+  );
+
+  const displayPriceFormatted = item.priceFormatted || `${Math.round(rawPrice / 1000)}K`;
+  const displayPlatform = item.platform || (item.id % 2 === 0 ? 'Shopee' : 'TikTokShop');
+  const displayAffiliateUrl = item.affiliateUrl || item.originalUrl || (
+    displayPlatform === 'TikTokShop' 
+      ? 'https://vt.tiktok.com/ZSsample-outfit?aff_sub=myfitdaily' 
+      : 'https://shopee.vn/product-sample?aff_sub=myfitdaily'
+  );
+
   const handleCardClick = () => {
     if (isSelectionMode && onToggleSelect) {
       onToggleSelect(item.id);
@@ -152,43 +169,42 @@ export default function ClothingCard({
               🏷️ {item.brand}
             </span>
           )}
-          {(item.priceFormatted || item.price) && (
-            <span style={{
-              background: 'rgba(0, 0, 0, 0.88)',
-              border: '1px solid #D4AF37',
-              color: '#FDE68A',
-              padding: '3px 8px',
-              borderRadius: '6px',
-              fontWeight: 800,
-              fontSize: '0.74rem',
-              backdropFilter: 'blur(8px)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <Tag size={11} color="#D4AF37" />
-              <span>
-                {item.categoryName === 'Tops' ? 'Áo : ' : item.categoryName === 'Bottoms' ? 'Quần : ' : ''}
-                {item.priceFormatted || `${Number(item.price).toLocaleString()}đ`}
-              </span>
+          {/* Always display Lookbook Price Tag (Concept TikTok) */}
+          <span style={{
+            background: 'rgba(0, 0, 0, 0.92)',
+            border: '1px solid #D4AF37',
+            color: '#FDE68A',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontWeight: 800,
+            fontSize: '0.76rem',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <Tag size={11} color="#D4AF37" />
+            <span>
+              {item.categoryName === 'Tops' ? 'Áo : ' : item.categoryName === 'Bottoms' ? 'Quần : ' : item.categoryName === 'Shoes' ? 'Giày : ' : ''}
+              {displayPriceFormatted}
             </span>
-          )}
-          {item.platform && (
-            <span style={{
-              background: item.platform?.toLowerCase().includes('tiktok') ? 'rgba(0, 0, 0, 0.85)' : 'rgba(238, 77, 45, 0.88)',
-              border: item.platform?.toLowerCase().includes('tiktok') ? '1px solid #00F2FE' : '1px solid rgba(255,255,255,0.3)',
-              color: '#FFFFFF',
-              padding: '2px 7px',
-              borderRadius: '4px',
-              fontWeight: 700,
-              fontSize: '0.68rem',
-              letterSpacing: '0.02em',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
-            }}>
-              {item.platform === 'TikTokShop' ? '🎵 TikTok' : item.platform}
-            </span>
-          )}
+          </span>
+
+          {/* Platform Tag */}
+          <span style={{
+            background: displayPlatform?.toLowerCase().includes('tiktok') ? 'rgba(0, 0, 0, 0.88)' : 'rgba(238, 77, 45, 0.9)',
+            border: displayPlatform?.toLowerCase().includes('tiktok') ? '1px solid #00F2FE' : '1px solid rgba(255,255,255,0.35)',
+            color: '#FFFFFF',
+            padding: '2px 7px',
+            borderRadius: '4px',
+            fontWeight: 700,
+            fontSize: '0.68rem',
+            letterSpacing: '0.02em',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+          }}>
+            {displayPlatform === 'TikTokShop' ? '🎵 TikTok' : displayPlatform}
+          </span>
         </div>
 
         {/* Action button: Delete Single Item */}
@@ -376,50 +392,48 @@ export default function ClothingCard({
         )}
 
         {/* Action Button: Affiliate Buy Direct Link */}
-        {(item.affiliateUrl || item.originalUrl) && (
-          <a
-            href={item.affiliateUrl || item.originalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              marginTop: '8px',
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              background: item.platform?.toLowerCase().includes('tiktok') 
-                ? '#0F172A' 
-                : 'linear-gradient(135deg, #EA580C, #F97316)',
-              color: '#FFFFFF',
-              textDecoration: 'none',
-              border: item.platform?.toLowerCase().includes('tiktok') 
-                ? '1px solid #00F2FE' 
-                : '1px solid rgba(249, 115, 22, 0.5)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-              transition: 'all 0.2s ease',
-              boxSizing: 'border-box'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(234, 88, 12, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
-            }}
-          >
-            <ExternalLink size={13} />
-            <span>
-              {text('🛒 Mua ngay', '🛒 Buy Now')} {item.priceFormatted ? `· ${item.priceFormatted}` : ''}
-            </span>
-          </a>
-        )}
+        <a
+          href={displayAffiliateUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            marginTop: '8px',
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+            background: displayPlatform?.toLowerCase().includes('tiktok') 
+              ? '#0F172A' 
+              : 'linear-gradient(135deg, #EA580C, #F97316)',
+            color: '#FFFFFF',
+            textDecoration: 'none',
+            border: displayPlatform?.toLowerCase().includes('tiktok') 
+              ? '1px solid #00F2FE' 
+              : '1px solid rgba(249, 115, 22, 0.5)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+            transition: 'all 0.2s ease',
+            boxSizing: 'border-box'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(234, 88, 12, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.25)';
+          }}
+        >
+          <ExternalLink size={13} />
+          <span>
+            {text('🛒 Mua ngay', '🛒 Buy Now')} · {displayPriceFormatted}
+          </span>
+        </a>
       </div>
     </div>
   );
