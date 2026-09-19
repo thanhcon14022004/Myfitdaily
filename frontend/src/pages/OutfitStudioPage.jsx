@@ -42,60 +42,8 @@ export default function OutfitStudioPage({
 
   const [deleteModalItem, setDeleteModalItem] = useState(null);
 
-  // Chế độ xem: 'lookbook' (2D AI Lookbook Chuẩn Đẹp TikTok) | 'mannequin' (3D Mesh) | 'flatlay' (Sàn phẳng)
-  const [studioMode, setStudioMode] = useState('lookbook');
-
-  // TikTok / Douyin AI Lookbook Presets
-  const LOOKBOOK_PRESETS = [
-    {
-      id: 'argyle',
-      title: 'Polo Len Quả Trám Retro',
-      subtitle: 'Áo : 263K · Quần : 220K',
-      image: '/assets/lookbook/lookbook_argyle.png',
-      topName: 'Áo Polo Len Quả Trám Retro',
-      topPrice: '263K',
-      bottomName: 'Quần Jeans Baggy Ống Rộng',
-      bottomPrice: '220K',
-      shoesPrice: '450K',
-      totalPrice: '483.000 đ',
-      platform: 'Shopee',
-      style: 'Vintage Casual',
-      affiliateUrl: 'https://shopee.vn/search?keyword=ao+polo+len+qua+tram+argyle&aff_sub=myfitdaily_lookbook',
-    },
-    {
-      id: 'nowwear',
-      title: 'Sweatshirt NOWWEAR Club',
-      subtitle: 'Áo : 215K · Quần : 204K',
-      image: '/assets/lookbook/lookbook_nowwear.png',
-      topName: 'Áo Sweatshirt NOWWEAR Club Navy',
-      topPrice: '215K',
-      bottomName: 'Quần Jeans Rách Baggy Wash',
-      bottomPrice: '204K',
-      shoesPrice: '450K',
-      totalPrice: '419.000 đ',
-      platform: 'TikTok Shop',
-      style: 'Gen Z Streetwear',
-      affiliateUrl: 'https://shop.tiktok.com/view/product/nowwear-club-sweatshirt?aff_sub=myfitdaily_lookbook',
-    },
-    {
-      id: 'vest',
-      title: 'Gile Len Cổ V & Chần Bông',
-      subtitle: 'Áo : 326K · Quần : 184K',
-      image: '/assets/lookbook/lookbook_vest.png',
-      topName: 'Áo Gile Len Dệt Kim Retro Cổ V',
-      topPrice: '326K',
-      bottomName: 'Quần Jeans Đen Ống Suông',
-      bottomPrice: '184K',
-      shoesPrice: '450K',
-      totalPrice: '510.000 đ',
-      platform: 'Shopee',
-      style: 'Winter Chic',
-      affiliateUrl: 'https://shopee.vn/search?keyword=ao+gile+len+det+kim+co+v&aff_sub=myfitdaily_lookbook',
-    },
-  ];
-
-  const [selectedLookbookId, setSelectedLookbookId] = useState('argyle');
-  const activeLookbook = LOOKBOOK_PRESETS.find(p => p.id === selectedLookbookId) || LOOKBOOK_PRESETS[0];
+  // Chế độ xem: 'mannequin' (Người Mẫu 2D Thử Đồ Trực Tiếp) | 'flatlay' (Sàn phẳng)
+  const [studioMode, setStudioMode] = useState('mannequin');
 
   // Mặc định chọn ngay bộ 3 món Streetwear từ Mobile: Sweatshirt Navy Frozen.HN + Trackpants + Sneaker
   const defaultTop = effectiveClothes.find(c => c.id === 100 || c.imageUrl?.includes('sweatshirt_frozen_navy')) 
@@ -281,49 +229,29 @@ export default function OutfitStudioPage({
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Layers size={18} color="#D4AF37" />
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-                {studioMode === 'lookbook' 
-                  ? text('Studio 2D AI Lookbook (TikTok)', '2D AI Lookbook Studio')
-                  : (studioMode === 'mannequin' 
-                    ? text('Phòng Thử Đồ Người Ảo 3D', 'Virtual Fitting Room 3D') 
-                    : text('Sàn Phối Đồ Flat-Lay', 'Flat-Lay Studio Canvas'))}
+                {studioMode === 'mannequin' 
+                  ? text('Phòng Thử Đồ Người Mẫu 2D (Lookbook)', '2D Human Model Live Fitting') 
+                  : text('Sàn Phối Đồ Flat-Lay', 'Flat-Lay Studio Canvas')}
               </h3>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 255, 255, 0.06)', padding: '4px', borderRadius: 'var(--radius-full)' }}>
               <button
                 type="button"
-                onClick={() => setStudioMode('lookbook')}
-                style={{
-                  background: studioMode === 'lookbook' ? 'linear-gradient(135deg, #D4AF37, #F3D98A)' : 'transparent',
-                  color: studioMode === 'lookbook' ? '#080A0F' : 'var(--text-secondary)',
-                  border: 'none',
-                  padding: '5px 14px',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'var(--transition)'
-                }}
-              >
-                📸 {text('2D AI Lookbook (Chuẩn Đẹp)', '2D AI Lookbook (Recommended)')}
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setStudioMode('mannequin')}
                 style={{
-                  background: studioMode === 'mannequin' ? 'linear-gradient(135deg, #D4AF37, #C27D5E)' : 'transparent',
+                  background: studioMode === 'mannequin' ? 'linear-gradient(135deg, #D4AF37, #F3D98A)' : 'transparent',
                   color: studioMode === 'mannequin' ? '#080A0F' : 'var(--text-secondary)',
                   border: 'none',
-                  padding: '5px 14px',
+                  padding: '6px 16px',
                   borderRadius: 'var(--radius-full)',
-                  fontSize: '0.78rem',
+                  fontSize: '0.8rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   transition: 'var(--transition)'
                 }}
               >
-                💃 {text('Mô Hình 3D (Thử nghiệm)', '3D Model (Experimental)')}
+                💃 {text('Người Mẫu 2D (Thử Đồ Trực Tiếp)', '2D Human Model (Live Fitting)')}
               </button>
 
               <button
@@ -333,9 +261,9 @@ export default function OutfitStudioPage({
                   background: studioMode === 'flatlay' ? 'linear-gradient(135deg, #D4AF37, #C27D5E)' : 'transparent',
                   color: studioMode === 'flatlay' ? '#080A0F' : 'var(--text-secondary)',
                   border: 'none',
-                  padding: '5px 14px',
+                  padding: '6px 16px',
                   borderRadius: 'var(--radius-full)',
-                  fontSize: '0.78rem',
+                  fontSize: '0.8rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   transition: 'var(--transition)'
@@ -346,175 +274,130 @@ export default function OutfitStudioPage({
             </div>
           </div>
 
-          {/* MODE 0: 2D AI LOOKBOOK STUDIO (TIKTOK / DOUYIN VTON STYLE) */}
-          {studioMode === 'lookbook' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
-              {/* Top Lookbook Scene Presets Switcher */}
-              <div style={{
+          {/* Quick Outfit Presets Bar (Set phối sẵn 1-click) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '16px',
+            overflowX: 'auto',
+            padding: '8px 12px',
+            background: 'rgba(255, 255, 255, 0.02)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            width: '100%'
+          }}>
+            <span style={{ fontSize: '0.74rem', color: '#D4AF37', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
+              <Sparkles size={14} color="#D4AF37" /> {text('Mặc Thử Nhanh:', 'Quick Try-On:')}
+            </span>
+            <button
+              type="button"
+              onClick={handleApplyStreetwearSet}
+              style={{
+                background: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black')) 
+                  ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.35), rgba(194, 125, 94, 0.35))'
+                  : 'rgba(212, 175, 55, 0.12)',
+                border: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black'))
+                  ? '1px solid #D4AF37'
+                  : '1px solid rgba(212, 175, 55, 0.3)',
+                color: '#FDE68A',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                overflowX: 'auto',
-                padding: '6px 4px',
-                width: '100%'
-              }}>
-                <span style={{ fontSize: '0.74rem', color: '#D4AF37', fontWeight: 800, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Sparkles size={14} color="#D4AF37" /> Lookbook TikTok:
-                </span>
-                {LOOKBOOK_PRESETS.map(preset => {
-                  const isSelected = selectedLookbookId === preset.id;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedLookbookId(preset.id);
-                        if (preset.id === 'argyle') {
-                          const top = effectiveClothes.find(c => c.name?.toLowerCase().includes('argyle') || c.name?.toLowerCase().includes('polo') || c.id === 101);
-                          const btm = effectiveClothes.find(c => c.name?.toLowerCase().includes('baggy') || c.name?.toLowerCase().includes('jeans'));
-                          if (top) setSelectedTop(top);
-                          if (btm) setSelectedBottom(btm);
-                        } else if (preset.id === 'nowwear') {
-                          handleApplyStreetwearSet();
-                        } else if (preset.id === 'vest') {
-                          const top = effectiveClothes.find(c => c.name?.toLowerCase().includes('len') || c.categoryId === 1);
-                          const btm = effectiveClothes.find(c => c.name?.toLowerCase().includes('tây') || c.name?.toLowerCase().includes('jeans'));
-                          if (top) setSelectedTop(top);
-                          if (btm) setSelectedBottom(btm);
-                        }
-                      }}
-                      style={{
-                        background: isSelected 
-                          ? 'linear-gradient(135deg, #D4AF37, #F3D98A)' 
-                          : 'rgba(255, 255, 255, 0.05)',
-                        color: isSelected ? '#080A0F' : '#FFF',
-                        border: isSelected ? '1px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.1)',
-                        padding: '6px 14px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.76rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        boxShadow: isSelected ? '0 0 12px rgba(212, 175, 55, 0.3)' : 'none',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {preset.title} ({preset.subtitle})
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Main 2D AI Canvas: Left Flat-lay items with price tags + Right 2D Model seamless try-on */}
-              <div style={{
-                position: 'relative',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                border: '1px solid rgba(212, 175, 55, 0.45)',
-                background: 'linear-gradient(180deg, #3C4148 0%, #2B3037 100%)',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6)',
+                gap: '6px',
+                boxShadow: (selectedTop?.imageUrl?.includes('sweatshirt_frozen_navy') && selectedBottom?.imageUrl?.includes('trackpants_stripe_black'))
+                  ? '0 0 12px rgba(212, 175, 55, 0.25)'
+                  : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <span>🔥</span>
+              <span>{text('Set Streetwear Mobile (Sweatshirt + Trackpants + Sneaker)', 'Mobile Streetwear Set')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleApplySmartCasualSet}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: 'var(--text-secondary)',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '520px',
-                maxHeight: '660px'
-              }}>
-                <img
-                  src={activeLookbook.image}
-                  alt={activeLookbook.title}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    maxHeight: '660px',
-                    objectFit: 'contain',
-                    display: 'block'
-                  }}
-                />
+                gap: '6px'
+              }}
+            >
+              <span>👔</span>
+              <span>{text('Quý Ông Lịch Lãm', 'Smart Casual')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleApplyWeekendSet}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: 'var(--text-secondary)',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>☕</span>
+              <span>{text('Weekend Chill', 'Weekend Chill')}</span>
+            </button>
+          </div>
 
-                {/* Floating Badge Top-Right: AI 2D Try-On Guarantee */}
-                <div style={{
-                  position: 'absolute',
-                  top: '14px',
-                  right: '14px',
-                  background: 'rgba(12, 16, 26, 0.85)',
-                  backdropFilter: 'blur(8px)',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  border: '1px solid rgba(212, 175, 55, 0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}>
-                  <Sparkles size={13} color="#D4AF37" />
-                  <span style={{ fontSize: '0.72rem', color: '#F3D98A', fontWeight: 800, letterSpacing: '0.5px' }}>
-                    AI 2D VTON · KHÔNG XUYÊN GIÁP
-                  </span>
-                </div>
-
-                {/* Floating Banner Bottom-Left: Detailed Lookbook Price & Direct Affiliate Buy */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  left: '16px',
-                  background: 'rgba(10, 14, 22, 0.92)',
-                  backdropFilter: 'blur(12px)',
-                  padding: '12px 16px',
-                  borderRadius: '14px',
-                  border: '1px solid rgba(212, 175, 55, 0.5)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-                  maxWidth: '340px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-                      🏷️ {activeLookbook.platform} LOOKBOOK
-                    </span>
-                    <span style={{
-                      fontSize: '0.62rem',
-                      background: activeLookbook.platform === 'Shopee' ? '#EE4D2D' : '#00F2FE',
-                      color: activeLookbook.platform === 'Shopee' ? '#FFF' : '#000',
-                      fontWeight: 800,
-                      padding: '1px 6px',
-                      borderRadius: '4px'
-                    }}>
-                      {activeLookbook.platform}
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '2px' }}>
-                    {activeLookbook.subtitle}
-                  </div>
-
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginBottom: '8px' }}>
-                    Tổng Set: <strong style={{ color: '#F3D98A' }}>{activeLookbook.totalPrice}</strong> ({activeLookbook.style})
-                  </div>
-
-                  <a
-                    href={activeLookbook.affiliateUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '7px 14px',
-                      borderRadius: '8px',
-                      background: 'linear-gradient(135deg, #D4AF37, #F3D98A)',
-                      color: '#080A0F',
-                      fontSize: '0.76rem',
-                      fontWeight: 900,
-                      textDecoration: 'none',
-                      boxShadow: '0 4px 10px rgba(212, 175, 55, 0.3)'
-                    }}
-                  >
-                    🛒 Mua Nguyên Set Trên {activeLookbook.platform} →
-                  </a>
-                </div>
-              </div>
+          {/* Missing body metrics warning banner if user hasn't set custom dimensions */}
+          {(!user?.height || !user?.weight) && onNavigate && (
+            <div style={{
+              background: 'rgba(212, 175, 55, 0.1)',
+              border: '1px solid rgba(212, 175, 55, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 14px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.76rem',
+              gap: '8px'
+            }}>
+              <span style={{ color: '#F3D98A' }}>
+                💡 Bạn đang xem mô hình người mẫu mặc định (165cm, 52kg). Hãy cập nhật số đo riêng để người ảo co giãn chuẩn vóc dáng của bạn!
+              </span>
+              <button
+                onClick={() => onNavigate('profile')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#FFF',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Cập nhật số đo →
+              </button>
             </div>
           )}
 
-          {/* MODE 1: VIRTUAL MANNEQUIN FITTING ROOM (3D/2.5D TRY-ON) */}
+          {/* MODE 1: 2D HUMAN MODEL LIVE FITTING ROOM */}
           {studioMode === 'mannequin' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
               <VirtualMannequin

@@ -307,10 +307,11 @@ export default function VirtualMannequin({
 
   const activeShapeObj = findShapeDef(userProfileShapeStr);
 
-  // Tùy chọn hiển thị
+  // Tùy chọn hiển thị: Mặc định là 'flatlay' (Người mẫu 2D thử đồ thực tế, không xuyên giáp)
   const [showMeasurements, setShowMeasurements] = useState(true);
   const [activeSlotFocus, setActiveSlotFocus] = useState(null);
-  const [fittingMode, setFittingMode] = useState('model3d'); // 'model3d' (3D Avatar GLB), 'atelier' (Phom Chuẩn 3D) hoặc 'flatlay' (Ảnh Thật Bóc Tách)
+  const [fittingMode, setFittingMode] = useState('flatlay'); // 'flatlay' (2D Mannequin + Ảnh Thật), 'atelier' (Phom May Đo) hoặc 'model3d' (3D Avatar GLB)
+
 
   // =========================================================================
   // HỆ THỐNG XOAY 3D SÂN KHẤU SHOWROOM (3D TURNTABLE ROTATION SYSTEM)
