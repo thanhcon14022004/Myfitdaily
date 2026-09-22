@@ -208,10 +208,9 @@ public class AiController : ControllerBase
             var b64 = Convert.ToBase64String(fBytes);
             return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:image/jpeg;base64,{b64}", prompt, model = "FLUX.1-schnell" }, "Tạo ảnh thử đồ thành công bằng AI FLUX!"));
         }
-        catch
+        catch (Exception ex)
         {
-            var fallback = isMale ? "/assets/fits/model_male_pants_dark.jpg" : "/assets/fits/model_female_pants_dark.jpg";
-            return Ok(ApiResponse<object>.Ok(new { imageUrl = fallback, prompt, model = "Studio Lookbook" }, "Tạo ảnh thử đồ thành công!"));
+            return StatusCode(503, ApiResponse<object>.Fail($"Không thể tạo ảnh AI lúc này ({ex.Message}). Vui lòng kiểm tra lại kết nối!"));
         }
     }
 
@@ -239,10 +238,9 @@ public class AiController : ControllerBase
             var b64 = Convert.ToBase64String(imageBytes);
             return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:image/jpeg;base64,{b64}", prompt, model = "FLUX.1-schnell" }, "Tạo ảnh người mẫu thời trang AI FLUX thành công!"));
         }
-        catch
+        catch (Exception ex)
         {
-            var fallback = isMale ? "/assets/fits/model_male_pants_dark.jpg" : "/assets/fits/model_female_pants_dark.jpg";
-            return Ok(ApiResponse<object>.Ok(new { imageUrl = fallback, prompt, model = "Studio Lookbook" }, "Tạo ảnh người mẫu thời trang AI thành công!"));
+            return StatusCode(503, ApiResponse<object>.Fail($"Dịch vụ AI đang bận ({ex.Message}). Vui lòng thử lại sau!"));
         }
     }
 
