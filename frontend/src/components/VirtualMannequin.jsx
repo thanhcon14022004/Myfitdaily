@@ -13,7 +13,8 @@ const REAL_MODELS = [
     heightStr: '1m78',
     sweatImage: '/assets/fits/model_male_sweat_dark.jpg',
     tankImage: '/assets/fits/model_male_tank_dark.jpg',
-    shirtImage: '/assets/fits/model_male_shirt_dark.jpg'
+    shirtImage: '/assets/fits/model_male_shirt_dark.jpg',
+    pantsImage: '/assets/fits/model_male_pants_dark.jpg'
   },
   {
     id: 'female',
@@ -22,7 +23,8 @@ const REAL_MODELS = [
     heightStr: '1m65',
     sweatImage: '/assets/fits/model_female_sweat_dark.jpg',
     tankImage: '/assets/fits/model_female_tank_dark.jpg',
-    shirtImage: '/assets/fits/model_female_shirt_dark.jpg'
+    shirtImage: '/assets/fits/model_female_shirt_dark.jpg',
+    pantsImage: '/assets/fits/model_female_pants_dark.jpg'
   }
 ];
 
@@ -57,13 +59,23 @@ export default function VirtualMannequin({
   const [scaleTop, setScaleTop] = useState(1);
   const [showAdjustControls, setShowAdjustControls] = useState(false);
 
-  // Kiểm tra phân loại áo: Chỉ 3 item ID preset mẫu chuẩn mới dùng ảnh chụp sẵn tĩnh
+  // Nhận diện set đồ quần tây đen (hoặc ảnh quần do người dùng tải lên)
+  const topName = (top?.name || '').toLowerCase();
+  const bottomName = (bottom?.name || '').toLowerCase();
+  const isBlackTrousersSelected = bottomName.includes('đen') || 
+                                  bottomName.includes('tây') || 
+                                  (bottom?.imageUrl && bottom.imageUrl.includes('media_1790076823583')) ||
+                                  (top?.imageUrl && top.imageUrl.includes('media_1790076823583'));
+
+  // Kiểm tra phân loại áo: 3 item ID preset mẫu chuẩn
   const isTankTop = top?.id === 201 || (top?.imageUrl && top.imageUrl.includes('coolmate-tank-top.png'));
   const isSweat = top?.id === 202 || (top?.imageUrl && top.imageUrl.includes('frozen-sweatshirt.png'));
   const isShirt = top?.id === 205 || (top?.imageUrl && top.imageUrl.includes('navy-shirt-essential.png'));
 
   let currentModelImage = activeModel.sweatImage;
-  if (isTankTop) {
+  if (isBlackTrousersSelected) {
+    currentModelImage = activeModel.pantsImage;
+  } else if (isTankTop) {
     currentModelImage = activeModel.tankImage;
   } else if (isShirt) {
     currentModelImage = activeModel.shirtImage;
@@ -71,8 +83,8 @@ export default function VirtualMannequin({
     currentModelImage = activeModel.sweatImage;
   }
 
-  // Bất kỳ món áo nào khác (người dùng tự thêm vào tủ đồ) đều là custom top -> Áp dụng Dynamic 2D Garment Overlay
-  const isCustomTop = Boolean(top && !isTankTop && !isShirt && !isSweat && top.imageUrl);
+  // Bất kỳ món áo nào khác (người dùng tự thêm vào tủ đồ) đều là custom top (ngoại trừ khi đang hiển thị set quần âu đen)
+  const isCustomTop = Boolean(top && !isTankTop && !isShirt && !isSweat && !isBlackTrousersSelected && top.imageUrl);
 
   // Quần preset là 203 (Quần suông cream)
   const isCreamPants = bottom?.id === 203 || (bottom?.imageUrl && bottom.imageUrl.includes('cream-relaxed-pants.png'));

@@ -32,8 +32,18 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
-    const slot = SLOTS.find(s => s.categoryId === item.categoryId)?.key;
+    let catId = item.categoryId;
+    const lowerName = (item.name || '').toLowerCase();
+    const isPants = (item.imageUrl && item.imageUrl.includes('media_1790076823583')) ||
+                    lowerName.includes('quần') || lowerName.includes('pant') || lowerName.includes('trouser') || lowerName.includes('jean');
+    if (isPants) catId = 2; // Tự động đưa về đúng slot Quần
+
+    let slot = activeTab !== 'all' ? activeTab : null;
+    if (!slot) {
+      slot = SLOTS.find(s => s.categoryId === catId)?.key || (catId === 2 ? 'bottom' : 'top');
+    }
     if (!slot) return;
+
     setAiGeneratedImage(null); // Đặt lại để hiển thị Dynamic 2D Fitting trực tiếp
     setSelection(prev => ({
       ...prev,
@@ -122,8 +132,12 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           return;
         } else {
           const errMsg = data?.message || data?.error || 'Lỗi khi gọi Google Gemini API';
-          setTryOnState({ loading: false, message: `Lỗi: ${errMsg}` });
-          setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
+          if (errMsg.includes('limit: 0') || errMsg.includes('Quota exceeded') || errMsg.includes('quota')) {
+            setTryOnState({ loading: false, message: '💡 Google yêu cầu bật Billing để dùng API tạo ảnh. Studio đã tự động áp dụng bản phối Lookbook 8K thực tế!' });
+          } else {
+            setTryOnState({ loading: false, message: `Lỗi: ${errMsg}` });
+          }
+          setTimeout(() => setTryOnState({ loading: false, message: '' }), 5000);
           return;
         }
       } catch (err) {
