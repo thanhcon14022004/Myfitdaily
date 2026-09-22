@@ -167,6 +167,10 @@ export default function VirtualMannequin({
           key={aiGeneratedModelImage || currentModelImage}
           src={aiGeneratedModelImage || (isCustomTop ? activeModel.tankImage : currentModelImage)}
           alt={activeModel.name}
+          onError={(e) => {
+            console.warn("Model image load error, falling back to studio photo");
+            e.currentTarget.src = currentModelImage || activeModel.sweatImage;
+          }}
           style={{
             width: '100%',
             height: '100%',

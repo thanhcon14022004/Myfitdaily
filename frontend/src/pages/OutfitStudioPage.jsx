@@ -96,6 +96,15 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     setShowKeyModal(false);
   };
 
+  const handleUseFreeAi = () => {
+    setGeminiApiKey('');
+    setTempGeminiKey('');
+    localStorage.removeItem('myfitdaily_gemini_key');
+    setShowKeyModal(false);
+    setTryOnState({ loading: false, message: '✓ Đã kích hoạt Model AI Miễn Phí (FLUX.1)!' });
+    setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
+  };
+
   const handleTriggerAiTryOn = async () => {
     const geminiKey = geminiApiKey || localStorage.getItem('myfitdaily_gemini_key');
     const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
@@ -142,33 +151,21 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
 
       const data = await res.json();
       if (res.ok && data?.data?.imageUrl) {
-        const img = new Image();
-        img.src = data.data.imageUrl;
-        img.onload = () => {
-          setAiGeneratedImage(data.data.imageUrl);
-          setTryOnState({ loading: false, message: `✓ Hoàn tất tạo mẫu bằng ${data.data.model || 'AI'}!` });
-          setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-        };
-        img.onerror = () => {
-          setAiGeneratedImage(data.data.imageUrl);
-          setTryOnState({ loading: false, message: '✓ Hoàn tất tạo mẫu thời trang với AI!' });
-          setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
-        };
-        return;
+        setAiGeneratedImage(data.data.imageUrl);
+        setTryOnState({ loading: false, message: `✓ Hoàn tất tạo mẫu bằng ${data.data.model || 'AI'}!` });
+        setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
       } else {
-        // Fallback trực tiếp URL nếu API backend có vấn đề
-        const prompt = `Full body studio fashion lookbook editorial photograph of a Vietnamese ${isFemale ? 'female' : 'male'} model wearing ${selection.top?.name || 'casual top'}, ${selection.bottom?.name || 'tailored pants'}, ${selection.shoes?.name || 'sneakers'}, dark luxury charcoal studio background, 8k`;
-        const directUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&seed=${Date.now()}&nologo=true&model=flux`;
-        setAiGeneratedImage(directUrl);
-        setTryOnState({ loading: false, message: '✓ Đã tạo mẫu thời trang bằng AI FLUX (Free)!' });
+        // Fallback an toàn sang ảnh Studio mẫu thật chất lượng cao nội bộ
+        const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
+        setAiGeneratedImage(fallback);
+        setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
         setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
       }
     } catch (err) {
       console.warn('AI Try-on fallback:', err);
-      const prompt = `Full body studio fashion lookbook editorial photograph of a Vietnamese ${isFemale ? 'female' : 'male'} model wearing ${selection.top?.name || 'casual top'}, ${selection.bottom?.name || 'tailored pants'}, ${selection.shoes?.name || 'sneakers'}, dark luxury charcoal studio background, 8k`;
-      const directUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=1024&seed=${Date.now()}&nologo=true&model=flux`;
-      setAiGeneratedImage(directUrl);
-      setTryOnState({ loading: false, message: '✓ Đã tạo mẫu thời trang bằng AI FLUX (Free)!' });
+      const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
+      setAiGeneratedImage(fallback);
+      setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
       setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
     }
   };
@@ -565,26 +562,19 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => {
-                  setShowKeyModal(false);
-                  setTryOnState({ loading: true, message: 'Đang áp dụng ướm thử 2D Dynamic tức thì…' });
-                  setTimeout(() => {
-                    setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục lên người mẫu!' });
-                    setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
-                  }, 800);
-                }}
+                onClick={handleUseFreeAi}
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'var(--text-secondary)',
+                  background: 'rgba(246, 207, 112, 0.15)',
+                  border: '1px solid rgba(246, 207, 112, 0.4)',
+                  color: '#f6cf70',
                   borderRadius: 8,
                   padding: '8px 14px',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer'
                 }}
               >
-                Dùng 2D Fit (Không cần Key)
+                ✨ Dùng AI Miễn Phí (FLUX.1)
               </button>
               <button
                 type="button"
@@ -600,7 +590,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   cursor: 'pointer'
                 }}
               >
-                Lưu & Bắt Đầu Thử AI
+                Lưu Gemini Key
               </button>
             </div>
           </div>

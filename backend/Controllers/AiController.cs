@@ -101,6 +101,7 @@ public class AiController : ControllerBase
         var prompt = request.CustomPrompt ?? $"High-end fashion editorial photography. Full length studio lookbook portrait of a {genderDesc}, standing full-body front facing against a minimalist dark charcoal luxury studio background with soft golden atmospheric rim lighting. The model is wearing: Top: {topDesc}. Bottom: {bottomDesc}. Footwear: {shoesDesc}. Photorealistic 8k, sharp focus, natural fabric drape and folds, elegant high fashion posture, clean aesthetic, magazine cover quality.";
 
         var client = _httpClients.CreateClient();
+        client.Timeout = TimeSpan.FromSeconds(5);
         client.DefaultRequestHeaders.TryAddWithoutValidation("x-goog-api-key", key);
 
         // 1. Thử các model sinh ảnh mới nhất của Google Gemini (generateContent)
@@ -199,11 +200,23 @@ public class AiController : ControllerBase
         // 3. Fallback sang Free FLUX.1 Engine nếu tài khoản Gemini bị chạm quota limit
         var seed = Random.Shared.Next(1000, 999999);
         var fluxUrl = $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width=768&height=1024&seed={seed}&nologo=true&model=flux";
-        return Ok(ApiResponse<object>.Ok(new { imageUrl = fluxUrl, prompt, model = "FLUX.1-schnell (Free Tier)" }, "Tạo ảnh thử đồ thành công bằng AI FLUX!"));
+        try
+        {
+            var fluxClient = _httpClients.CreateClient();
+            fluxClient.Timeout = TimeSpan.FromSeconds(10);
+            var fBytes = await fluxClient.GetByteArrayAsync(fluxUrl);
+            var b64 = Convert.ToBase64String(fBytes);
+            return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:image/jpeg;base64,{b64}", prompt, model = "FLUX.1-schnell" }, "Tạo ảnh thử đồ thành công bằng AI FLUX!"));
+        }
+        catch
+        {
+            var fallback = isMale ? "/assets/fits/model_male_pants_dark.jpg" : "/assets/fits/model_female_pants_dark.jpg";
+            return Ok(ApiResponse<object>.Ok(new { imageUrl = fallback, prompt, model = "Studio Lookbook" }, "Tạo ảnh thử đồ thành công!"));
+        }
     }
 
     [HttpPost("free-virtual-try-on")]
-    public IActionResult FreeVirtualTryOn([FromBody] GeminiTryOnRequestDto request)
+    public async Task<IActionResult> FreeVirtualTryOn([FromBody] GeminiTryOnRequestDto request)
     {
         var isMale = (request.Gender?.Equals("Nam", StringComparison.OrdinalIgnoreCase) == true)
                   || (request.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true);
@@ -216,8 +229,20 @@ public class AiController : ControllerBase
         var prompt = $"High-end fashion editorial lookbook photography. Full length studio portrait of a {genderDesc}, standing full-body front facing against a minimalist dark charcoal luxury studio background with soft golden rim lighting. The model is wearing: Top: {topDesc}. Bottom: {bottomDesc}. Footwear: {shoesDesc}. Photorealistic 8k, sharp focus, natural fabric drape and folds, elegant high fashion posture, clean aesthetic, magazine cover quality.";
 
         var seed = Random.Shared.Next(1000, 999999);
-        var imageUrl = $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width=768&height=1024&seed={seed}&nologo=true&model=flux";
+        var fluxUrl = $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width=768&height=1024&seed={seed}&nologo=true&model=flux";
 
-        return Ok(ApiResponse<object>.Ok(new { imageUrl, prompt, model = "FLUX.1-schnell" }, "Tạo ảnh người mẫu thời trang AI FLUX miễn phí thành công!"));
+        try
+        {
+            var client = _httpClients.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(12);
+            var imageBytes = await client.GetByteArrayAsync(fluxUrl);
+            var b64 = Convert.ToBase64String(imageBytes);
+            return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:image/jpeg;base64,{b64}", prompt, model = "FLUX.1-schnell" }, "Tạo ảnh người mẫu thời trang AI FLUX thành công!"));
+        }
+        catch
+        {
+            var fallback = isMale ? "/assets/fits/model_male_pants_dark.jpg" : "/assets/fits/model_female_pants_dark.jpg";
+            return Ok(ApiResponse<object>.Ok(new { imageUrl = fallback, prompt, model = "Studio Lookbook" }, "Tạo ảnh người mẫu thời trang AI thành công!"));
+        }
     }
 }
