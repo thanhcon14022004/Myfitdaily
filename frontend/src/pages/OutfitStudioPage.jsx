@@ -25,10 +25,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const [tryOnState, setTryOnState] = useState({ loading: false, message: '' });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('myfitdaily_gemini_key') || '');
-  const [fashnApiKey, setFashnApiKey] = useState(() => localStorage.getItem('myfitdaily_fashn_key') || '');
   const [showKeyModal, setShowKeyModal] = useState(false);
-  const [tempGeminiKey, setTempGeminiKey] = useState(() => localStorage.getItem('myfitdaily_gemini_key') || '');
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
@@ -85,25 +82,6 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     setAiGeneratedImage(null);
   };
 
-  const handleSaveApiKey = () => {
-    const trimmedGemini = tempGeminiKey.trim();
-    setGeminiApiKey(trimmedGemini);
-    if (trimmedGemini) {
-      localStorage.setItem('myfitdaily_gemini_key', trimmedGemini);
-    } else {
-      localStorage.removeItem('myfitdaily_gemini_key');
-    }
-    setShowKeyModal(false);
-  };
-
-  const handleUseFreeAi = () => {
-    setGeminiApiKey('');
-    setTempGeminiKey('');
-    localStorage.removeItem('myfitdaily_gemini_key');
-    setShowKeyModal(false);
-    setTryOnState({ loading: false, message: '✓ Đã kích hoạt Model AI Miễn Phí (FLUX.1)!' });
-    setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
-  };
 
   const [colabUrl, setColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
   const [tempColabUrl, setTempColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
@@ -592,16 +570,16 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               </button>
             </div>
 
-            {/* TAB / PHẦN 1: GOOGLE COLAB T4 GPU RIÊNG */}
+            {/* GOOGLE COLAB T4 GPU RIÊNG */}
             <div style={{
               background: 'rgba(56, 189, 248, 0.08)',
               border: '1px solid rgba(56, 189, 248, 0.25)',
               borderRadius: 12,
-              padding: 14,
+              padding: 16,
               marginBottom: 16
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 800, fontSize: 13.5 }}>
                   <span>⚡ Máy Chủ Google Colab T4 GPU (Miễn phí 100%)</span>
                 </div>
                 {colabUrl ? (
@@ -614,22 +592,22 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   </span>
                 )}
               </div>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 10px 0' }}>
-                Chạy file <code>MyFitDaily_Virtual_TryOn_Colab.ipynb</code> trên Google Colab với GPU Tesla T4 (16GB VRAM) hoàn toàn miễn phí, sau đó dán link Cloudflare vào đây:
+              <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: '0 0 12px 0' }}>
+                Chạy file <code>MyFitDaily_Virtual_TryOn_Colab.ipynb</code> trên Google Colab với GPU Tesla T4 (16GB VRAM) hoàn toàn miễn phí, sau đó dán link Cloudflare Tunnel vào đây:
               </p>
 
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
-                  placeholder="https://xxxx.trycloudflare.com"
+                  placeholder="https://tên-ngẫu-nhiên.trycloudflare.com"
                   value={tempColabUrl}
                   onChange={(e) => setTempColabUrl(e.target.value)}
                   style={{
                     flex: 1,
                     background: 'rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    border: '1px solid rgba(56, 189, 248, 0.35)',
                     borderRadius: 8,
-                    padding: '8px 12px',
+                    padding: '9px 12px',
                     color: '#fff',
                     fontSize: 12.5,
                     outline: 'none'
@@ -643,9 +621,9 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                     border: 0,
                     color: '#fff',
                     borderRadius: 8,
-                    padding: '8px 14px',
-                    fontSize: 12,
-                    fontWeight: 700,
+                    padding: '9px 16px',
+                    fontSize: 12.5,
+                    fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap'
                   }}
@@ -653,81 +631,31 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   Lưu & Kết Nối
                 </button>
               </div>
+
+              <div style={{
+                marginTop: 10,
+                fontSize: 11.5,
+                color: '#93c5fd',
+                background: 'rgba(56, 189, 248, 0.08)',
+                padding: '8px 10px',
+                borderRadius: 8,
+                lineHeight: 1.4
+              }}>
+                💡 <strong>Lưu ý quan trọng:</strong> Đường link đúng có dạng <code>https://...trycloudflare.com</code> được in ra ở cuối <strong>Ô Số 4</strong> trên Google Colab (không phải <code>api.trycloudflare.com</code>).
+              </div>
+
               {colabUrl && (
                 <button
                   type="button"
                   onClick={() => { setTempColabUrl(''); setColabUrl(''); localStorage.removeItem('myfitdaily_colab_url'); }}
-                  style={{ marginTop: 6, background: 'transparent', border: 0, color: '#f87171', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}
+                  style={{ marginTop: 8, background: 'transparent', border: 0, color: '#f87171', fontSize: 11.5, cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   Ngắt kết nối Colab
                 </button>
               )}
             </div>
 
-            {/* PHẦN 2: DỰ PHÒNG GOOGLE GEMINI HOẶC ZERO GPU */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 12,
-              padding: 14,
-              marginBottom: 16
-            }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#f6cf70', marginBottom: 6 }}>
-                Dự phòng: Gemini API Key (Không bắt buộc)
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="password"
-                  placeholder="AIzaSy..."
-                  value={tempGeminiKey}
-                  onChange={(e) => setTempGeminiKey(e.target.value)}
-                  style={{
-                    flex: 1,
-                    background: 'rgba(0,0,0,0.4)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                    color: '#fff',
-                    fontSize: 12,
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveApiKey}
-                  style={{
-                    background: 'rgba(246, 207, 112, 0.2)',
-                    border: '1px solid rgba(246, 207, 112, 0.4)',
-                    color: '#f6cf70',
-                    borderRadius: 8,
-                    padding: '8px 14px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Lưu Key
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={handleUseFreeAi}
-                style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(255, 255, 255, 0.18)',
-                  color: 'var(--text-secondary)',
-                  borderRadius: 8,
-                  padding: '7px 14px',
-                  fontSize: 12,
-                  cursor: 'pointer'
-                }}
-              >
-                Đặt lại về AI Server Mặc Định
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 type="button"
                 onClick={() => setShowKeyModal(false)}
@@ -736,8 +664,8 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   border: 0,
                   color: '#fff',
                   borderRadius: 8,
-                  padding: '7px 18px',
-                  fontSize: 12,
+                  padding: '7px 22px',
+                  fontSize: 12.5,
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
