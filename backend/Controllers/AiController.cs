@@ -52,8 +52,8 @@ public class AiController : ControllerBase
     public async Task<IActionResult> StartVirtualTryOn([FromBody] VirtualTryOnRequestDto request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        var key = _config["Fashn:ApiKey"];
-        if (string.IsNullOrWhiteSpace(key)) return StatusCode(503, ApiResponse<object>.Fail("Chưa cấu hình FASHN_API_KEY trên server."));
+        var key = Request.Headers["X-Fashn-Key"].FirstOrDefault() ?? _config["Fashn:ApiKey"];
+        if (string.IsNullOrWhiteSpace(key)) return StatusCode(503, ApiResponse<object>.Fail("Chưa cấu hình FASHN_API_KEY trên server. Bạn có thể nhập API Key trong phần Thử đồ AI."));
         var payload = new { model_name = request.Category == "shoes" ? "tryon-max" : "tryon-v1.6", inputs = new { model_image = request.ModelImage, garment_image = request.GarmentImage, category = request.Category == "shoes" ? "auto" : request.Category, garment_photo_type = "model", mode = request.Mode is "performance" or "balanced" or "quality" ? request.Mode : "balanced", output_format = "jpeg", moderation_level = "conservative" } };
         var client = _httpClients.CreateClient("Fashn");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
@@ -67,7 +67,7 @@ public class AiController : ControllerBase
     [HttpGet("virtual-try-on/{id}")]
     public async Task<IActionResult> GetVirtualTryOnStatus(string id)
     {
-        var key = _config["Fashn:ApiKey"];
+        var key = Request.Headers["X-Fashn-Key"].FirstOrDefault() ?? _config["Fashn:ApiKey"];
         if (string.IsNullOrWhiteSpace(key)) return StatusCode(503, ApiResponse<object>.Fail("Chưa cấu hình FASHN_API_KEY trên server."));
         var client = _httpClients.CreateClient("Fashn");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);

@@ -32,7 +32,9 @@ export default function VirtualMannequin({
   bottom = null,
   shoes = null,
   gender: propGender,
-  compact = false
+  compact = false,
+  isAiProcessing = false,
+  aiGeneratedModelImage = null
 }) {
   const { text } = useLanguage();
 
@@ -50,11 +52,15 @@ export default function VirtualMannequin({
 
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
 
-  // Kiểm tra phân loại áo đang chọn để hiển thị người mẫu mặc áo tương ứng
-  const topName = (top?.name || '').toLowerCase();
-  const isTankTop = topName.includes('ba lỗ') || topName.includes('tank') || top?.id === 201;
-  const isShirt = topName.includes('sơ mi') || topName.includes('shirt') || topName.includes('thiết kế') || topName.includes('oxford') || top?.id === 205;
-  const isSweat = topName.includes('sweatshirt') || topName.includes('frozen') || top?.id === 202;
+  // Micro-adjustment cho trang phục tự thêm vào tủ đồ
+  const [adjustTopY, setAdjustTopY] = useState(0);
+  const [scaleTop, setScaleTop] = useState(1);
+  const [showAdjustControls, setShowAdjustControls] = useState(false);
+
+  // Kiểm tra phân loại áo: Chỉ 3 item ID preset mẫu chuẩn mới dùng ảnh chụp sẵn tĩnh
+  const isTankTop = top?.id === 201 || (top?.imageUrl && top.imageUrl.includes('coolmate-tank-top.png'));
+  const isSweat = top?.id === 202 || (top?.imageUrl && top.imageUrl.includes('frozen-sweatshirt.png'));
+  const isShirt = top?.id === 205 || (top?.imageUrl && top.imageUrl.includes('navy-shirt-essential.png'));
 
   let currentModelImage = activeModel.sweatImage;
   if (isTankTop) {
@@ -65,8 +71,16 @@ export default function VirtualMannequin({
     currentModelImage = activeModel.sweatImage;
   }
 
-  // Tự động nhận diện món đồ custom người dùng tải lên để apply dynamic overlay
-  const isCustomTop = top && !isTankTop && !isShirt && !isSweat && top.imageUrl;
+  // Bất kỳ món áo nào khác (người dùng tự thêm vào tủ đồ) đều là custom top -> Áp dụng Dynamic 2D Garment Overlay
+  const isCustomTop = Boolean(top && !isTankTop && !isShirt && !isSweat && top.imageUrl);
+
+  // Quần preset là 203 (Quần suông cream)
+  const isCreamPants = bottom?.id === 203 || (bottom?.imageUrl && bottom.imageUrl.includes('cream-relaxed-pants.png'));
+  const isCustomBottom = Boolean(bottom && !isCreamPants && bottom.imageUrl);
+
+  // Giày preset là 204 (Sneaker retro)
+  const isRetroSneaker = shoes?.id === 204 || (shoes?.imageUrl && shoes.imageUrl.includes('retro-sneakers.png'));
+  const isCustomShoes = Boolean(shoes && !isRetroSneaker && shoes.imageUrl);
 
   return (
     <div style={{
@@ -130,12 +144,16 @@ export default function VirtualMannequin({
         justifyContent: 'center',
         borderRadius: '20px',
         overflow: 'hidden',
-        boxShadow: '0 20px 45px rgba(0, 0, 0, 0.65)'
+        boxShadow: isAiProcessing 
+          ? '0 0 35px rgba(246, 207, 112, 0.45), 0 20px 45px rgba(0, 0, 0, 0.75)' 
+          : '0 20px 45px rgba(0, 0, 0, 0.65)',
+        border: isAiProcessing ? '1.5px solid #f6cf70' : '1px solid rgba(255,255,255,0.06)',
+        transition: 'all 0.3s ease'
       }}>
-        {/* Ảnh Người Mẫu Thật Mặc Quần Áo Đầy Đủ, Nét Căng */}
+        {/* Ảnh Người Mẫu: Ưu tiên ảnh do AI Diffusion tạo ra nếu có */}
         <img
-          key={currentModelImage}
-          src={isCustomTop ? activeModel.tankImage : currentModelImage}
+          key={aiGeneratedModelImage || currentModelImage}
+          src={aiGeneratedModelImage || (isCustomTop ? activeModel.tankImage : currentModelImage)}
           alt={activeModel.name}
           style={{
             width: '100%',
@@ -146,20 +164,24 @@ export default function VirtualMannequin({
           }}
         />
 
-        {/* Dynamic Garment Overlay cho bất kỳ món đồ custom nào người dùng tải lên */}
-        {isCustomTop && (
-          <div style={{
-            position: 'absolute',
-            top: selectedGender === 'Nam' ? '18%' : '20%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: selectedGender === 'Nam' ? '56%' : '52%',
-            zIndex: 10,
-            pointerEvents: 'none',
-            display: 'flex',
-            justifyContent: 'center',
-            filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.65)) drop-shadow(0 2px 6px rgba(0,0,0,0.4))'
-          }}>
+        {/* Dynamic Garment Overlay - ÁO CUSTOM */}
+        {isCustomTop && !aiGeneratedModelImage && (
+          <div
+            style={{
+              position: 'absolute',
+              top: `calc(${selectedGender === 'Nam' ? '18%' : '20%'} + ${adjustTopY}px)`,
+              left: '50%',
+              transform: `translateX(-50%) scale(${scaleTop})`,
+              transformOrigin: 'top center',
+              width: selectedGender === 'Nam' ? '56%' : '52%',
+              zIndex: 10,
+              pointerEvents: 'none',
+              display: 'flex',
+              justifyContent: 'center',
+              filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) drop-shadow(0 3px 8px rgba(0,0,0,0.45)) contrast(1.04)',
+              transition: 'transform 0.15s ease, top 0.15s ease'
+            }}
+          >
             <img
               src={top.imageUrl}
               alt={top.name}
@@ -171,6 +193,195 @@ export default function VirtualMannequin({
             />
           </div>
         )}
+
+        {/* Dynamic Garment Overlay - QUẦN CUSTOM */}
+        {isCustomBottom && !aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            top: selectedGender === 'Nam' ? '46%' : '48%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: selectedGender === 'Nam' ? '54%' : '50%',
+            zIndex: 9,
+            pointerEvents: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
+          }}>
+            <img
+              src={bottom.imageUrl}
+              alt={bottom.name}
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Dynamic Garment Overlay - GIÀY CUSTOM */}
+        {isCustomShoes && !aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            top: '88%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '46%',
+            zIndex: 11,
+            pointerEvents: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+          }}>
+            <img
+              src={shoes.imageUrl}
+              alt={shoes.name}
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Dynamic Fit Indicator Badge */}
+        {(isCustomTop || isCustomBottom || isCustomShoes) && !aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            background: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(246, 207, 112, 0.4)',
+            color: '#f6cf70',
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            padding: '3px 8px',
+            borderRadius: 'var(--radius-full)',
+            letterSpacing: '0.04em',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4
+          }}>
+            <span>✨ 2D Dynamic Fit</span>
+          </div>
+        )}
+
+        {/* Nút bật tắt tinh chỉnh vị trí áo (khi mặc áo custom) */}
+        {isCustomTop && !aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            bottom: 12,
+            right: 12,
+            zIndex: 15
+          }}>
+            <button
+              type="button"
+              onClick={() => setShowAdjustControls(!showAdjustControls)}
+              title="Căn chỉnh vị trí & kích cỡ áo"
+              style={{
+                background: showAdjustControls ? '#f6cf70' : 'rgba(0,0,0,0.65)',
+                color: showAdjustControls ? '#17130a' : '#fff',
+                border: '1px solid rgba(246,207,112,0.4)',
+                borderRadius: 'var(--radius-full)',
+                padding: '4px 10px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              ⚙️ Căn chỉnh áo
+            </button>
+          </div>
+        )}
+
+        {/* Thanh công cụ tinh chỉnh vị trí Y và Scale áo */}
+        {isCustomTop && showAdjustControls && !aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            bottom: 44,
+            left: 12,
+            right: 12,
+            background: 'rgba(15, 18, 26, 0.92)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(246, 207, 112, 0.35)',
+            borderRadius: 12,
+            padding: '10px 14px',
+            zIndex: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.72rem', color: '#f6cf70', fontWeight: 800 }}>CĂN CHỈNH FORM ÁO</span>
+              <button
+                type="button"
+                onClick={() => { setAdjustTopY(0); setScaleTop(1); }}
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  color: 'var(--text-muted)',
+                  fontSize: '0.68rem',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Mặc định
+              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.7rem' }}>
+              <span style={{ minWidth: 50, color: 'var(--text-secondary)' }}>Vị trí:</span>
+              <input
+                type="range"
+                min="-30"
+                max="30"
+                value={adjustTopY}
+                onChange={(e) => setAdjustTopY(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#f6cf70', cursor: 'pointer' }}
+              />
+              <span style={{ minWidth: 32, textAlign: 'right', color: '#fff' }}>{adjustTopY}px</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.7rem' }}>
+              <span style={{ minWidth: 50, color: 'var(--text-secondary)' }}>Kích cỡ:</span>
+              <input
+                type="range"
+                min="0.8"
+                max="1.25"
+                step="0.02"
+                value={scaleTop}
+                onChange={(e) => setScaleTop(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#f6cf70', cursor: 'pointer' }}
+              />
+              <span style={{ minWidth: 32, textAlign: 'right', color: '#fff' }}>{Math.round(scaleTop * 100)}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Hiệu ứng quét tia Laser AI Scanner khi bấm Thử đồ AI */}
+        {isAiProcessing && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to bottom, transparent 30%, rgba(246, 207, 112, 0.18) 50%, rgba(246, 207, 112, 0.45) 51%, transparent 55%)',
+            animation: 'aiScannerMove 1.5s infinite linear',
+            pointerEvents: 'none',
+            zIndex: 20
+          }} />
+        )}
+
+        <style>{`
+          @keyframes aiScannerMove {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+          }
+        `}</style>
       </div>
     </div>
   );

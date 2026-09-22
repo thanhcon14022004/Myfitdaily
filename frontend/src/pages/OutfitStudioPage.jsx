@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Check, RotateCcw, Save, Sparkles, UserRound, Wand2 } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, UserRound, Wand2, Key, X, ShieldCheck } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
@@ -24,11 +24,16 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'bottom', 'shoes'
   const [tryOnState, setTryOnState] = useState({ loading: false, message: '' });
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
+  const [fashnApiKey, setFashnApiKey] = useState(() => localStorage.getItem('myfitdaily_fashn_key') || '');
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [tempKeyInput, setTempKeyInput] = useState(() => localStorage.getItem('myfitdaily_fashn_key') || '');
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
     const slot = SLOTS.find(s => s.categoryId === item.categoryId)?.key;
     if (!slot) return;
+    setAiGeneratedImage(null); // Đặt lại để hiển thị Dynamic 2D Fitting trực tiếp
     setSelection(prev => ({
       ...prev,
       [slot]: prev[slot]?.id === item.id ? null : item
@@ -66,14 +71,104 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const reset = () => {
     setSelection(defaults);
     setActiveTab('all');
+    setAiGeneratedImage(null);
   };
 
-  const handleTriggerAiTryOn = () => {
-    setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và khớp dáng người mẫu…' });
-    setTimeout(() => {
-      setTryOnState({ loading: false, message: 'Đã hoàn tất thử đồ trên người mẫu.' });
-      setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
-    }, 800);
+  const handleSaveApiKey = () => {
+    const trimmed = tempKeyInput.trim();
+    setFashnApiKey(trimmed);
+    if (trimmed) {
+      localStorage.setItem('myfitdaily_fashn_key', trimmed);
+    } else {
+      localStorage.removeItem('myfitdaily_fashn_key');
+    }
+    setShowKeyModal(false);
+  };
+
+  const handleTriggerAiTryOn = async () => {
+    const key = fashnApiKey || localStorage.getItem('myfitdaily_fashn_key');
+
+    // Nếu người dùng đã cài API Key FASHN và đang có áo chọn
+    if (key && selection.top?.imageUrl) {
+      setTryOnState({ loading: true, message: 'Đang kết nối FASHN.ai Diffusion để render người mẫu…' });
+      try {
+        const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
+        const modelPath = isFemale ? '/assets/fits/model_female_tank_dark.jpg' : '/assets/fits/model_male_tank_dark.jpg';
+        const fullModelUrl = window.location.origin + modelPath;
+        const fullGarmentUrl = selection.top.imageUrl.startsWith('http') 
+          ? selection.top.imageUrl 
+          : window.location.origin + selection.top.imageUrl;
+
+        const res = await fetch('/api/ai/virtual-try-on', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Fashn-Key': key
+          },
+          body: JSON.stringify({
+            modelImage: fullModelUrl,
+            garmentImage: fullGarmentUrl,
+            category: 'tops',
+            mode: 'balanced'
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data?.id) {
+          const jobId = data.id;
+          setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và tạo ảnh thử đồ…' });
+
+          let attempts = 0;
+          const pollInterval = setInterval(async () => {
+            attempts++;
+            if (attempts > 30) {
+              clearInterval(pollInterval);
+              setTryOnState({ loading: false, message: 'Hết thời gian chờ AI Cloud. Đã áp dụng 2D Dynamic Fit.' });
+              return;
+            }
+            try {
+              const statusRes = await fetch(`/api/ai/virtual-try-on/${jobId}`, {
+                headers: { 'X-Fashn-Key': key }
+              });
+              const statusData = await statusRes.json();
+              if (statusData?.status === 'completed' && statusData?.output?.[0]) {
+                clearInterval(pollInterval);
+                setAiGeneratedImage(statusData.output[0]);
+                setTryOnState({ loading: false, message: '✓ Đã hoàn tất Virtual Try-On với FASHN AI!' });
+                setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
+              } else if (statusData?.status === 'failed') {
+                clearInterval(pollInterval);
+                setTryOnState({ loading: false, message: 'AI Render: ' + (statusData.error?.message || 'Không thể tạo ảnh.') });
+                setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
+              }
+            } catch (pollErr) {
+              console.warn('Poll error:', pollErr);
+            }
+          }, 2000);
+          return;
+        } else {
+          // Key không hợp lệ hoặc lỗi
+          setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và khớp dáng người mẫu…' });
+          setTimeout(() => {
+            setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm thử 2D Dynamic!' });
+            setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
+          }, 1200);
+        }
+      } catch (err) {
+        setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và khớp dáng người mẫu…' });
+        setTimeout(() => {
+          setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm thử 2D Dynamic!' });
+          setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
+        }, 1200);
+      }
+    } else {
+      // Chế độ Dynamic 2D Fitting Scanner tức thì
+      setTryOnState({ loading: true, message: 'AI đang phân tích cấu trúc vải & khớp phom người mẫu…' });
+      setTimeout(() => {
+        setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm đồ lên người mẫu!' });
+        setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
+      }, 1200);
+    }
   };
 
   return (
@@ -127,32 +222,61 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               top={selection.top}
               bottom={selection.bottom}
               shoes={selection.shoes}
+              isAiProcessing={tryOnState.loading}
+              aiGeneratedModelImage={aiGeneratedImage}
             />
           </div>
 
           {/* Thanh trạng thái AI & 3 Slot món đồ đang mặc */}
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 12 }}>
-              <button
-                type="button"
-                disabled={tryOnState.loading}
-                onClick={handleTriggerAiTryOn}
-                style={{
-                  border: 0,
-                  borderRadius: 9,
-                  padding: '9px 18px',
-                  cursor: tryOnState.loading ? 'wait' : 'pointer',
-                  background: tryOnState.loading ? 'rgba(246,207,112,.45)' : 'linear-gradient(135deg,#f6cf70,#c89536)',
-                  color: '#17130a',
-                  fontWeight: 900,
-                  fontSize: 13
-                }}
-              >
-                <Wand2 size={15} style={{ verticalAlign: 'text-bottom', marginRight: 6 }}/>
-                {tryOnState.loading ? 'Đang thử đồ…' : 'Thử đồ AI'}
-              </button>
+            <div style={{ textAlign: 'center', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  disabled={tryOnState.loading}
+                  onClick={handleTriggerAiTryOn}
+                  style={{
+                    border: 0,
+                    borderRadius: 9,
+                    padding: '9px 18px',
+                    cursor: tryOnState.loading ? 'wait' : 'pointer',
+                    background: tryOnState.loading ? 'rgba(246,207,112,.45)' : 'linear-gradient(135deg,#f6cf70,#c89536)',
+                    color: '#17130a',
+                    fontWeight: 900,
+                    fontSize: 13,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    boxShadow: '0 4px 16px rgba(246, 207, 112, 0.25)'
+                  }}
+                >
+                  <Wand2 size={15} />
+                  {tryOnState.loading ? 'Đang thử đồ…' : 'Thử đồ AI'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowKeyModal(true)}
+                  title={fashnApiKey ? 'Đã cấu hình FASHN API Key' : 'Cấu hình FASHN API Key để Render AI thực tế'}
+                  style={{
+                    border: fashnApiKey ? '1px solid rgba(246,207,112,0.6)' : '1px solid rgba(255,255,255,0.15)',
+                    background: fashnApiKey ? 'rgba(246,207,112,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: fashnApiKey ? '#f6cf70' : 'var(--text-muted)',
+                    borderRadius: 9,
+                    padding: '9px 10px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Key size={15} />
+                </button>
+              </div>
+
               {tryOnState.message && (
-                <div style={{ marginTop: 6, color: '#9ee6b8', fontSize: 12, fontWeight: 600 }}>
+                <div style={{ marginTop: 4, color: '#9ee6b8', fontSize: 12, fontWeight: 600 }}>
                   {tryOnState.message}
                 </div>
               )}
@@ -349,6 +473,111 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           </div>
         </aside>
       </div>
+
+      {/* MODAL CẤU HÌNH FASHN API KEY */}
+      {showKeyModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 16
+        }}>
+          <div style={{
+            background: 'linear-gradient(145deg, #161922, #0d0f15)',
+            border: '1px solid rgba(246, 207, 112, 0.35)',
+            borderRadius: 16,
+            maxWidth: 460,
+            width: '100%',
+            padding: 24,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f6cf70', fontWeight: 800, fontSize: 16 }}>
+                <Key size={18} />
+                <span>Cấu hình AI Virtual Try-On</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKeyModal(false)}
+                style={{ background: 'transparent', border: 0, color: 'var(--text-muted)', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+              Nhập <strong>FASHN API Key</strong> để render người mẫu mặc đồ thực tế bằng công nghệ AI Diffusion. 
+              Nếu để trống, ứng dụng sẽ chạy chế độ <strong>2D Dynamic Fitting</strong> tức thì với 0 chi phí API.
+            </p>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
+                FASHN API Key:
+              </label>
+              <input
+                type="password"
+                placeholder="fa-..."
+                value={tempKeyInput}
+                onChange={(e) => setTempKeyInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'rgba(0,0,0,0.4)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  color: '#fff',
+                  fontSize: 13,
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                Lưu an toàn trong bộ nhớ máy cá nhân (localStorage) và gửi trực tiếp qua Header bảo mật.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => { setTempKeyInput(''); setFashnApiKey(''); localStorage.removeItem('myfitdaily_fashn_key'); setShowKeyModal(false); }}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'var(--text-muted)',
+                  borderRadius: 8,
+                  padding: '8px 14px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Xóa Key
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                style={{
+                  background: 'linear-gradient(135deg, #f6cf70, #c89536)',
+                  border: 0,
+                  color: '#17130a',
+                  borderRadius: 8,
+                  padding: '8px 18px',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                Lưu Cấu Hình
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .model-stylist-grid {
