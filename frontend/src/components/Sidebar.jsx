@@ -20,6 +20,8 @@ import {
   Link2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
+import SubscriptionCountdown from './SubscriptionCountdown';
 
 export default function Sidebar({
   isOpen,
@@ -50,12 +52,13 @@ export default function Sidebar({
   const displayInitials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase()
     : (isAdmin ? 'AD' : 'HT');
-  const subType = user?.subscriptionType || 'Free';
+  const isPlus = isPremiumPlusUser(user);
+  const isPrem = isPremiumUser(user);
   const displayPlan = isAdmin
     ? '🛡️ Quản Trị Viên (Admin)'
-    : (subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus')
+    : isPlus
       ? '💎 Premium Plus'
-      : subType.toLowerCase() === 'premium'
+      : isPrem
         ? '👑 VIP Premium'
         : 'Gói Free Cơ Bản';
 
@@ -797,6 +800,15 @@ export default function Sidebar({
               }}>
                 {displayPlan}
               </div>
+              {user?.subscriptionExpiresAt && (isPrem || isPlus) && (
+                <div style={{ marginTop: '3px' }}>
+                  <SubscriptionCountdown
+                    expiresAt={user.subscriptionExpiresAt}
+                    planType={user.subscriptionType}
+                    variant="pill"
+                  />
+                </div>
+              )}
             </div>
           </button>
 

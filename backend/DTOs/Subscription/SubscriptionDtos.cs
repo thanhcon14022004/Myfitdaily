@@ -41,4 +41,55 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.Subscription
         public List<string> CurrentFeatures { get; set; } = new();
         public bool IsExpired { get; set; }
     }
+
+    public class CreatePaymentRequestDto
+    {
+        [Required]
+        public string PlanId { get; set; } = string.Empty; // "Premium", "PremiumPlus"
+
+        [Required]
+        public string BillingCycle { get; set; } = "Monthly"; // "Monthly", "Yearly"
+    }
+
+    public class CreatePaymentResponseDto
+    {
+        public string OrderCode { get; set; } = string.Empty;
+        public string PlanId { get; set; } = string.Empty;
+        public string PlanName { get; set; } = string.Empty;
+        public string BillingCycle { get; set; } = "Monthly";
+        public decimal Amount { get; set; }
+        public string BankName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
+        public string AccountName { get; set; } = string.Empty;
+        public string TransferContent { get; set; } = string.Empty;
+        public string QrUrl { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class CheckPaymentResponseDto
+    {
+        public bool IsSuccess { get; set; }
+        public string Status { get; set; } = "Pending"; // "Pending", "Success"
+        public string Message { get; set; } = string.Empty;
+        public string? OrderCode { get; set; }
+        public string? PlanId { get; set; }
+        public DateTime? PaidAt { get; set; }
+        public object? User { get; set; }
+    }
+
+    public class SePayWebhookDto
+    {
+        public long Id { get; set; }
+        public string? Gateway { get; set; }
+        public string? TransactionDate { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? SubAccount { get; set; }
+        public string? Code { get; set; }
+        public string? Content { get; set; }
+        public string? TransferType { get; set; }
+        public decimal TransferAmount { get; set; }
+        public decimal Accumulated { get; set; }
+        public string? ReferenceCode { get; set; }
+        public string? Description { get; set; }
+    }
 }

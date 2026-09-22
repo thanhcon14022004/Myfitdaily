@@ -17,6 +17,7 @@ import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
 import { sanitizeClothesForGender } from '../data/initialWardrobe';
+import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
 
 export default function WardrobePage({ 
   clothes = [], 
@@ -246,9 +247,9 @@ export default function WardrobePage({
 
           <button
             onClick={() => {
-              const subType = user?.subscriptionType || 'Free';
-              const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
-              const isPremium = subType.toLowerCase() === 'premium';
+              const subType = getSubscriptionType(user);
+              const isPlus = isPremiumPlusUser(user);
+              const isPremium = isPremiumUser(user);
               const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
               if (effectiveClothes.length >= maxLimit) {
                 alert(text(
@@ -272,9 +273,9 @@ export default function WardrobePage({
 
       {/* Thanh Sức Chứa Tủ Đồ (Wardrobe Capacity Meter) */}
       {(() => {
-        const subType = user?.subscriptionType || 'Free';
-        const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
-        const isPremium = subType.toLowerCase() === 'premium';
+        const subType = getSubscriptionType(user);
+        const isPlus = isPremiumPlusUser(user);
+        const isPremium = isPremiumUser(user);
         const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
         const currentCount = effectiveClothes.length;
         const percent = isPlus ? 15 : Math.min(100, Math.round((currentCount / maxLimit) * 100));
