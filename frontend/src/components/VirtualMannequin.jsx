@@ -19,8 +19,8 @@ const REAL_MODELS = [
     gender: 'Nữ',
     name: 'Mẫu Nữ',
     heightStr: '1m65',
-    sweatImage: '/assets/fits/fits_female_model.jpg',
-    tankImage: '/assets/fits/fits_female_model.jpg'
+    sweatImage: '/assets/fits/model_female_sweat_dark.jpg',
+    tankImage: '/assets/fits/model_female_tank_dark.jpg'
   }
 ];
 
