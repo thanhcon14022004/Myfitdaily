@@ -9,30 +9,36 @@ public static class DbSeeder
     public static async Task SeedDemoDataAsync(ApplicationDbContext context)
     {
         var now = DateTime.UtcNow;
-        if (!await context.Categories.AnyAsync())
+        var existingCatIds = await context.Categories.Select(c => c.Id).ToListAsync();
+        var allCats = new List<Category>
         {
-            context.Categories.AddRange(
-                new Category { Id = 1, Name = "Tops", Description = "Áo", DisplayOrder = 1, IsActive = true, CreatedAt = now },
-                new Category { Id = 2, Name = "Bottoms", Description = "Quần", DisplayOrder = 2, IsActive = true, CreatedAt = now },
-                new Category { Id = 5, Name = "Shoes", Description = "Giày", DisplayOrder = 3, IsActive = true, CreatedAt = now });
-            await context.SaveChangesAsync();
+            new Category { Id = 1, Name = "Tops", Description = "Áo", DisplayOrder = 1, IsActive = true, CreatedAt = now },
+            new Category { Id = 2, Name = "Bottoms", Description = "Quần", DisplayOrder = 2, IsActive = true, CreatedAt = now },
+            new Category { Id = 3, Name = "Dresses", Description = "Đầm & Váy", DisplayOrder = 3, IsActive = true, CreatedAt = now },
+            new Category { Id = 4, Name = "Outerwear", Description = "Áo Khoác", DisplayOrder = 4, IsActive = true, CreatedAt = now },
+            new Category { Id = 5, Name = "Shoes", Description = "Giày", DisplayOrder = 5, IsActive = true, CreatedAt = now },
+            new Category { Id = 6, Name = "Accessories", Description = "Phụ Kiện", DisplayOrder = 6, IsActive = true, CreatedAt = now }
+        };
+        foreach (var cat in allCats)
+        {
+            if (!existingCatIds.Contains(cat.Id))
+            {
+                context.Categories.Add(cat);
+            }
         }
+        await context.SaveChangesAsync();
 
         var demoMale = await GetOrCreateUser(context, "test@myfitdaily.com", "Gentleman (Demo Nam)", "Nam", now);
         var demoFemale = await GetOrCreateUser(context, "demo@myfitdaily.com", "Fashionista (Demo Nữ)", "Nữ", now);
 
-        // The old wardrobe and its dependent outfit links are intentionally removed.
-        // This makes the persisted catalogue match the four approved products exactly.
-        var oldOutfitItems = await context.OutfitItems.ToListAsync();
-        var oldOutfits = await context.Outfits.ToListAsync();
-        var oldClothes = await context.ClothingItems.ToListAsync();
-        if (oldOutfitItems.Count > 0) context.OutfitItems.RemoveRange(oldOutfitItems);
-        if (oldOutfits.Count > 0) context.Outfits.RemoveRange(oldOutfits);
-        if (oldClothes.Count > 0) context.ClothingItems.RemoveRange(oldClothes);
-        await context.SaveChangesAsync();
-
-        context.ClothingItems.AddRange(CreateStylistEdit(demoMale.Id, now));
-        context.ClothingItems.AddRange(CreateStylistEdit(demoFemale.Id, now));
+        if (!await context.ClothingItems.AnyAsync(c => c.UserId == demoMale.Id))
+        {
+            context.ClothingItems.AddRange(CreateStylistEdit(demoMale.Id, now));
+        }
+        if (!await context.ClothingItems.AnyAsync(c => c.UserId == demoFemale.Id))
+        {
+            context.ClothingItems.AddRange(CreateStylistEdit(demoFemale.Id, now));
+        }
         await context.SaveChangesAsync();
     }
 

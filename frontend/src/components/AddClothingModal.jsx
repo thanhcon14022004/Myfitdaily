@@ -487,15 +487,14 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) {
-      alert("Vui lòng nhập tên món đồ");
-      return;
-    }
-
     if (!formData.imageUrl) {
       alert("Vui lòng tải ảnh lên hoặc chọn ảnh minh họa cho món đồ");
       return;
     }
+
+    const currentCat = categoryOptions.find(c => c.id === formData.categoryId) || categoryOptions[0];
+    const catLabel = currentCat?.name?.split(' ')?.[0] || 'Áo';
+    const autoName = formData.name?.trim() || `${catLabel} ${formData.brand ? formData.brand + ' ' : ''}màu ${formData.color || 'Trắng'}`;
 
     setIsSubmitting(true);
     try {
@@ -510,6 +509,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
 
       await onAdd({
         ...formData,
+        name: autoName,
         categoryId: Number(formData.categoryId),
         categoryName: categoryNames[formData.categoryId],
         brand: formData.brand?.trim() || 'Chưa rõ hãng',
@@ -1409,7 +1409,6 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                 </label>
                 <input
                   type="text"
-                  required
                   id="input-clothing-name"
                   placeholder="VD: Áo sơ mi lụa trắng Zara..."
                   value={formData.name}

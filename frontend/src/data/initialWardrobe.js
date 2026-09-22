@@ -22,4 +22,23 @@ export const INITIAL_OUTFITS = INITIAL_OUTFITS_MALE;
 export function getCategoriesForGender() { return INITIAL_CATEGORIES_MALE; }
 export function getInitialClothesForGender() { return STYLIST_CLOTHES; }
 export function getInitialOutfitsForGender() { return INITIAL_OUTFITS_MALE; }
-export function sanitizeClothesForGender(items) { return Array.isArray(items) ? items.filter(item => STYLIST_CLOTHES.some(seed => seed.id === item.id || seed.name === item.name)) : []; }
+export function sanitizeClothesForGender(items, gender) {
+  if (!Array.isArray(items)) return [];
+  const isMale = !gender || gender.toLowerCase() === 'nam' || gender.toLowerCase() === 'male';
+  if (!isMale) return items;
+  return items.filter(item => {
+    if (item.categoryId === 3) return false;
+    const name = (item.name || '').toLowerCase();
+    return !(
+      name.includes('váy') ||
+      name.includes('đầm') ||
+      name.includes('croptop') ||
+      name.includes('tiểu thư') ||
+      name.includes('cao gót') ||
+      name.includes('chân váy') ||
+      name.includes('dress') ||
+      name.includes('skirt') ||
+      name.includes('heels')
+    );
+  });
+}
