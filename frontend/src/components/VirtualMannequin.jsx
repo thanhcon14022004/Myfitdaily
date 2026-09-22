@@ -56,6 +56,12 @@ export default function VirtualMannequin({
     setSelectedGender(isUserMale ? 'Nam' : 'Nữ');
   }, [isUserMale]);
 
+  useEffect(() => {
+    if (aiGeneratedModelImage) {
+      setViewMode('model');
+    }
+  }, [aiGeneratedModelImage]);
+
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
 
   // Nhận diện phân loại áo preset
@@ -232,26 +238,10 @@ export default function VirtualMannequin({
           <span>{viewMode === 'fits' ? '✨ Bàn Phối Đồ Chuẩn Fits' : '✨ Người Mẫu Studio 8K'}</span>
         </div>
 
-        {/* NẾU ĐÃ CÓ ẢNH THỬ ĐỒ THẬT TỪ IDM-VTON */}
-        {aiGeneratedModelImage ? (
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <img
-              src={aiGeneratedModelImage}
-              alt="AI Try-On Result"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                objectPosition: 'center'
-              }}
-            />
-          </div>
-        ) : (
-          <>
-            {/* ======================================================== */}
-            {/* CHẾ ĐỘ 1: FITS DIGITAL CANVAS (ĐỒ THẬT CHUẨN XÁC 100%, 0MS DELAY) */}
-            {/* ======================================================== */}
-            {viewMode === 'fits' && (
+        {/* ======================================================== */}
+        {/* CHẾ ĐỘ 1: FITS DIGITAL CANVAS (ĐỒ THẬT CHUẨN XÁC 100%, 0MS DELAY) */}
+        {/* ======================================================== */}
+        {viewMode === 'fits' && (
               <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
             {/* Khung silhouette ma-nơ-canh mờ tối giản phía sau tạo form người mẫu thanh lịch */}
             <img
@@ -403,70 +393,83 @@ export default function VirtualMannequin({
         )}
 
         {/* ======================================================== */}
-        {/* CHẾ ĐỘ 2: NGƯỜI MẪU STUDIO LOOKBOOK (CHUẨN FORM THEO ÁO) */}
+        {/* CHẾ ĐỘ 2: NGƯỜI MẪU STUDIO HOẶC AI RENDER */}
         {/* ======================================================== */}
         {viewMode === 'model' && (
           <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Ảnh người mẫu thật chuẩn theo món Áo đang chọn */}
-            <img
-              src={studioModelBase}
-              alt={activeModel.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center top'
-              }}
-            />
-
-            {/* Nếu là áo custom của người dùng tải lên */}
-            {isCustomTop && (
-              <div style={{
-                position: 'absolute',
-                top: selectedGender === 'Nam' ? '18%' : '20%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: selectedGender === 'Nam' ? '56%' : '52%',
-                zIndex: 10,
-                pointerEvents: 'none',
-                display: 'flex',
-                justifyContent: 'center',
-                filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
-              }}>
+            {aiGeneratedModelImage ? (
+              <img
+                src={aiGeneratedModelImage}
+                alt="AI Try-On Result"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'center'
+                }}
+              />
+            ) : (
+              <>
+                {/* Ảnh người mẫu thật chuẩn theo món Áo đang chọn */}
                 <img
-                  src={top.imageUrl}
-                  alt={top.name}
-                  style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                  src={studioModelBase}
+                  alt={activeModel.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center top'
+                  }}
                 />
-              </div>
-            )}
 
-            {/* Nếu người dùng chọn quần đen: Phủ quần đen lên chân người mẫu (thay vì đổi áo sang sơ mi trắng) */}
-            {isBlackPants && bottom?.imageUrl && (
-              <div style={{
-                position: 'absolute',
-                top: selectedGender === 'Nam' ? '46%' : '48%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: selectedGender === 'Nam' ? '54%' : '50%',
-                zIndex: 9,
-                pointerEvents: 'none',
-                display: 'flex',
-                justifyContent: 'center',
-                filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
-              }}>
-                <img
-                  src={bottom.imageUrl}
-                  alt={bottom.name}
-                  style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
-                />
-              </div>
+                {/* Nếu là áo custom của người dùng tải lên */}
+                {isCustomTop && (
+                  <div style={{
+                    position: 'absolute',
+                    top: selectedGender === 'Nam' ? '18%' : '20%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: selectedGender === 'Nam' ? '56%' : '52%',
+                    zIndex: 10,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
+                  }}>
+                    <img
+                      src={top.imageUrl}
+                      alt={top.name}
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+
+                {/* Nếu người dùng chọn quần đen: Phủ quần đen lên chân người mẫu */}
+                {isBlackPants && bottom?.imageUrl && (
+                  <div style={{
+                    position: 'absolute',
+                    top: selectedGender === 'Nam' ? '46%' : '48%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: selectedGender === 'Nam' ? '54%' : '50%',
+                    zIndex: 9,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
+                  }}>
+                    <img
+                      src={bottom.imageUrl}
+                      alt={bottom.name}
+                      style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
-      </>
-    )}
-  </div>
+      </div>
     </div>
   );
 }

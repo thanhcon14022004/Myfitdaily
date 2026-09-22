@@ -109,7 +109,14 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const [tempColabUrl, setTempColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
 
   const handleSaveColabUrl = () => {
-    const trimmed = tempColabUrl.trim().replace(/\/$/, '');
+    let trimmed = tempColabUrl.trim().replace(/\/$/, '');
+    if (trimmed && !trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+      trimmed = 'https://' + trimmed;
+    }
+    if (trimmed.includes('api.trycloudflare.com')) {
+      alert('⚠️ Đường link không thể là "https://api.trycloudflare.com". Bạn hãy copy link dạng "https://tên-ngẫu-nhiên.trycloudflare.com" được in ra tại Ô Số 4 trên Google Colab!');
+      return;
+    }
     setColabUrl(trimmed);
     if (trimmed) {
       localStorage.setItem('myfitdaily_colab_url', trimmed);
@@ -182,17 +189,25 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         return;
       }
 
-      // Fallback an toàn sang ảnh Studio mẫu thật chất lượng cao nội bộ
-      const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
-      setAiGeneratedImage(fallback);
-      setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
-      setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
+      // Nếu không có kết quả từ AI, giữ nguyên Bàn Phối Đồ Chuẩn Fits
+      setAiGeneratedImage(null);
+      setTryOnState({
+        loading: false,
+        message: colabUrl
+          ? '⚠️ Không kết nối được URL Colab hoặc đường link chưa chính xác.'
+          : '⚠️ AI bận. Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.'
+      });
+      setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
     } catch (err) {
-      console.warn('AI Try-on fallback:', err);
-      const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
-      setAiGeneratedImage(fallback);
-      setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
-      setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
+      console.warn('AI Try-on error:', err);
+      setAiGeneratedImage(null);
+      setTryOnState({
+        loading: false,
+        message: colabUrl
+          ? '⚠️ Không kết nối được URL Colab. Hãy kiểm tra lại link Cloudflare Tunnel.'
+          : '⚠️ Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.'
+      });
+      setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
     }
   };
 
