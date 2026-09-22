@@ -145,35 +145,13 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         return;
       }
 
-      // 2. Dự phòng: Free Virtual Try-on Engine
-      res = await fetch('/api/ai/free-virtual-try-on', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gender: isFemale ? 'Nữ' : 'Nam',
-          topName: selection.top?.name || '',
-          topImageUrl: selection.top?.imageUrl || '',
-          bottomName: selection.bottom?.name || '',
-          bottomImageUrl: selection.bottom?.imageUrl || '',
-          shoesName: selection.shoes?.name || ''
-        })
-      });
-
-      data = await res.json();
-      if (res.ok && data?.data?.imageUrl) {
-        setAiGeneratedImage(data.data.imageUrl);
-        setTryOnState({ loading: false, message: `✓ Hoàn tất tạo mẫu bằng ${data.data.model || 'AI'}!` });
-        setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-        return;
-      }
-
       // Nếu không có kết quả từ AI, giữ nguyên Bàn Phối Đồ Chuẩn Fits
       setAiGeneratedImage(null);
       setTryOnState({
         loading: false,
-        message: colabUrl
-          ? '⚠️ Không kết nối được URL Colab hoặc đường link chưa chính xác.'
-          : '⚠️ AI bận. Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.'
+        message: data?.message || (colabUrl
+          ? '⚠️ Không kết nối được URL Colab. Hãy kiểm tra lại Ô Số 4 trên Colab.'
+          : '⚠️ AI bận. Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.')
       });
       setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
     } catch (err) {

@@ -311,14 +311,27 @@ public class AiController : ControllerBase
                     form.Add(new StringContent("upper_body"), "category");
 
                     var colabRes = await colabClient.PostAsync($"{colabUrl}/tryon", form);
+                    var colabJson = await colabRes.Content.ReadAsStringAsync();
                     if (colabRes.IsSuccessStatusCode)
                     {
-                        var colabJson = await colabRes.Content.ReadAsStringAsync();
                         using var colabDoc = JsonDocument.Parse(colabJson);
                         if (colabDoc.RootElement.TryGetProperty("image_url", out var imgProp))
                         {
                             return Ok(ApiResponse<object>.Ok(new { imageUrl = imgProp.GetString(), model = "CatVTON (Google Colab GPU T4 Riêng)" }, "Thử đồ thành công từ Server Colab riêng của bạn!"));
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[Colab Server Error HTTP {(int)colabRes.StatusCode}]: {colabJson}");
+                        try
+                        {
+                            using var errDoc = JsonDocument.Parse(colabJson);
+                            if (errDoc.RootElement.TryGetProperty("error", out var errProp))
+                            {
+                                return BadRequest(ApiResponse<object>.Fail($"Lỗi từ GPU Colab: {errProp.GetString()}"));
+                            }
+                        }
+                        catch { }
                     }
                 }
                 catch (Exception colabEx)
