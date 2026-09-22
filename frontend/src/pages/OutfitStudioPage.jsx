@@ -227,55 +227,75 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           </div>
 
           {/* Thanh trạng thái AI & 3 Slot món đồ đang mặc */}
+          {/* Thanh trạng thái Fits Live & 3 Slot món đồ đang mặc */}
           <div>
-            <div style={{ textAlign: 'center', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ textAlign: 'center', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                borderRadius: 999,
+                background: 'rgba(74, 222, 128, 0.1)',
+                border: '1px solid rgba(74, 222, 128, 0.25)',
+                color: '#86efac',
+                fontSize: 12,
+                fontWeight: 700
+              }}>
+                <Check size={13} style={{ color: '#4ade80' }} />
+                <span>{text('Đang phối đồ trực tiếp từ tủ đồ (Chuẩn Fits)', 'Fitting live from your wardrobe (Fits style)')}</span>
+              </div>
+
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  style={{
+                    border: 0,
+                    borderRadius: 9,
+                    padding: '8px 18px',
+                    cursor: 'pointer',
+                    background: savedSuccess ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f6cf70, #c89536)',
+                    color: savedSuccess ? '#fff' : '#17130a',
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    boxShadow: '0 4px 14px rgba(246, 207, 112, 0.25)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Save size={14} />
+                  <span>{savedSuccess ? '✓ Đã Lưu Outfit!' : 'Lưu Outfit Này'}</span>
+                </button>
+
                 <button
                   type="button"
                   disabled={tryOnState.loading}
                   onClick={handleTriggerAiTryOn}
+                  title="Thử tạo ảnh người mẫu AI Studio 8K"
                   style={{
-                    border: 0,
+                    border: '1px solid rgba(255,255,255,0.14)',
                     borderRadius: 9,
-                    padding: '9px 18px',
+                    padding: '8px 12px',
                     cursor: tryOnState.loading ? 'wait' : 'pointer',
-                    background: tryOnState.loading ? 'rgba(246,207,112,.45)' : 'linear-gradient(135deg,#f6cf70,#c89536)',
-                    color: '#17130a',
-                    fontWeight: 900,
-                    fontSize: 13,
+                    background: 'rgba(255,255,255,0.06)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: 12,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
-                    boxShadow: '0 4px 16px rgba(246, 207, 112, 0.25)'
+                    gap: 5
                   }}
                 >
-                  <Wand2 size={15} />
-                  {tryOnState.loading ? 'Đang thử đồ…' : 'Thử đồ AI'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowKeyModal(true)}
-                  title={fashnApiKey ? 'Đã cấu hình FASHN API Key' : 'Cấu hình FASHN API Key để Render AI thực tế'}
-                  style={{
-                    border: fashnApiKey ? '1px solid rgba(246,207,112,0.6)' : '1px solid rgba(255,255,255,0.15)',
-                    background: fashnApiKey ? 'rgba(246,207,112,0.12)' : 'rgba(255,255,255,0.06)',
-                    color: fashnApiKey ? '#f6cf70' : 'var(--text-muted)',
-                    borderRadius: 9,
-                    padding: '9px 10px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <Key size={15} />
+                  <Wand2 size={13} style={{ color: '#f6cf70' }} />
+                  <span>{tryOnState.loading ? 'Đang tạo…' : 'Thử AI 8K'}</span>
                 </button>
               </div>
 
               {tryOnState.message && (
-                <div style={{ marginTop: 4, color: '#9ee6b8', fontSize: 12, fontWeight: 600 }}>
+                <div style={{ marginTop: 2, color: '#9ee6b8', fontSize: 11.5, fontWeight: 600 }}>
                   {tryOnState.message}
                 </div>
               )}

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { Smartphone, UserRound, Sparkles, Check, Shirt, Scissors, Footprints } from 'lucide-react';
 
 /**
- * Danh sách Người Mẫu Thời Trang AI Người Thật
- * Phông nền đen studio sang trọng, hòa quyện hoàn hảo vào giao diện MyFitDaily
+ * Danh sách Người Mẫu Thời Trang Studio (Lookbook chuẩn)
  */
 const REAL_MODELS = [
   {
@@ -14,7 +14,8 @@ const REAL_MODELS = [
     sweatImage: '/assets/fits/model_male_sweat_dark.jpg',
     tankImage: '/assets/fits/model_male_tank_dark.jpg',
     shirtImage: '/assets/fits/model_male_shirt_dark.jpg',
-    pantsImage: '/assets/fits/model_male_pants_dark.jpg'
+    pantsImage: '/assets/fits/model_male_pants_dark.jpg',
+    mannequinImage: '/assets/mannequin_male.png'
   },
   {
     id: 'female',
@@ -24,7 +25,8 @@ const REAL_MODELS = [
     sweatImage: '/assets/fits/model_female_sweat_dark.jpg',
     tankImage: '/assets/fits/model_female_tank_dark.jpg',
     shirtImage: '/assets/fits/model_female_shirt_dark.jpg',
-    pantsImage: '/assets/fits/model_female_pants_dark.jpg'
+    pantsImage: '/assets/fits/model_female_pants_dark.jpg',
+    mannequinImage: '/assets/mannequin_female.png'
   }
 ];
 
@@ -40,13 +42,15 @@ export default function VirtualMannequin({
 }) {
   const { text } = useLanguage();
 
-  // Xác định giới tính người dùng
+  // Xác định giới tính
   const isUserMale = (user?.gender?.toLowerCase() === 'nam' ||
                       user?.gender?.toLowerCase() === 'male' ||
                       propGender?.toLowerCase() === 'nam' ||
                       propGender?.toLowerCase() === 'male');
 
   const [selectedGender, setSelectedGender] = useState(isUserMale ? 'Nam' : 'Nữ');
+  // Chế độ hiển thị: 'fits' (Chuẩn app Fits: hiển thị trực tiếp đồ thật) hoặc 'model' (Mẫu studio lookbook)
+  const [viewMode, setViewMode] = useState('fits');
 
   useEffect(() => {
     setSelectedGender(isUserMale ? 'Nam' : 'Nữ');
@@ -54,45 +58,30 @@ export default function VirtualMannequin({
 
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
 
-  // Micro-adjustment cho trang phục tự thêm vào tủ đồ
-  const [adjustTopY, setAdjustTopY] = useState(0);
-  const [scaleTop, setScaleTop] = useState(1);
-  const [showAdjustControls, setShowAdjustControls] = useState(false);
-
-  // Nhận diện set đồ quần tây đen (hoặc ảnh quần do người dùng tải lên)
-  const topName = (top?.name || '').toLowerCase();
-  const bottomName = (bottom?.name || '').toLowerCase();
-  const isBlackTrousersSelected = bottomName.includes('đen') || 
-                                  bottomName.includes('tây') || 
-                                  (bottom?.imageUrl && bottom.imageUrl.includes('media_1790076823583')) ||
-                                  (top?.imageUrl && top.imageUrl.includes('media_1790076823583'));
-
-  // Kiểm tra phân loại áo: 3 item ID preset mẫu chuẩn
+  // Nhận diện phân loại áo preset
   const isTankTop = top?.id === 201 || (top?.imageUrl && top.imageUrl.includes('coolmate-tank-top.png'));
   const isSweat = top?.id === 202 || (top?.imageUrl && top.imageUrl.includes('frozen-sweatshirt.png'));
   const isShirt = top?.id === 205 || (top?.imageUrl && top.imageUrl.includes('navy-shirt-essential.png'));
 
-  let currentModelImage = activeModel.sweatImage;
-  if (isBlackTrousersSelected) {
-    currentModelImage = activeModel.pantsImage;
-  } else if (isTankTop) {
-    currentModelImage = activeModel.tankImage;
+  // Nhận diện phân loại quần
+  const bottomName = (bottom?.name || '').toLowerCase();
+  const isBlackPants = bottomName.includes('đen') || 
+                       bottomName.includes('tây') || 
+                       (bottom?.imageUrl && bottom.imageUrl.includes('media_1790076823583'));
+
+  // Trong chế độ Model: Chọn ảnh mẫu nền theo ÁO trước, tuyệt đối không bị đè bởi áo sơ mi trắng ngẫu nhiên
+  let studioModelBase = activeModel.sweatImage;
+  if (isTankTop) {
+    studioModelBase = activeModel.tankImage;
   } else if (isShirt) {
-    currentModelImage = activeModel.shirtImage;
+    studioModelBase = activeModel.shirtImage;
   } else if (isSweat) {
-    currentModelImage = activeModel.sweatImage;
+    studioModelBase = activeModel.sweatImage;
+  } else if (top?.imageUrl) {
+    studioModelBase = activeModel.tankImage; // Làm phôi để đè áo custom lên
   }
 
-  // Bất kỳ món áo nào khác (người dùng tự thêm vào tủ đồ) đều là custom top (ngoại trừ khi đang hiển thị set quần âu đen)
-  const isCustomTop = Boolean(top && !isTankTop && !isShirt && !isSweat && !isBlackTrousersSelected && top.imageUrl);
-
-  // Quần preset là 203 (Quần suông cream)
-  const isCreamPants = bottom?.id === 203 || (bottom?.imageUrl && bottom.imageUrl.includes('cream-relaxed-pants.png'));
-  const isCustomBottom = Boolean(bottom && !isCreamPants && bottom.imageUrl);
-
-  // Giày preset là 204 (Sneaker retro)
-  const isRetroSneaker = shoes?.id === 204 || (shoes?.imageUrl && shoes.imageUrl.includes('retro-sneakers.png'));
-  const isCustomShoes = Boolean(shoes && !isRetroSneaker && shoes.imageUrl);
+  const isCustomTop = Boolean(top && !isTankTop && !isShirt && !isSweat && top.imageUrl);
 
   return (
     <div style={{
@@ -104,323 +93,361 @@ export default function VirtualMannequin({
       margin: '0 auto',
       userSelect: 'none'
     }}>
-      {/* 1. CHUYỂN ĐỔI NGƯỜI MẪU NAM / NỮ GỌN GÀNG TINH TẾ */}
+      {/* THANH ĐIỀU HƯỚNG CHỌN CHẾ ĐỘ: FITS APP VS MẪU STUDIO & GIỚI TÍNH */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        marginBottom: '14px',
-        background: 'rgba(255, 255, 255, 0.04)',
-        padding: '3px 6px',
-        borderRadius: 'var(--radius-full)',
-        border: '1px solid rgba(255, 255, 255, 0.08)'
+        justifyContent: 'space-between',
+        width: '100%',
+        maxWidth: compact ? '290px' : '340px',
+        marginBottom: '12px',
+        gap: 8,
+        flexWrap: 'wrap'
       }}>
-        {REAL_MODELS.map(m => {
-          const isSelected = m.gender === selectedGender;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setSelectedGender(m.gender)}
-              style={{
-                background: isSelected 
-                  ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(194, 125, 94, 0.3))' 
-                  : 'transparent',
-                border: isSelected ? '1px solid #D4AF37' : '1px solid transparent',
-                color: isSelected ? '#FDE68A' : 'var(--text-muted)',
-                borderRadius: 'var(--radius-full)',
-                padding: '4px 14px',
-                fontSize: '0.74rem',
-                fontWeight: isSelected ? 800 : 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <span>{m.gender === 'Nam' ? '👨' : '👩'}</span>
-              <span>{m.name} ({m.heightStr})</span>
-            </button>
-          );
-        })}
+        {/* Toggle Chế Độ Hiển Thị */}
+        <div style={{
+          display: 'inline-flex',
+          background: 'rgba(255, 255, 255, 0.05)',
+          padding: '3px',
+          borderRadius: 10,
+          border: '1px solid rgba(255, 255, 255, 0.08)'
+        }}>
+          <button
+            type="button"
+            onClick={() => setViewMode('fits')}
+            style={{
+              background: viewMode === 'fits' ? 'linear-gradient(135deg, #f6cf70, #c89536)' : 'transparent',
+              color: viewMode === 'fits' ? '#17130a' : 'var(--text-muted)',
+              border: 0,
+              borderRadius: 8,
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Smartphone size={12} />
+            <span>Kiểu Fits App</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('model')}
+            style={{
+              background: viewMode === 'model' ? 'linear-gradient(135deg, #f6cf70, #c89536)' : 'transparent',
+              color: viewMode === 'model' ? '#17130a' : 'var(--text-muted)',
+              border: 0,
+              borderRadius: 8,
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <UserRound size={12} />
+            <span>Mẫu Studio</span>
+          </button>
+        </div>
+
+        {/* Toggle Giới Tính */}
+        <div style={{
+          display: 'inline-flex',
+          background: 'rgba(255, 255, 255, 0.05)',
+          padding: '3px',
+          borderRadius: 10,
+          border: '1px solid rgba(255, 255, 255, 0.08)'
+        }}>
+          {REAL_MODELS.map(m => {
+            const isSelected = m.gender === selectedGender;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setSelectedGender(m.gender)}
+                style={{
+                  background: isSelected ? 'rgba(246, 207, 112, 0.2)' : 'transparent',
+                  border: isSelected ? '1px solid #D4AF37' : '1px solid transparent',
+                  color: isSelected ? '#FDE68A' : 'var(--text-muted)',
+                  borderRadius: 8,
+                  padding: '3px 9px',
+                  fontSize: '0.7rem',
+                  fontWeight: isSelected ? 800 : 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>{m.gender === 'Nam' ? '👨 Nam' : '👩 Nữ'}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* 2. SÂN KHẤU NGƯỜI MẪU THẬT - QUẦN ÁO NGUYÊN VẸN, KHÔNG BỊ RÁCH / LỖI PHÔNG */}
+      {/* SÂN KHẤU CANVAS PHỐI ĐỒ CHUẨN FITS APP */}
       <div style={{
         position: 'relative',
         width: compact ? '290px' : '340px',
         height: compact ? '480px' : '540px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         borderRadius: '20px',
         overflow: 'hidden',
-        boxShadow: isAiProcessing 
-          ? '0 0 35px rgba(246, 207, 112, 0.45), 0 20px 45px rgba(0, 0, 0, 0.75)' 
-          : '0 20px 45px rgba(0, 0, 0, 0.65)',
-        border: isAiProcessing ? '1.5px solid #f6cf70' : '1px solid rgba(255,255,255,0.06)',
-        transition: 'all 0.3s ease'
+        background: 'radial-gradient(circle at 50% 20%, rgba(246, 207, 112, 0.07), transparent 60%), linear-gradient(180deg, #151821 0%, #0d0f14 100%)',
+        border: '1px solid rgba(246, 207, 112, 0.2)',
+        boxShadow: '0 20px 45px rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
-        {/* Ảnh Người Mẫu: Ưu tiên ảnh do AI Diffusion tạo ra nếu có */}
-        <img
-          key={aiGeneratedModelImage || currentModelImage}
-          src={aiGeneratedModelImage || (isCustomTop ? activeModel.tankImage : currentModelImage)}
-          alt={activeModel.name}
-          onError={(e) => {
-            console.warn("Model image load error, falling back to studio photo");
-            e.currentTarget.src = currentModelImage || activeModel.sweatImage;
-          }}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center top',
-            transition: 'opacity 0.25s ease'
-          }}
-        />
+        {/* BADGE GÓC TRÊN */}
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(246, 207, 112, 0.4)',
+          color: '#f6cf70',
+          fontSize: '0.68rem',
+          fontWeight: 800,
+          padding: '3px 9px',
+          borderRadius: 'var(--radius-full)',
+          letterSpacing: '0.04em',
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4
+        }}>
+          <Sparkles size={11} />
+          <span>{viewMode === 'fits' ? '✨ Bàn Phối Đồ Chuẩn Fits' : '✨ Người Mẫu Studio 8K'}</span>
+        </div>
 
-        {/* Dynamic Garment Overlay - ÁO CUSTOM */}
-        {isCustomTop && !aiGeneratedModelImage && (
-          <div
-            style={{
+        {/* ======================================================== */}
+        {/* CHẾ ĐỘ 1: FITS DIGITAL CANVAS (ĐỒ THẬT CHUẨN XÁC 100%, 0MS DELAY) */}
+        {/* ======================================================== */}
+        {viewMode === 'fits' && (
+          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+            {/* Khung silhouette ma-nơ-canh mờ tối giản phía sau tạo form người mẫu thanh lịch */}
+            <img
+              src={activeModel.mannequinImage}
+              alt="Mannequin Silhouette"
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                height: '92%',
+                objectFit: 'contain',
+                opacity: 0.16,
+                filter: 'grayscale(1) contrast(1.1) brightness(1.2)',
+                pointerEvents: 'none',
+                zIndex: 1
+              }}
+            />
+
+            {/* 1. SLOT ÁO (TOP) */}
+            <div style={{
               position: 'absolute',
-              top: `calc(${selectedGender === 'Nam' ? '18%' : '20%'} + ${adjustTopY}px)`,
+              top: '9%',
               left: '50%',
-              transform: `translateX(-50%) scale(${scaleTop})`,
-              transformOrigin: 'top center',
-              width: selectedGender === 'Nam' ? '56%' : '52%',
-              zIndex: 10,
-              pointerEvents: 'none',
+              transform: 'translateX(-50%)',
+              width: '64%',
+              height: '38%',
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) drop-shadow(0 3px 8px rgba(0,0,0,0.45)) contrast(1.04)',
-              transition: 'transform 0.15s ease, top 0.15s ease'
-            }}
-          >
+              zIndex: 10,
+              transition: 'all 0.2s ease'
+            }}>
+              {top?.imageUrl ? (
+                <img
+                  src={top.imageUrl}
+                  alt={top.name}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 14px 22px rgba(0,0,0,0.75)) contrast(1.03)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  border: '1.5px dashed rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  padding: '12px 18px',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  <Shirt size={14} /> + Chọn Áo
+                </div>
+              )}
+            </div>
+
+            {/* 2. SLOT QUẦN (BOTTOM) */}
+            <div style={{
+              position: 'absolute',
+              top: '40%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '52%',
+              height: '46%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9,
+              transition: 'all 0.2s ease'
+            }}>
+              {bottom?.imageUrl ? (
+                <img
+                  src={bottom.imageUrl}
+                  alt={bottom.name}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.75)) contrast(1.03)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  border: '1.5px dashed rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  padding: '12px 18px',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  <Scissors size={14} /> + Chọn Quần
+                </div>
+              )}
+            </div>
+
+            {/* 3. SLOT GIÀY (SHOES) */}
+            <div style={{
+              position: 'absolute',
+              bottom: '4%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '46%',
+              height: '18%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 11,
+              transition: 'all 0.2s ease'
+            }}>
+              {shoes?.imageUrl ? (
+                <img
+                  src={shoes.imageUrl}
+                  alt={shoes.name}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.8))',
+                    transition: 'transform 0.2s ease'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  border: '1.5px dashed rgba(255,255,255,0.18)',
+                  borderRadius: 12,
+                  padding: '8px 14px',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}>
+                  <Footprints size={13} /> + Chọn Giày
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* CHẾ ĐỘ 2: NGƯỜI MẪU STUDIO LOOKBOOK (CHUẨN FORM THEO ÁO) */}
+        {/* ======================================================== */}
+        {viewMode === 'model' && (
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {/* Ảnh người mẫu thật chuẩn theo món Áo đang chọn */}
             <img
-              src={top.imageUrl}
-              alt={top.name}
+              src={studioModelBase}
+              alt={activeModel.name}
               style={{
                 width: '100%',
-                height: 'auto',
-                objectFit: 'contain'
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center top'
               }}
             />
-          </div>
-        )}
 
-        {/* Dynamic Garment Overlay - QUẦN CUSTOM */}
-        {isCustomBottom && !aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            top: selectedGender === 'Nam' ? '46%' : '48%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: selectedGender === 'Nam' ? '54%' : '50%',
-            zIndex: 9,
-            pointerEvents: 'none',
-            display: 'flex',
-            justifyContent: 'center',
-            filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
-          }}>
-            <img
-              src={bottom.imageUrl}
-              alt={bottom.name}
-              style={{
-                width: '100%',
-                height: 'auto',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
-        )}
-
-        {/* Dynamic Garment Overlay - GIÀY CUSTOM */}
-        {isCustomShoes && !aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            top: '88%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '46%',
-            zIndex: 11,
-            pointerEvents: 'none',
-            display: 'flex',
-            justifyContent: 'center',
-            filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
-          }}>
-            <img
-              src={shoes.imageUrl}
-              alt={shoes.name}
-              style={{
-                width: '100%',
-                height: 'auto',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
-        )}
-
-        {/* AI Generated Badge */}
-        {aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.95), rgba(200, 149, 54, 0.95))',
-            color: '#12151f',
-            fontSize: '0.68rem',
-            fontWeight: 900,
-            padding: '4px 10px',
-            borderRadius: 'var(--radius-full)',
-            letterSpacing: '0.04em',
-            zIndex: 15,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.6)'
-          }}>
-            <span>✨ Gemini Imagen AI Render</span>
-          </div>
-        )}
-
-        {/* Dynamic Fit Indicator Badge */}
-        {(isCustomTop || isCustomBottom || isCustomShoes) && !aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            background: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(246, 207, 112, 0.4)',
-            color: '#f6cf70',
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            padding: '3px 8px',
-            borderRadius: 'var(--radius-full)',
-            letterSpacing: '0.04em',
-            zIndex: 15,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4
-          }}>
-            <span>✨ 2D Dynamic Fit</span>
-          </div>
-        )}
-
-        {/* Nút bật tắt tinh chỉnh vị trí áo (khi mặc áo custom) */}
-        {isCustomTop && !aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            bottom: 12,
-            right: 12,
-            zIndex: 15
-          }}>
-            <button
-              type="button"
-              onClick={() => setShowAdjustControls(!showAdjustControls)}
-              title="Căn chỉnh vị trí & kích cỡ áo"
-              style={{
-                background: showAdjustControls ? '#f6cf70' : 'rgba(0,0,0,0.65)',
-                color: showAdjustControls ? '#17130a' : '#fff',
-                border: '1px solid rgba(246,207,112,0.4)',
-                borderRadius: 'var(--radius-full)',
-                padding: '4px 10px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                backdropFilter: 'blur(8px)',
+            {/* Nếu là áo custom của người dùng tải lên */}
+            {isCustomTop && (
+              <div style={{
+                position: 'absolute',
+                top: selectedGender === 'Nam' ? '18%' : '20%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: selectedGender === 'Nam' ? '56%' : '52%',
+                zIndex: 10,
+                pointerEvents: 'none',
                 display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}
-            >
-              ⚙️ Căn chỉnh áo
-            </button>
+                justifyContent: 'center',
+                filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
+              }}>
+                <img
+                  src={top.imageUrl}
+                  alt={top.name}
+                  style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+
+            {/* Nếu người dùng chọn quần đen: Phủ quần đen lên chân người mẫu (thay vì đổi áo sang sơ mi trắng) */}
+            {isBlackPants && bottom?.imageUrl && (
+              <div style={{
+                position: 'absolute',
+                top: selectedGender === 'Nam' ? '46%' : '48%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: selectedGender === 'Nam' ? '54%' : '50%',
+                zIndex: 9,
+                pointerEvents: 'none',
+                display: 'flex',
+                justifyContent: 'center',
+                filter: 'drop-shadow(0 14px 24px rgba(0,0,0,0.75)) contrast(1.04)'
+              }}>
+                <img
+                  src={bottom.imageUrl}
+                  alt={bottom.name}
+                  style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                />
+              </div>
+            )}
           </div>
         )}
-
-        {/* Thanh công cụ tinh chỉnh vị trí Y và Scale áo */}
-        {isCustomTop && showAdjustControls && !aiGeneratedModelImage && (
-          <div style={{
-            position: 'absolute',
-            bottom: 44,
-            left: 12,
-            right: 12,
-            background: 'rgba(15, 18, 26, 0.92)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(246, 207, 112, 0.35)',
-            borderRadius: 12,
-            padding: '10px 14px',
-            zIndex: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.72rem', color: '#f6cf70', fontWeight: 800 }}>CĂN CHỈNH FORM ÁO</span>
-              <button
-                type="button"
-                onClick={() => { setAdjustTopY(0); setScaleTop(1); }}
-                style={{
-                  background: 'transparent',
-                  border: 0,
-                  color: 'var(--text-muted)',
-                  fontSize: '0.68rem',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
-                }}
-              >
-                Mặc định
-              </button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.7rem' }}>
-              <span style={{ minWidth: 50, color: 'var(--text-secondary)' }}>Vị trí:</span>
-              <input
-                type="range"
-                min="-30"
-                max="30"
-                value={adjustTopY}
-                onChange={(e) => setAdjustTopY(Number(e.target.value))}
-                style={{ flex: 1, accentColor: '#f6cf70', cursor: 'pointer' }}
-              />
-              <span style={{ minWidth: 32, textAlign: 'right', color: '#fff' }}>{adjustTopY}px</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.7rem' }}>
-              <span style={{ minWidth: 50, color: 'var(--text-secondary)' }}>Kích cỡ:</span>
-              <input
-                type="range"
-                min="0.8"
-                max="1.25"
-                step="0.02"
-                value={scaleTop}
-                onChange={(e) => setScaleTop(Number(e.target.value))}
-                style={{ flex: 1, accentColor: '#f6cf70', cursor: 'pointer' }}
-              />
-              <span style={{ minWidth: 32, textAlign: 'right', color: '#fff' }}>{Math.round(scaleTop * 100)}%</span>
-            </div>
-          </div>
-        )}
-
-        {/* Hiệu ứng quét tia Laser AI Scanner khi bấm Thử đồ AI */}
-        {isAiProcessing && (
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, transparent 30%, rgba(246, 207, 112, 0.18) 50%, rgba(246, 207, 112, 0.45) 51%, transparent 55%)',
-            animation: 'aiScannerMove 1.5s infinite linear',
-            pointerEvents: 'none',
-            zIndex: 20
-          }} />
-        )}
-
-        <style>{`
-          @keyframes aiScannerMove {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-          }
-        `}</style>
       </div>
     </div>
   );
