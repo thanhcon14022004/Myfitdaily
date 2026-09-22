@@ -126,7 +126,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Đảm bảo các cột thông số cơ thể tồn tại trong PostgreSQL Supabase (chạy ngầm để không block khởi động server)
+// Đảm bảo các cột thông số cơ thể và trang phục tồn tại trong PostgreSQL Supabase (chạy ngầm để không block khởi động server)
 _ = Task.Run(async () =>
 {
     try
@@ -147,6 +147,12 @@ _ = Task.Run(async () =>
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionPeriod"" character varying(20);
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Brand"" character varying(100);
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Size"" character varying(20);
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Price"" numeric;
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""PriceFormatted"" character varying(50);
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""AffiliateUrl"" text;
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""OriginalUrl"" text;
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Platform"" character varying(50);
+            ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""IsAffiliate"" boolean NOT NULL DEFAULT false;
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""ImageUrl"" TYPE text;
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""Description"" TYPE text;
         ");
@@ -161,4 +167,3 @@ _ = Task.Run(async () =>
 });
 
 app.Run();
-
