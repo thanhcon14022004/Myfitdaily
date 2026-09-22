@@ -109,58 +109,58 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     const geminiKey = geminiApiKey || localStorage.getItem('myfitdaily_gemini_key');
     const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
 
-    setTryOnState({ loading: true, message: 'Model AI đang phân tích trang phục và render người mẫu 8K…' });
+    setTryOnState({ loading: true, message: 'AI IDM-VTON đang dệt trang phục thật lên người mẫu… (~8-12s)' });
 
     try {
-      let res;
-      if (geminiKey) {
-        res = await fetch('/api/ai/gemini-virtual-try-on', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Gemini-Key': geminiKey
-          },
-          body: JSON.stringify({
-            gender: isFemale ? 'Nữ' : 'Nam',
-            topName: selection.top?.name || '',
-            topDescription: selection.top?.description || selection.top?.name || '',
-            topImageUrl: selection.top?.imageUrl || '',
-            bottomName: selection.bottom?.name || '',
-            bottomDescription: selection.bottom?.description || selection.bottom?.name || '',
-            bottomImageUrl: selection.bottom?.imageUrl || '',
-            shoesName: selection.shoes?.name || '',
-            shoesDescription: selection.shoes?.description || selection.shoes?.name || ''
-          })
-        });
-      } else {
-        // Free AI Virtual Try-on Engine (FLUX.1)
-        res = await fetch('/api/ai/free-virtual-try-on', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            gender: isFemale ? 'Nữ' : 'Nam',
-            topName: selection.top?.name || '',
-            topDescription: selection.top?.description || selection.top?.name || '',
-            bottomName: selection.bottom?.name || '',
-            bottomDescription: selection.bottom?.description || selection.bottom?.name || '',
-            shoesName: selection.shoes?.name || '',
-            shoesDescription: selection.shoes?.description || selection.shoes?.name || ''
-          })
-        });
+      // 1. Ưu tiên gọi Model Thử Đồ Thật IDM-VTON (100% Free qua Hugging Face ZeroGPU)
+      let res = await fetch('/api/ai/idm-vton-try-on', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender: isFemale ? 'Nữ' : 'Nam',
+          topName: selection.top?.name || '',
+          topImageUrl: selection.top?.imageUrl || '',
+          bottomName: selection.bottom?.name || '',
+          bottomImageUrl: selection.bottom?.imageUrl || '',
+          shoesName: selection.shoes?.name || ''
+        })
+      });
+
+      let data = await res.json();
+      if (res.ok && data?.data?.imageUrl) {
+        setAiGeneratedImage(data.data.imageUrl);
+        setTryOnState({ loading: false, message: `✓ Hoàn tất thử đồ thật bằng ${data.data.model || 'IDM-VTON'}!` });
+        setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
+        return;
       }
 
-      const data = await res.json();
+      // 2. Dự phòng: Free Virtual Try-on Engine
+      res = await fetch('/api/ai/free-virtual-try-on', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gender: isFemale ? 'Nữ' : 'Nam',
+          topName: selection.top?.name || '',
+          topImageUrl: selection.top?.imageUrl || '',
+          bottomName: selection.bottom?.name || '',
+          bottomImageUrl: selection.bottom?.imageUrl || '',
+          shoesName: selection.shoes?.name || ''
+        })
+      });
+
+      data = await res.json();
       if (res.ok && data?.data?.imageUrl) {
         setAiGeneratedImage(data.data.imageUrl);
         setTryOnState({ loading: false, message: `✓ Hoàn tất tạo mẫu bằng ${data.data.model || 'AI'}!` });
         setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-      } else {
-        // Fallback an toàn sang ảnh Studio mẫu thật chất lượng cao nội bộ
-        const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
-        setAiGeneratedImage(fallback);
-        setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
-        setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
+        return;
       }
+
+      // Fallback an toàn sang ảnh Studio mẫu thật chất lượng cao nội bộ
+      const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';
+      setAiGeneratedImage(fallback);
+      setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục cùng người mẫu Studio!' });
+      setTimeout(() => setTryOnState({ loading: false, message: '' }), 3500);
     } catch (err) {
       console.warn('AI Try-on fallback:', err);
       const fallback = isFemale ? '/assets/fits/model_female_pants_dark.jpg' : '/assets/fits/model_male_pants_dark.jpg';

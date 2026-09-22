@@ -245,4 +245,139 @@ public class AiController : ControllerBase
             return Ok(ApiResponse<object>.Ok(new { imageUrl = fallback, prompt, model = "Studio Lookbook" }, "Tạo ảnh người mẫu thời trang AI thành công!"));
         }
     }
+
+    [HttpPost("idm-vton-try-on")]
+    public async Task<IActionResult> IdmVtonTryOn([FromBody] GeminiTryOnRequestDto request)
+    {
+        var isMale = (request.Gender?.Equals("Nam", StringComparison.OrdinalIgnoreCase) == true)
+                  || (request.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true);
+
+        var garmentUrl = request.TopImageUrl;
+        if (string.IsNullOrWhiteSpace(garmentUrl))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn một món áo trong tủ đồ để thử!"));
+        }
+
+        try
+        {
+            var client = _httpClients.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(60);
+
+            // 1. Lấy dữ liệu ảnh áo (local hoặc URL)
+            byte[] garmentBytes;
+            string garmentFileName = "garment.png";
+            if (garmentUrl.StartsWith("/assets/") || garmentUrl.StartsWith("assets/"))
+            {
+                var rel = garmentUrl.TrimStart('/');
+                var localPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "frontend", "public", rel);
+                if (!System.IO.File.Exists(localPath))
+                {
+                    localPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", rel);
+                }
+                garmentBytes = await System.IO.File.ReadAllBytesAsync(localPath);
+                garmentFileName = Path.GetFileName(localPath);
+            }
+            else
+            {
+                garmentBytes = await client.GetByteArrayAsync(garmentUrl);
+            }
+
+            // 2. Lấy dữ liệu ảnh người mẫu chuẩn của Fits
+            var modelRel = isMale ? "assets/fits/fits_model_male.png" : "assets/fits/model_female_clean.png";
+            var modelPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "frontend", "public", modelRel);
+            if (!System.IO.File.Exists(modelPath))
+            {
+                modelPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "frontend", "public", "assets", "fits", "fits_model_male.png");
+            }
+            var modelBytes = await System.IO.File.ReadAllBytesAsync(modelPath);
+
+            // 3. Upload cả 2 ảnh lên Hugging Face IDM-VTON
+            var uploadUrl = "https://yisol-idm-vton.hf.space/upload";
+            string modelServerPath, garmentServerPath;
+
+            using (var modelContent = new MultipartFormDataContent())
+            {
+                modelContent.Add(new ByteArrayContent(modelBytes), "files", "model.png");
+                var mRes = await client.PostAsync(uploadUrl, modelContent);
+                var mJson = await mRes.Content.ReadAsStringAsync();
+                using var mDoc = JsonDocument.Parse(mJson);
+                modelServerPath = mDoc.RootElement[0].GetString()!;
+            }
+
+            using (var garmContent = new MultipartFormDataContent())
+            {
+                garmContent.Add(new ByteArrayContent(garmentBytes), "files", garmentFileName);
+                var gRes = await client.PostAsync(uploadUrl, garmContent);
+                var gJson = await gRes.Content.ReadAsStringAsync();
+                using var gDoc = JsonDocument.Parse(gJson);
+                garmentServerPath = gDoc.RootElement[0].GetString()!;
+            }
+
+            // 4. Gọi endpoint /call/tryon
+            var callUrl = "https://yisol-idm-vton.hf.space/call/tryon";
+            var tryonPayload = new
+            {
+                data = new object[]
+                {
+                    new
+                    {
+                        background = new { path = modelServerPath },
+                        layers = Array.Empty<object>(),
+                        composite = (object?)null
+                    },
+                    new { path = garmentServerPath },
+                    request.TopName ?? "garment",
+                    true,  // auto-masking
+                    false, // is_checked_crop
+                    25,    // denoise_steps
+                    42     // seed
+                }
+            };
+
+            var callRes = await client.PostAsync(callUrl, new StringContent(JsonSerializer.Serialize(tryonPayload), Encoding.UTF8, "application/json"));
+            var callBody = await callRes.Content.ReadAsStringAsync();
+            using var callDoc = JsonDocument.Parse(callBody);
+            var eventId = callDoc.RootElement.GetProperty("event_id").GetString();
+
+            // 5. Đọc SSE stream
+            var streamUrl = $"https://yisol-idm-vton.hf.space/call/tryon/{eventId}";
+            using var streamRes = await client.GetAsync(streamUrl, HttpCompletionOption.ResponseHeadersRead);
+            using var streamReader = new StreamReader(await streamRes.Content.ReadAsStreamAsync());
+
+            string? finalImageUrl = null;
+            string? line;
+            while ((line = await streamReader.ReadLineAsync()) != null)
+            {
+                if (line.StartsWith("data: "))
+                {
+                    var dataStr = line.Substring(6);
+                    if (dataStr.StartsWith("[") && dataStr.Contains("\"url\":"))
+                    {
+                        using var resDoc = JsonDocument.Parse(dataStr);
+                        if (resDoc.RootElement.GetArrayLength() > 0)
+                        {
+                            var firstObj = resDoc.RootElement[0];
+                            if (firstObj.TryGetProperty("url", out var u))
+                            {
+                                finalImageUrl = u.GetString();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(finalImageUrl))
+            {
+                var resBytes = await client.GetByteArrayAsync(finalImageUrl);
+                var b64 = Convert.ToBase64String(resBytes);
+                return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:image/png;base64,{b64}", model = "IDM-VTON (Hugging Face ZeroGPU)" }, "Thử đồ thực tế thành công bằng AI IDM-VTON!"));
+            }
+
+            return BadRequest(ApiResponse<object>.Fail("Không nhận được kết quả từ server AI. Vui lòng thử lại sau giây lát!"));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.Fail($"Lỗi khi gọi IDM-VTON: {ex.Message}"));
+        }
+    }
 }

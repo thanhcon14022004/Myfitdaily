@@ -232,11 +232,27 @@ export default function VirtualMannequin({
           <span>{viewMode === 'fits' ? '✨ Bàn Phối Đồ Chuẩn Fits' : '✨ Người Mẫu Studio 8K'}</span>
         </div>
 
-        {/* ======================================================== */}
-        {/* CHẾ ĐỘ 1: FITS DIGITAL CANVAS (ĐỒ THẬT CHUẨN XÁC 100%, 0MS DELAY) */}
-        {/* ======================================================== */}
-        {viewMode === 'fits' && (
-          <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+        {/* NẾU ĐÃ CÓ ẢNH THỬ ĐỒ THẬT TỪ IDM-VTON */}
+        {aiGeneratedModelImage ? (
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <img
+              src={aiGeneratedModelImage}
+              alt="AI Try-On Result"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                objectPosition: 'center'
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* ======================================================== */}
+            {/* CHẾ ĐỘ 1: FITS DIGITAL CANVAS (ĐỒ THẬT CHUẨN XÁC 100%, 0MS DELAY) */}
+            {/* ======================================================== */}
+            {viewMode === 'fits' && (
+              <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
             {/* Khung silhouette ma-nơ-canh mờ tối giản phía sau tạo form người mẫu thanh lịch */}
             <img
               src={activeModel.mannequinImage}
@@ -448,7 +464,9 @@ export default function VirtualMannequin({
             )}
           </div>
         )}
-      </div>
+      </>
+    )}
+  </div>
     </div>
   );
 }
