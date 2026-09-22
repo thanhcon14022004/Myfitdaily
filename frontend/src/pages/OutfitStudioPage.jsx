@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Check, RotateCcw, Save, Sparkles, UserRound, Wand2, Key, X, ShieldCheck } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, UserRound, Wand2, Key, X, ShieldCheck, Cpu } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
@@ -105,17 +105,43 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
   };
 
+  const [colabUrl, setColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
+  const [tempColabUrl, setTempColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
+
+  const handleSaveColabUrl = () => {
+    const trimmed = tempColabUrl.trim().replace(/\/$/, '');
+    setColabUrl(trimmed);
+    if (trimmed) {
+      localStorage.setItem('myfitdaily_colab_url', trimmed);
+      setTryOnState({ loading: false, message: '✓ Đã kết nối GPU Server Google Colab riêng!' });
+    } else {
+      localStorage.removeItem('myfitdaily_colab_url');
+      setTryOnState({ loading: false, message: '✓ Đã chuyển về AI Server miễn phí mặc định.' });
+    }
+    setShowKeyModal(false);
+    setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
+  };
+
   const handleTriggerAiTryOn = async () => {
-    const geminiKey = geminiApiKey || localStorage.getItem('myfitdaily_gemini_key');
     const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
 
-    setTryOnState({ loading: true, message: 'AI IDM-VTON đang dệt trang phục thật lên người mẫu… (~8-12s)' });
+    setTryOnState({
+      loading: true,
+      message: colabUrl 
+        ? 'Server Colab riêng đang dệt trang phục thật lên người mẫu… (~4-6s)'
+        : 'AI IDM-VTON đang dệt trang phục thật lên người mẫu… (~8-12s)'
+    });
 
     try {
-      // 1. Ưu tiên gọi Model Thử Đồ Thật IDM-VTON (100% Free qua Hugging Face ZeroGPU)
+      const headers = { 'Content-Type': 'application/json' };
+      if (colabUrl) {
+        headers['X-Colab-Url'] = colabUrl;
+      }
+
+      // 1. Ưu tiên gọi Model Thử Đồ Thật (IDM-VTON / Colab GPU)
       let res = await fetch('/api/ai/idm-vton-try-on', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           gender: isFemale ? 'Nữ' : 'Nam',
           topName: selection.top?.name || '',
@@ -291,6 +317,28 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                 >
                   <Wand2 size={13} style={{ color: '#f6cf70' }} />
                   <span>{tryOnState.loading ? 'Đang tạo…' : 'Thử AI 8K'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowKeyModal(true)}
+                  title="Cấu hình AI Server hoặc Google Colab GPU"
+                  style={{
+                    border: colabUrl ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255,255,255,0.14)',
+                    borderRadius: 9,
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    background: colabUrl ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255,255,255,0.06)',
+                    color: colabUrl ? '#38bdf8' : '#fff',
+                    fontWeight: 600,
+                    fontSize: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5
+                  }}
+                >
+                  <Cpu size={13} style={{ color: colabUrl ? '#38bdf8' : '#f6cf70' }} />
+                  <span>{colabUrl ? '🟢 Colab GPU' : 'Cấu hình AI'}</span>
                 </button>
               </div>
 
@@ -493,7 +541,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         </aside>
       </div>
 
-      {/* MODAL CẤU HÌNH GOOGLE GEMINI (IMAGEN 3) API KEY */}
+      {/* MODAL CẤU HÌNH AI SERVER & GOOGLE COLAB */}
       {showKeyModal && (
         <div style={{
           position: 'fixed',
@@ -510,15 +558,15 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             background: 'linear-gradient(145deg, #161922, #0d0f15)',
             border: '1px solid rgba(246, 207, 112, 0.35)',
             borderRadius: 16,
-            maxWidth: 480,
+            maxWidth: 520,
             width: '100%',
             padding: 24,
             boxShadow: '0 20px 50px rgba(0,0,0,0.85)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f6cf70', fontWeight: 800, fontSize: 16 }}>
-                <Sparkles size={18} />
-                <span>Render AI: Google Gemini (Imagen)</span>
+                <Cpu size={20} />
+                <span>Cấu Hình AI Server Thử Đồ (Virtual Try-On)</span>
               </div>
               <button
                 type="button"
@@ -529,88 +577,157 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 14 }}>
-              Để AI tự động vẽ và render người mẫu thật diện nguyên set đồ với ánh sáng studio 8K, vui lòng nhập <strong>Google Gemini API Key</strong>.
-            </p>
-
+            {/* TAB / PHẦN 1: GOOGLE COLAB T4 GPU RIÊNG */}
             <div style={{
-              background: 'rgba(246, 207, 112, 0.08)',
-              border: '1px solid rgba(246, 207, 112, 0.2)',
-              borderRadius: 10,
-              padding: '10px 12px',
-              fontSize: 12,
-              marginBottom: 16,
-              color: '#f6cf70'
+              background: 'rgba(56, 189, 248, 0.08)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 16
             }}>
-              💡 Bạn có thể tạo API Key hoàn toàn miễn phí tại{' '}
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noreferrer"
-                style={{ color: '#fff', textDecoration: 'underline', fontWeight: 700 }}
-              >
-                Google AI Studio (aistudio.google.com)
-              </a>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 700, fontSize: 13 }}>
+                  <span>⚡ Máy Chủ Google Colab T4 GPU (Miễn phí 100%)</span>
+                </div>
+                {colabUrl ? (
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'rgba(74,222,128,0.2)', color: '#86efac', fontWeight: 700 }}>
+                    🟢 Đã kết nối
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#bbb' }}>
+                    ⚪ Chưa kết nối
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 10px 0' }}>
+                Chạy file <code>MyFitDaily_Virtual_TryOn_Colab.ipynb</code> trên Google Colab với GPU Tesla T4 (16GB VRAM) hoàn toàn miễn phí, sau đó dán link Cloudflare vào đây:
+              </p>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  placeholder="https://xxxx.trycloudflare.com"
+                  value={tempColabUrl}
+                  onChange={(e) => setTempColabUrl(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(0,0,0,0.5)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    borderRadius: 8,
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: 12.5,
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveColabUrl}
+                  style={{
+                    background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
+                    border: 0,
+                    color: '#fff',
+                    borderRadius: 8,
+                    padding: '8px 14px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Lưu & Kết Nối
+                </button>
+              </div>
+              {colabUrl && (
+                <button
+                  type="button"
+                  onClick={() => { setTempColabUrl(''); setColabUrl(''); localStorage.removeItem('myfitdaily_colab_url'); }}
+                  style={{ marginTop: 6, background: 'transparent', border: 0, color: '#f87171', fontSize: 11, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Ngắt kết nối Colab
+                </button>
+              )}
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
-                Gemini API Key (AIzaSy...):
+            {/* PHẦN 2: DỰ PHÒNG GOOGLE GEMINI HOẶC ZERO GPU */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 16
+            }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#f6cf70', marginBottom: 6 }}>
+                Dự phòng: Gemini API Key (Không bắt buộc)
               </label>
-              <input
-                type="password"
-                placeholder="AIzaSy..."
-                value={tempGeminiKey}
-                onChange={(e) => setTempGeminiKey(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 8,
-                  padding: '10px 12px',
-                  color: '#fff',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                Key được lưu an toàn trong máy cá nhân (localStorage) và gửi trực tiếp qua Header bảo mật.
-              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="password"
+                  placeholder="AIzaSy..."
+                  value={tempGeminiKey}
+                  onChange={(e) => setTempGeminiKey(e.target.value)}
+                  style={{
+                    flex: 1,
+                    background: 'rgba(0,0,0,0.4)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 8,
+                    padding: '8px 12px',
+                    color: '#fff',
+                    fontSize: 12,
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveApiKey}
+                  style={{
+                    background: 'rgba(246, 207, 112, 0.2)',
+                    border: '1px solid rgba(246, 207, 112, 0.4)',
+                    color: '#f6cf70',
+                    borderRadius: 8,
+                    padding: '8px 14px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Lưu Key
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
               <button
                 type="button"
                 onClick={handleUseFreeAi}
                 style={{
-                  background: 'rgba(246, 207, 112, 0.15)',
-                  border: '1px solid rgba(246, 207, 112, 0.4)',
-                  color: '#f6cf70',
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.18)',
+                  color: 'var(--text-secondary)',
                   borderRadius: 8,
-                  padding: '8px 14px',
+                  padding: '7px 14px',
                   fontSize: 12,
-                  fontWeight: 700,
                   cursor: 'pointer'
                 }}
               >
-                ✨ Dùng AI Miễn Phí (FLUX.1)
+                Đặt lại về AI Server Mặc Định
               </button>
               <button
                 type="button"
-                onClick={handleSaveApiKey}
+                onClick={() => setShowKeyModal(false)}
                 style={{
-                  background: 'linear-gradient(135deg, #f6cf70, #c89536)',
+                  background: 'rgba(255, 255, 255, 0.1)',
                   border: 0,
-                  color: '#17130a',
+                  color: '#fff',
                   borderRadius: 8,
-                  padding: '8px 18px',
-                  fontSize: 13,
-                  fontWeight: 800,
+                  padding: '7px 18px',
+                  fontSize: 12,
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Lưu Gemini Key
+                Đóng
               </button>
             </div>
           </div>

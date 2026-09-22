@@ -291,7 +291,43 @@ public class AiController : ControllerBase
             }
             var modelBytes = await System.IO.File.ReadAllBytesAsync(modelPath);
 
-            // 3. Upload cả 2 ảnh lên Hugging Face IDM-VTON
+            // NẾU CÓ CẤU HÌNH SERVER GOOGLE COLAB RIÊNG: Gửi thẳng sang GPU Colab của người dùng
+            string? colabUrl = null;
+            if (Request.Headers.TryGetValue("X-Colab-Url", out var headerVal) && !string.IsNullOrWhiteSpace(headerVal))
+            {
+                colabUrl = headerVal.ToString().Trim().TrimEnd('/');
+            }
+
+            if (!string.IsNullOrWhiteSpace(colabUrl))
+            {
+                try
+                {
+                    using var colabClient = _httpClients.CreateClient();
+                    colabClient.Timeout = TimeSpan.FromSeconds(30);
+
+                    using var form = new MultipartFormDataContent();
+                    form.Add(new ByteArrayContent(modelBytes), "person_image", "model.png");
+                    form.Add(new ByteArrayContent(garmentBytes), "garment_image", garmentFileName);
+                    form.Add(new StringContent("upper_body"), "category");
+
+                    var colabRes = await colabClient.PostAsync($"{colabUrl}/tryon", form);
+                    if (colabRes.IsSuccessStatusCode)
+                    {
+                        var colabJson = await colabRes.Content.ReadAsStringAsync();
+                        using var colabDoc = JsonDocument.Parse(colabJson);
+                        if (colabDoc.RootElement.TryGetProperty("image_url", out var imgProp))
+                        {
+                            return Ok(ApiResponse<object>.Ok(new { imageUrl = imgProp.GetString(), model = "CatVTON (Google Colab GPU T4 Riêng)" }, "Thử đồ thành công từ Server Colab riêng của bạn!"));
+                        }
+                    }
+                }
+                catch (Exception colabEx)
+                {
+                    Console.WriteLine($"[Colab Server Notice] {colabEx.Message}, tự động chuyển sang Hugging Face...");
+                }
+            }
+
+            // 3. MẶC ĐỊNH HOẶC DỰ PHÒNG: Upload cả 2 ảnh lên Hugging Face IDM-VTON
             var uploadUrl = "https://yisol-idm-vton.hf.space/upload";
             string modelServerPath, garmentServerPath;
 
