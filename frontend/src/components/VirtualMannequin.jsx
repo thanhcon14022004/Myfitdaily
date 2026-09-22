@@ -12,7 +12,8 @@ const REAL_MODELS = [
     name: 'Mẫu Nam',
     heightStr: '1m78',
     sweatImage: '/assets/fits/model_male_sweat_dark.jpg',
-    tankImage: '/assets/fits/model_male_tank_dark.jpg'
+    tankImage: '/assets/fits/model_male_tank_dark.jpg',
+    shirtImage: '/assets/fits/model_male_shirt_dark.jpg'
   },
   {
     id: 'female',
@@ -20,7 +21,8 @@ const REAL_MODELS = [
     name: 'Mẫu Nữ',
     heightStr: '1m65',
     sweatImage: '/assets/fits/model_female_sweat_dark.jpg',
-    tankImage: '/assets/fits/model_female_tank_dark.jpg'
+    tankImage: '/assets/fits/model_female_tank_dark.jpg',
+    shirtImage: '/assets/fits/model_female_shirt_dark.jpg'
   }
 ];
 
@@ -48,12 +50,23 @@ export default function VirtualMannequin({
 
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
 
-  // Kiểm tra áo đang chọn để hiển thị người mẫu mặc áo tương ứng
-  const isTankTop = top?.name?.toLowerCase().includes('ba lỗ') || 
-                    top?.name?.toLowerCase().includes('tank') ||
-                    top?.id === 201;
+  // Kiểm tra phân loại áo đang chọn để hiển thị người mẫu mặc áo tương ứng
+  const topName = (top?.name || '').toLowerCase();
+  const isTankTop = topName.includes('ba lỗ') || topName.includes('tank') || top?.id === 201;
+  const isShirt = topName.includes('sơ mi') || topName.includes('shirt') || topName.includes('thiết kế') || topName.includes('oxford') || top?.id === 205;
+  const isSweat = topName.includes('sweatshirt') || topName.includes('frozen') || top?.id === 202;
 
-  const currentModelImage = isTankTop ? activeModel.tankImage : activeModel.sweatImage;
+  let currentModelImage = activeModel.sweatImage;
+  if (isTankTop) {
+    currentModelImage = activeModel.tankImage;
+  } else if (isShirt) {
+    currentModelImage = activeModel.shirtImage;
+  } else if (isSweat) {
+    currentModelImage = activeModel.sweatImage;
+  }
+
+  // Tự động nhận diện món đồ custom người dùng tải lên để apply dynamic overlay
+  const isCustomTop = top && !isTankTop && !isShirt && !isSweat && top.imageUrl;
 
   return (
     <div style={{
@@ -122,7 +135,7 @@ export default function VirtualMannequin({
         {/* Ảnh Người Mẫu Thật Mặc Quần Áo Đầy Đủ, Nét Căng */}
         <img
           key={currentModelImage}
-          src={currentModelImage}
+          src={isCustomTop ? activeModel.tankImage : currentModelImage}
           alt={activeModel.name}
           style={{
             width: '100%',
@@ -132,6 +145,32 @@ export default function VirtualMannequin({
             transition: 'opacity 0.25s ease'
           }}
         />
+
+        {/* Dynamic Garment Overlay cho bất kỳ món đồ custom nào người dùng tải lên */}
+        {isCustomTop && (
+          <div style={{
+            position: 'absolute',
+            top: selectedGender === 'Nam' ? '18%' : '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: selectedGender === 'Nam' ? '56%' : '52%',
+            zIndex: 10,
+            pointerEvents: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.65)) drop-shadow(0 2px 6px rgba(0,0,0,0.4))'
+          }}>
+            <img
+              src={top.imageUrl}
+              alt={top.name}
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
