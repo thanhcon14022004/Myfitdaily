@@ -501,93 +501,29 @@ export default function Sidebar({
             </>
           )}
 
-          {/* Thêm... (More: Khám phá, Thêm đồ nhanh) */}
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-              className="sidebar-nav-item"
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                background: moreMenuOpen ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                color: '#ECECEC',
-                fontSize: '0.88rem',
-                fontWeight: 500,
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <MoreHorizontal size={17} color="#B4B4B4" />
-              <span>{text('Thêm...', 'More...')}</span>
-            </button>
-
-            {/* More options popover */}
-            {moreMenuOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '10px',
-                  width: '210px',
-                  background: 'var(--bg-popover)',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: '12px',
-                  padding: '6px',
-                  boxShadow: 'var(--shadow-lg)',
-                  zIndex: 100,
-                }}
-                onMouseLeave={() => setMoreMenuOpen(false)}
-              >
-                <button
-                  onClick={() => { onOpenAddModal(); setMoreMenuOpen(false); }}
-                  className="sidebar-popover-item"
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    color: '#D4AF37',
-                    fontSize: '0.84rem',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <Plus size={15} />
-                  <span>{text('Thêm món đồ mới', 'Add New Garment')}</span>
-                </button>
-                <button
-                  onClick={() => { setCurrentTab('landing'); setMoreMenuOpen(false); }}
-                  className="sidebar-popover-item"
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    color: '#ECECEC',
-                    fontSize: '0.84rem',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <Compass size={15} />
-                  <span>{text('Khám phá giới thiệu', 'Explore Features')}</span>
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Khám phá giới thiệu */}
+          <button
+            onClick={() => setCurrentTab('landing')}
+            className={`sidebar-nav-item ${currentTab === 'landing' ? 'active' : ''}`}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              background: currentTab === 'landing' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              color: currentTab === 'landing' ? '#ECECEC' : 'var(--text-secondary)',
+              fontSize: '0.88rem',
+              fontWeight: currentTab === 'landing' ? 600 : 500,
+              border: 'none',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <Compass size={17} color="#B4B4B4" />
+            <span>{text('Khám phá giới thiệu', 'Explore Features')}</span>
+          </button>
         </div>
 
         {/* Scrollable Center Area: Chat History */}
