@@ -100,52 +100,102 @@ public class AiController : ControllerBase
 
         var prompt = request.CustomPrompt ?? $"High-end fashion editorial photography. Full length studio lookbook portrait of a {genderDesc}, standing full-body front facing against a minimalist dark charcoal luxury studio background with soft golden atmospheric rim lighting. The model is wearing: Top: {topDesc}. Bottom: {bottomDesc}. Footwear: {shoesDesc}. Photorealistic 8k, sharp focus, natural fabric drape and folds, elegant high fashion posture, clean aesthetic, magazine cover quality.";
 
-        var payload = new
+        var client = _httpClients.CreateClient();
+        client.DefaultRequestHeaders.TryAddWithoutValidation("x-goog-api-key", key);
+
+        // 1. Thử các model sinh ảnh mới nhất của Google Gemini (generateContent)
+        var imageModels = new[] { "gemini-2.5-flash-image", "gemini-3.1-flash-image", "gemini-3-pro-image" };
+        var generatePayload = new
         {
-            instances = new[]
+            contents = new[]
             {
-                new { prompt = prompt }
-            },
-            parameters = new
-            {
-                sampleCount = 1,
-                aspectRatio = "3:4"
+                new
+                {
+                    parts = new object[]
+                    {
+                        new { text = prompt }
+                    }
+                }
             }
         };
 
-        var client = _httpClients.CreateClient();
-        var url = $"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={Uri.EscapeDataString(key)}";
+        string? lastError = null;
 
-        var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
-        var body = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
+        foreach (var model in imageModels)
         {
             try
             {
-                using var errJson = JsonDocument.Parse(body);
-                if (errJson.RootElement.TryGetProperty("error", out var errObj) &&
-                    errObj.TryGetProperty("message", out var msgProp))
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={Uri.EscapeDataString(key)}";
+                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(generatePayload), Encoding.UTF8, "application/json"));
+                var body = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
                 {
-                    return StatusCode((int)response.StatusCode, ApiResponse<object>.Fail($"Lỗi từ Google Gemini Imagen: {msgProp.GetString()}"));
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0)
+                    {
+                        var parts = candidates[0].GetProperty("content").GetProperty("parts");
+                        foreach (var part in parts.EnumerateArray())
+                        {
+                            if (part.TryGetProperty("inlineData", out var inlineData))
+                            {
+                                var b64 = inlineData.GetProperty("data").GetString();
+                                var mime = inlineData.TryGetProperty("mimeType", out var m) ? m.GetString() : "image/jpeg";
+                                var dataUrl = $"data:{mime};base64,{b64}";
+                                return Ok(ApiResponse<object>.Ok(new { imageUrl = dataUrl, prompt, model }, "Tạo ảnh thử đồ thành công với Google Gemini!"));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        using var errDoc = JsonDocument.Parse(body);
+                        if (errDoc.RootElement.TryGetProperty("error", out var errObj) && errObj.TryGetProperty("message", out var msg))
+                        {
+                            lastError = msg.GetString();
+                        }
+                    }
+                    catch { lastError = body; }
+                }
+            }
+            catch (Exception ex)
+            {
+                lastError = ex.Message;
+            }
+        }
+
+        // 2. Dự phòng: Các model Imagen với predict method
+        var predictPayload = new
+        {
+            instances = new[] { new { prompt } },
+            parameters = new { sampleCount = 1, aspectRatio = "3:4" }
+        };
+        var predictModels = new[] { "imagen-3.0-generate-002", "imagen-3.0-fast-generate-001" };
+
+        foreach (var pModel in predictModels)
+        {
+            try
+            {
+                var pUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{pModel}:predict?key={Uri.EscapeDataString(key)}";
+                var pRes = await client.PostAsync(pUrl, new StringContent(JsonSerializer.Serialize(predictPayload), Encoding.UTF8, "application/json"));
+                var pBody = await pRes.Content.ReadAsStringAsync();
+
+                if (pRes.IsSuccessStatusCode)
+                {
+                    using var pDoc = JsonDocument.Parse(pBody);
+                    if (pDoc.RootElement.TryGetProperty("predictions", out var preds) && preds.GetArrayLength() > 0)
+                    {
+                        var b64 = preds[0].GetProperty("bytesBase64Encoded").GetString();
+                        var mime = preds[0].TryGetProperty("mimeType", out var m) ? m.GetString() : "image/jpeg";
+                        return Ok(ApiResponse<object>.Ok(new { imageUrl = $"data:{mime};base64,{b64}", prompt, model = pModel }, "Tạo ảnh thử đồ thành công!"));
+                    }
                 }
             }
             catch { }
-
-            return StatusCode((int)response.StatusCode, ApiResponse<object>.Fail($"Không thể kết nối Gemini API (Mã lỗi {(int)response.StatusCode}): {body}"));
         }
 
-        using var json = JsonDocument.Parse(body);
-        if (json.RootElement.TryGetProperty("predictions", out var predictions) && predictions.GetArrayLength() > 0)
-        {
-            var first = predictions[0];
-            var b64 = first.GetProperty("bytesBase64Encoded").GetString();
-            var mime = first.TryGetProperty("mimeType", out var m) ? m.GetString() : "image/jpeg";
-            var dataUrl = $"data:{mime};base64,{b64}";
-
-            return Ok(ApiResponse<object>.Ok(new { imageUrl = dataUrl, prompt }, "Tạo ảnh thử đồ thành công với Google Gemini Imagen 3!"));
-        }
-
-        return StatusCode(500, ApiResponse<object>.Fail("Google Gemini không trả về dữ liệu hình ảnh."));
+        return StatusCode(500, ApiResponse<object>.Fail($"Google Gemini: {lastError ?? "Tài khoản của bạn chưa kích hoạt tính năng sinh ảnh. Bạn có thể sử dụng chế độ 2D Dynamic Fit."}"));
     }
 }
