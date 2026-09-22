@@ -75,4 +75,77 @@ public class AiController : ControllerBase
         var body = await response.Content.ReadAsStringAsync();
         return response.IsSuccessStatusCode ? Content(body, "application/json") : StatusCode((int)response.StatusCode, body);
     }
+
+    [HttpPost("gemini-virtual-try-on")]
+    public async Task<IActionResult> StartGeminiVirtualTryOn([FromBody] GeminiTryOnRequestDto request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var key = Request.Headers["X-Gemini-Key"].FirstOrDefault()
+                  ?? _config["Ai:GeminiApiKey"]
+                  ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return StatusCode(503, ApiResponse<object>.Fail("Chưa cấu hình Google Gemini API Key. Vui lòng nhập Gemini API Key (lấy miễn phí tại aistudio.google.com)."));
+        }
+
+        var isMale = (request.Gender?.Equals("Nam", StringComparison.OrdinalIgnoreCase) == true)
+                  || (request.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true);
+        var genderDesc = isMale ? "handsome 22-year-old Vietnamese male fashion model" : "attractive 21-year-old Vietnamese female fashion model";
+
+        var topDesc = !string.IsNullOrWhiteSpace(request.TopName) ? request.TopName : "minimalist casual top";
+        var bottomDesc = !string.IsNullOrWhiteSpace(request.BottomName) ? request.BottomName : "tailored trousers";
+        var shoesDesc = !string.IsNullOrWhiteSpace(request.ShoesName) ? request.ShoesName : "clean matching sneakers";
+
+        var prompt = request.CustomPrompt ?? $"High-end fashion editorial photography. Full length studio lookbook portrait of a {genderDesc}, standing full-body front facing against a minimalist dark charcoal luxury studio background with soft golden atmospheric rim lighting. The model is wearing: Top: {topDesc}. Bottom: {bottomDesc}. Footwear: {shoesDesc}. Photorealistic 8k, sharp focus, natural fabric drape and folds, elegant high fashion posture, clean aesthetic, magazine cover quality.";
+
+        var payload = new
+        {
+            instances = new[]
+            {
+                new { prompt = prompt }
+            },
+            parameters = new
+            {
+                sampleCount = 1,
+                aspectRatio = "3:4"
+            }
+        };
+
+        var client = _httpClients.CreateClient();
+        var url = $"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={Uri.EscapeDataString(key)}";
+
+        var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+        var body = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            try
+            {
+                using var errJson = JsonDocument.Parse(body);
+                if (errJson.RootElement.TryGetProperty("error", out var errObj) &&
+                    errObj.TryGetProperty("message", out var msgProp))
+                {
+                    return StatusCode((int)response.StatusCode, ApiResponse<object>.Fail($"Lỗi từ Google Gemini Imagen: {msgProp.GetString()}"));
+                }
+            }
+            catch { }
+
+            return StatusCode((int)response.StatusCode, ApiResponse<object>.Fail($"Không thể kết nối Gemini API (Mã lỗi {(int)response.StatusCode}): {body}"));
+        }
+
+        using var json = JsonDocument.Parse(body);
+        if (json.RootElement.TryGetProperty("predictions", out var predictions) && predictions.GetArrayLength() > 0)
+        {
+            var first = predictions[0];
+            var b64 = first.GetProperty("bytesBase64Encoded").GetString();
+            var mime = first.TryGetProperty("mimeType", out var m) ? m.GetString() : "image/jpeg";
+            var dataUrl = $"data:{mime};base64,{b64}";
+
+            return Ok(ApiResponse<object>.Ok(new { imageUrl = dataUrl, prompt }, "Tạo ảnh thử đồ thành công với Google Gemini Imagen 3!"));
+        }
+
+        return StatusCode(500, ApiResponse<object>.Fail("Google Gemini không trả về dữ liệu hình ảnh."));
+    }
 }

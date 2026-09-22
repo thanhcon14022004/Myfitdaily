@@ -246,6 +246,29 @@ export default function VirtualMannequin({
           </div>
         )}
 
+        {/* AI Generated Badge */}
+        {aiGeneratedModelImage && (
+          <div style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.95), rgba(200, 149, 54, 0.95))',
+            color: '#12151f',
+            fontSize: '0.68rem',
+            fontWeight: 900,
+            padding: '4px 10px',
+            borderRadius: 'var(--radius-full)',
+            letterSpacing: '0.04em',
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            boxShadow: '0 4px 14px rgba(0,0,0,0.6)'
+          }}>
+            <span>✨ Gemini Imagen AI Render</span>
+          </div>
+        )}
+
         {/* Dynamic Fit Indicator Badge */}
         {(isCustomTop || isCustomBottom || isCustomShoes) && !aiGeneratedModelImage && (
           <div style={{

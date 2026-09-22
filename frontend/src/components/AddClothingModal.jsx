@@ -78,7 +78,7 @@ const POPULAR_COLORS = [
 ];
 
 // Phân tích hình ảnh: Nhận diện cả Màu Sắc và Phom Dáng (Áo hay Quần) qua HTML5 Canvas
-function analyzeImageProperties(imageUrl, filename = '') {
+function analyzeImageProperties(imageUrl, filename = '', isMale = true) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';

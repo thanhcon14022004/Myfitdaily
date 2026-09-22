@@ -25,9 +25,10 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const [tryOnState, setTryOnState] = useState({ loading: false, message: '' });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('myfitdaily_gemini_key') || '');
   const [fashnApiKey, setFashnApiKey] = useState(() => localStorage.getItem('myfitdaily_fashn_key') || '');
   const [showKeyModal, setShowKeyModal] = useState(false);
-  const [tempKeyInput, setTempKeyInput] = useState(() => localStorage.getItem('myfitdaily_fashn_key') || '');
+  const [tempGeminiKey, setTempGeminiKey] = useState(() => localStorage.getItem('myfitdaily_gemini_key') || '');
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
@@ -75,21 +76,66 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   };
 
   const handleSaveApiKey = () => {
-    const trimmed = tempKeyInput.trim();
-    setFashnApiKey(trimmed);
-    if (trimmed) {
-      localStorage.setItem('myfitdaily_fashn_key', trimmed);
+    const trimmedGemini = tempGeminiKey.trim();
+    setGeminiApiKey(trimmedGemini);
+    if (trimmedGemini) {
+      localStorage.setItem('myfitdaily_gemini_key', trimmedGemini);
     } else {
-      localStorage.removeItem('myfitdaily_fashn_key');
+      localStorage.removeItem('myfitdaily_gemini_key');
     }
     setShowKeyModal(false);
   };
 
   const handleTriggerAiTryOn = async () => {
-    const key = fashnApiKey || localStorage.getItem('myfitdaily_fashn_key');
+    const geminiKey = geminiApiKey || localStorage.getItem('myfitdaily_gemini_key');
+    const fashnKey = fashnApiKey || localStorage.getItem('myfitdaily_fashn_key');
 
-    // Nếu người dùng đã cài API Key FASHN và đang có áo chọn
-    if (key && selection.top?.imageUrl) {
+    // 1. Ưu tiên: Google Gemini (Imagen 3) Generative Fashion Model
+    if (geminiKey) {
+      setTryOnState({ loading: true, message: 'Đang kết nối Google Gemini (Imagen 3) để tạo ảnh người mẫu…' });
+      try {
+        const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
+        const res = await fetch('/api/ai/gemini-virtual-try-on', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Gemini-Key': geminiKey
+          },
+          body: JSON.stringify({
+            gender: isFemale ? 'Nữ' : 'Nam',
+            topName: selection.top?.name || '',
+            topDescription: selection.top?.description || selection.top?.name || '',
+            topImageUrl: selection.top?.imageUrl || '',
+            bottomName: selection.bottom?.name || '',
+            bottomDescription: selection.bottom?.description || selection.bottom?.name || '',
+            bottomImageUrl: selection.bottom?.imageUrl || '',
+            shoesName: selection.shoes?.name || '',
+            shoesDescription: selection.shoes?.description || selection.shoes?.name || ''
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data?.data?.imageUrl) {
+          setAiGeneratedImage(data.data.imageUrl);
+          setTryOnState({ loading: false, message: '✓ Google Gemini Imagen 3 đã render người mẫu thành công!' });
+          setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
+          return;
+        } else {
+          const errMsg = data?.message || data?.error || 'Lỗi khi gọi Google Gemini API';
+          setTryOnState({ loading: false, message: `Lỗi: ${errMsg}` });
+          setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
+          return;
+        }
+      } catch (err) {
+        console.error('Gemini error:', err);
+        setTryOnState({ loading: false, message: 'Không thể kết nối máy chủ Gemini. Đang dùng 2D Dynamic Fit.' });
+        setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
+        return;
+      }
+    }
+
+    // 2. Dự phòng: FASHN.ai VTON nếu có key
+    if (fashnKey && selection.top?.imageUrl) {
       setTryOnState({ loading: true, message: 'Đang kết nối FASHN.ai Diffusion để render người mẫu…' });
       try {
         const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
@@ -103,7 +149,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Fashn-Key': key
+            'X-Fashn-Key': fashnKey
           },
           body: JSON.stringify({
             modelImage: fullModelUrl,
@@ -128,7 +174,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             }
             try {
               const statusRes = await fetch(`/api/ai/virtual-try-on/${jobId}`, {
-                headers: { 'X-Fashn-Key': key }
+                headers: { 'X-Fashn-Key': fashnKey }
               });
               const statusData = await statusRes.json();
               if (statusData?.status === 'completed' && statusData?.output?.[0]) {
@@ -146,29 +192,14 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             }
           }, 2000);
           return;
-        } else {
-          // Key không hợp lệ hoặc lỗi
-          setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và khớp dáng người mẫu…' });
-          setTimeout(() => {
-            setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm thử 2D Dynamic!' });
-            setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
-          }, 1200);
         }
       } catch (err) {
-        setTryOnState({ loading: true, message: 'AI đang phân tích nếp vải và khớp dáng người mẫu…' });
-        setTimeout(() => {
-          setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm thử 2D Dynamic!' });
-          setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
-        }, 1200);
+        console.warn('Fashn error:', err);
       }
-    } else {
-      // Chế độ Dynamic 2D Fitting Scanner tức thì
-      setTryOnState({ loading: true, message: 'AI đang phân tích cấu trúc vải & khớp phom người mẫu…' });
-      setTimeout(() => {
-        setTryOnState({ loading: false, message: '✓ Đã hoàn tất ướm đồ lên người mẫu!' });
-        setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
-      }, 1200);
     }
+
+    // 3. Nếu chưa nhập API Key: Mở Modal để hướng dẫn nhập Google Gemini Key
+    setShowKeyModal(true);
   };
 
   return (
@@ -474,12 +505,12 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         </aside>
       </div>
 
-      {/* MODAL CẤU HÌNH FASHN API KEY */}
+      {/* MODAL CẤU HÌNH GOOGLE GEMINI (IMAGEN 3) API KEY */}
       {showKeyModal && (
         <div style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(0, 0, 0, 0.75)',
+          background: 'rgba(0, 0, 0, 0.78)',
           backdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
@@ -491,15 +522,15 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             background: 'linear-gradient(145deg, #161922, #0d0f15)',
             border: '1px solid rgba(246, 207, 112, 0.35)',
             borderRadius: 16,
-            maxWidth: 460,
+            maxWidth: 480,
             width: '100%',
             padding: 24,
-            boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+            boxShadow: '0 20px 50px rgba(0,0,0,0.85)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f6cf70', fontWeight: 800, fontSize: 16 }}>
-                <Key size={18} />
-                <span>Cấu hình AI Virtual Try-On</span>
+                <Sparkles size={18} />
+                <span>Render AI: Google Gemini (Imagen)</span>
               </div>
               <button
                 type="button"
@@ -510,20 +541,39 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               </button>
             </div>
 
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
-              Nhập <strong>FASHN API Key</strong> để render người mẫu mặc đồ thực tế bằng công nghệ AI Diffusion. 
-              Nếu để trống, ứng dụng sẽ chạy chế độ <strong>2D Dynamic Fitting</strong> tức thì với 0 chi phí API.
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 14 }}>
+              Để AI tự động vẽ và render người mẫu thật diện nguyên set đồ với ánh sáng studio 8K, vui lòng nhập <strong>Google Gemini API Key</strong>.
             </p>
+
+            <div style={{
+              background: 'rgba(246, 207, 112, 0.08)',
+              border: '1px solid rgba(246, 207, 112, 0.2)',
+              borderRadius: 10,
+              padding: '10px 12px',
+              fontSize: 12,
+              marginBottom: 16,
+              color: '#f6cf70'
+            }}>
+              💡 Bạn có thể tạo API Key hoàn toàn miễn phí tại{' '}
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#fff', textDecoration: 'underline', fontWeight: 700 }}
+              >
+                Google AI Studio (aistudio.google.com)
+              </a>
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 6 }}>
-                FASHN API Key:
+                Gemini API Key (AIzaSy...):
               </label>
               <input
                 type="password"
-                placeholder="fa-..."
-                value={tempKeyInput}
-                onChange={(e) => setTempKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                value={tempGeminiKey}
+                onChange={(e) => setTempGeminiKey(e.target.value)}
                 style={{
                   width: '100%',
                   background: 'rgba(0,0,0,0.4)',
@@ -537,26 +587,33 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                 }}
               />
               <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                Lưu an toàn trong bộ nhớ máy cá nhân (localStorage) và gửi trực tiếp qua Header bảo mật.
+                Key được lưu an toàn trong máy cá nhân (localStorage) và gửi trực tiếp qua Header bảo mật.
               </span>
             </div>
 
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => { setTempKeyInput(''); setFashnApiKey(''); localStorage.removeItem('myfitdaily_fashn_key'); setShowKeyModal(false); }}
+                onClick={() => {
+                  setShowKeyModal(false);
+                  setTryOnState({ loading: true, message: 'Đang áp dụng ướm thử 2D Dynamic tức thì…' });
+                  setTimeout(() => {
+                    setTryOnState({ loading: false, message: '✓ Đã đồng bộ trang phục lên người mẫu!' });
+                    setTimeout(() => setTryOnState({ loading: false, message: '' }), 2500);
+                  }, 800);
+                }}
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'var(--text-muted)',
+                  color: 'var(--text-secondary)',
                   borderRadius: 8,
                   padding: '8px 14px',
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                Xóa Key
+                Dùng 2D Fit (Không cần Key)
               </button>
               <button
                 type="button"
@@ -572,7 +629,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   cursor: 'pointer'
                 }}
               >
-                Lưu Cấu Hình
+                Lưu & Bắt Đầu Thử AI
               </button>
             </div>
           </div>
