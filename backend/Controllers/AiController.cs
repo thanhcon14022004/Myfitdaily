@@ -196,6 +196,28 @@ public class AiController : ControllerBase
             catch { }
         }
 
-        return StatusCode(500, ApiResponse<object>.Fail($"Google Gemini: {lastError ?? "Tài khoản của bạn chưa kích hoạt tính năng sinh ảnh. Bạn có thể sử dụng chế độ 2D Dynamic Fit."}"));
+        // 3. Fallback sang Free FLUX.1 Engine nếu tài khoản Gemini bị chạm quota limit
+        var seed = Random.Shared.Next(1000, 999999);
+        var fluxUrl = $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width=768&height=1024&seed={seed}&nologo=true&model=flux";
+        return Ok(ApiResponse<object>.Ok(new { imageUrl = fluxUrl, prompt, model = "FLUX.1-schnell (Free Tier)" }, "Tạo ảnh thử đồ thành công bằng AI FLUX!"));
+    }
+
+    [HttpPost("free-virtual-try-on")]
+    public IActionResult FreeVirtualTryOn([FromBody] GeminiTryOnRequestDto request)
+    {
+        var isMale = (request.Gender?.Equals("Nam", StringComparison.OrdinalIgnoreCase) == true)
+                  || (request.Gender?.Equals("Male", StringComparison.OrdinalIgnoreCase) == true);
+        var genderDesc = isMale ? "handsome 22-year-old Vietnamese male fashion model" : "attractive 21-year-old Vietnamese female fashion model";
+
+        var topDesc = !string.IsNullOrWhiteSpace(request.TopName) ? request.TopName : "stylish minimalist casual top";
+        var bottomDesc = !string.IsNullOrWhiteSpace(request.BottomName) ? request.BottomName : "tailored trousers";
+        var shoesDesc = !string.IsNullOrWhiteSpace(request.ShoesName) ? request.ShoesName : "clean matching sneakers";
+
+        var prompt = $"High-end fashion editorial lookbook photography. Full length studio portrait of a {genderDesc}, standing full-body front facing against a minimalist dark charcoal luxury studio background with soft golden rim lighting. The model is wearing: Top: {topDesc}. Bottom: {bottomDesc}. Footwear: {shoesDesc}. Photorealistic 8k, sharp focus, natural fabric drape and folds, elegant high fashion posture, clean aesthetic, magazine cover quality.";
+
+        var seed = Random.Shared.Next(1000, 999999);
+        var imageUrl = $"https://image.pollinations.ai/prompt/{Uri.EscapeDataString(prompt)}?width=768&height=1024&seed={seed}&nologo=true&model=flux";
+
+        return Ok(ApiResponse<object>.Ok(new { imageUrl, prompt, model = "FLUX.1-schnell" }, "Tạo ảnh người mẫu thời trang AI FLUX miễn phí thành công!"));
     }
 }
