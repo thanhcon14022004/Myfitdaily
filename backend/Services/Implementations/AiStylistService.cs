@@ -234,11 +234,14 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
         private static readonly List<AccompanyingOutfitDto> TRENDING_ONLINE_STYLES = TRENDING_ONLINE_STYLES_FEMALE;
 
-        public AiStylistService(ApplicationDbContext context, IConfiguration configuration, IFashionEcommerceTrendService trendService)
+        private readonly IAiTrainingService? _trainingService;
+
+        public AiStylistService(ApplicationDbContext context, IConfiguration configuration, IFashionEcommerceTrendService trendService, IAiTrainingService? trainingService = null)
         {
             _context = context;
             _configuration = configuration;
             _trendService = trendService;
+            _trainingService = trainingService;
         }
 
         public async Task<ApiResponse<AiRecommendResponseDto>> GenerateOutfitRecommendationAsync(int? userId, AiRecommendRequestDto request)
@@ -848,7 +851,8 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             var geminiApiKey = _configuration["Ai:GeminiApiKey"];
             if (!string.IsNullOrWhiteSpace(geminiApiKey))
             {
-                var geminiChatResult = await CallGeminiChatAsync(geminiApiKey, userMsg, request.History, pool, bodyProfileSummary, ecomTrendSummary, request.UserLocation, request.Temperature, request.WeatherCondition, isMale);
+                var trainedRulesPrompt = _trainingService != null ? await _trainingService.GetActiveRulesSystemPromptAsync() : null;
+                var geminiChatResult = await CallGeminiChatAsync(geminiApiKey, userMsg, request.History, pool, bodyProfileSummary, ecomTrendSummary, request.UserLocation, request.Temperature, request.WeatherCondition, isMale, trainedRulesPrompt);
                 if (geminiChatResult != null)
                 {
                     bool isFutureChatEvent = request.Timeframe?.Equals("FutureEvent", StringComparison.OrdinalIgnoreCase) == true || !string.IsNullOrWhiteSpace(request.EventNature);
@@ -967,7 +971,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 .Replace('đ', 'd').Replace('Đ', 'D');
         }
 
-        private static async Task<AiChatResponseDto?> CallGeminiChatAsync(string apiKey, string message, List<ChatMessageItemDto>? history, List<RecommendedClothingDto> pool, string? bodyInfo = null, string? ecomTrendInfo = null, string? userLocation = null, double? temperature = null, string? weatherCondition = null, bool isMale = false)
+        private static async Task<AiChatResponseDto?> CallGeminiChatAsync(string apiKey, string message, List<ChatMessageItemDto>? history, List<RecommendedClothingDto> pool, string? bodyInfo = null, string? ecomTrendInfo = null, string? userLocation = null, double? temperature = null, string? weatherCondition = null, bool isMale = false, string? trainedRulesPrompt = null)
         {
             try
             {
@@ -994,6 +998,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                                    "4. Nếu trong tủ đồ người dùng có món đồ phù hợp, hãy nhắc tên chính xác món đồ đó để hướng dẫn người dùng mặc ngay.\n" +
                                    "5. Tuyệt đối không trả lời các chủ đề ngoài lề thời trang. Không lan man về chỉ số y tế hay cân nặng; chỉ dùng thông tin thể trạng (nếu có) để gợi ý form quần áo tôn dáng.\n" +
                                    "6. QUY ĐỊNH BẮT BUỘC VỀ GIỚI TÍNH: Người dùng hiện tại là " + (isMale ? "NAM (Thời trang nam giới). BẮT BUỘC chỉ tư vấn các món đồ nam tính như sơ mi Oxford/kaki, polo pique, áo thun boxy, blazer/bomber nam, quần tây xếp ly, quần chinos, jeans ống đứng, loafer, sneaker nam. TUYỆT ĐỐI KHÔNG gợi ý váy, đầm, áo croptop, áo tiểu thư hay giày cao gót nữ cho người dùng nam!" : "NỮ (Thời trang phái đẹp).") + "\n" +
+                                   (!string.IsNullOrWhiteSpace(trainedRulesPrompt) ? $"{trainedRulesPrompt}\n" : "") +
                                    weatherPromptContext +
                                    (!string.IsNullOrWhiteSpace(bodyInfo) ? $"Thông tin vóc dáng người dùng (tham khảo để gợi ý form quần áo): {bodyInfo}.\n" : "") +
                                    (!string.IsNullOrWhiteSpace(ecomTrendInfo) ? $"Xu hướng thời trang TMĐT tham khảo: {ecomTrendInfo}.\n" : "") +

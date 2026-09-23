@@ -17,7 +17,8 @@ import {
   MoreHorizontal,
   Settings,
   Shield,
-  Link2
+  Link2,
+  BrainCircuit
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
@@ -268,6 +269,43 @@ export default function Sidebar({
                   letterSpacing: '0.02em'
                 }}>
                   ADMIN
+                </span>
+              </button>
+
+              {/* Huấn Luyện AI Stylist (AI Training Studio) */}
+              <button
+                onClick={() => setCurrentTab('ai-training')}
+                className={`sidebar-nav-item ${currentTab === 'ai-training' ? 'active' : ''}`}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  background: currentTab === 'ai-training' ? 'rgba(168, 85, 247, 0.22)' : 'transparent',
+                  color: currentTab === 'ai-training' ? '#FFFFFF' : '#ECECEC',
+                  fontSize: '0.88rem',
+                  fontWeight: currentTab === 'ai-training' ? 600 : 500,
+                  border: currentTab === 'ai-training' ? '1px solid rgba(168, 85, 247, 0.45)' : 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <BrainCircuit size={17} color={currentTab === 'ai-training' ? '#C084FC' : '#B4B4B4'} />
+                  <span>{text('Huấn Luyện AI Stylist', 'AI Training Studio')}</span>
+                </div>
+                <span style={{
+                  fontSize: '0.62rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  background: 'rgba(168, 85, 247, 0.25)',
+                  color: '#C084FC',
+                  fontWeight: 700,
+                  letterSpacing: '0.02em'
+                }}>
+                  TRAINING
                 </span>
               </button>
 

@@ -14,6 +14,7 @@ import AiStylistPage from './pages/AiStylistPage';
 import ProfilePage from './pages/ProfilePage';
 import PremiumPage from './pages/PremiumPage';
 import AdminPortalPage from './pages/AdminPortalPage';
+import AiTrainingStudioPage from './pages/AiTrainingStudioPage';
 
 import { apiRequest } from './api/apiClient';
 import { 
@@ -556,10 +557,18 @@ export default function App() {
               }}
             />
           )}
+
+          {currentTab === 'ai-training' && (
+            <AiTrainingStudioPage
+              user={user}
+              clothes={clothes}
+              onNavigate={setCurrentTab}
+            />
+          )}
         </main>
 
-        {/* Footer (hidden on ai-stylist and admin portal pages) */}
-        {currentTab !== 'ai-stylist' && currentTab !== 'admin' && (
+        {/* Footer (hidden on ai-stylist, admin portal and ai training pages) */}
+        {currentTab !== 'ai-stylist' && currentTab !== 'admin' && currentTab !== 'ai-training' && (
           <footer style={{
             background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
