@@ -7,6 +7,7 @@ using MYFITDAILY_EXE201_Group6.Data;
 using MYFITDAILY_EXE201_Group6.DTOs.Subscription;
 using MYFITDAILY_EXE201_Group6.DTOs.User;
 using MYFITDAILY_EXE201_Group6.Entities;
+using MYFITDAILY_EXE201_Group6.Services.Interfaces;
 
 namespace MYFITDAILY_EXE201_Group6.Controllers
 {
@@ -14,8 +15,6 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
     [Route("api/[controller]")]
     public class SubscriptionController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-
         public static readonly List<SubscriptionPlanDto> AVAILABLE_PLANS = new()
         {
             new SubscriptionPlanDto
@@ -84,9 +83,21 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             }
         };
 
-        public SubscriptionController(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly ISePayService _sePayService;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<SubscriptionController> _logger;
+
+        public SubscriptionController(
+            ApplicationDbContext context,
+            ISePayService sePayService,
+            IConfiguration configuration,
+            ILogger<SubscriptionController> logger)
         {
             _context = context;
+            _sePayService = sePayService;
+            _configuration = configuration;
+            _logger = logger;
         }
 
         private int? GetCurrentUserId()
@@ -268,6 +279,246 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             var planDisplayName = targetPlan == "PremiumPlus" ? "Premium Plus" : targetPlan;
             var cycleText = isYearly ? "theo Năm" : "theo Tháng";
             return Ok(ApiResponse<UserDto>.Ok(userDto, $"Chúc mừng bạn đã kích hoạt thành công gói {planDisplayName} ({cycleText})!"));
+        }
+
+        /// <summary>
+        /// Tạo đơn thanh toán SePay VietQR động với mã OrderCode duy nhất
+        /// </summary>
+        [HttpPost("create-payment")]
+        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentRequestDto request)
+        {
+            var userId = GetCurrentUserId() ?? 1;
+            var planId = request.PlanId.Trim();
+            bool isYearly = string.Equals(request.BillingCycle, "Yearly", StringComparison.OrdinalIgnoreCase);
+
+            decimal amount = 0;
+            string planDisplayName = planId;
+            if (planId.Equals("Premium", StringComparison.OrdinalIgnoreCase))
+            {
+                planId = "Premium";
+                planDisplayName = "Premium VIP";
+                amount = isYearly ? 499000 : 49000;
+            }
+            else if (planId.Equals("PremiumPlus", StringComparison.OrdinalIgnoreCase) ||
+                     planId.Equals("premium_plus", StringComparison.OrdinalIgnoreCase))
+            {
+                planId = "PremiumPlus";
+                planDisplayName = "Premium Plus VIP";
+                amount = isYearly ? 999000 : 99000;
+            }
+            else
+            {
+                return BadRequest(ApiResponse<object>.Fail("Gói không hợp lệ để tạo thanh toán."));
+            }
+
+            // Sinh mã đơn hàng duy nhất bắt đầu bằng MFD (ví dụ: MFD849201)
+            var random = new Random();
+            string orderCode;
+            int attempts = 0;
+            do
+            {
+                orderCode = $"MFD{random.Next(100000, 999999)}";
+                attempts++;
+            } while (await _context.PaymentTransactions.AnyAsync(p => p.OrderCode == orderCode) && attempts < 10);
+
+            var paymentTx = new PaymentTransaction
+            {
+                UserId = userId,
+                OrderCode = orderCode,
+                PlanId = planId,
+                BillingCycle = isYearly ? "Yearly" : "Monthly",
+                Amount = amount,
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.PaymentTransactions.Add(paymentTx);
+            await _context.SaveChangesAsync();
+
+            var bankName = _configuration["SePay:BankName"] ?? "ACB";
+            var accountNumber = _configuration["SePay:AccountNumber"] ?? "27655931";
+            var accountName = _configuration["SePay:AccountName"] ?? "HA TRUNG THANH";
+
+            // Chuẩn VietQR SePay động
+            var qrUrl = $"https://qr.sepay.vn/img?acc={accountNumber}&bank={bankName}&amount={Convert.ToInt64(amount)}&des={orderCode}";
+
+            var response = new CreatePaymentResponseDto
+            {
+                OrderCode = orderCode,
+                PlanId = planId,
+                PlanName = planDisplayName,
+                BillingCycle = isYearly ? "Yearly" : "Monthly",
+                Amount = amount,
+                BankName = bankName,
+                AccountNumber = accountNumber,
+                AccountName = accountName,
+                TransferContent = orderCode,
+                QrUrl = qrUrl,
+                CreatedAt = paymentTx.CreatedAt
+            };
+
+            return Ok(ApiResponse<CreatePaymentResponseDto>.Ok(response, "Khởi tạo mã thanh toán SePay VietQR thành công"));
+        }
+
+        /// <summary>
+        /// Kiểm tra giao dịch từ SePay và tự động kích hoạt gói VIP nếu nhận được tiền
+        /// </summary>
+        [HttpGet("check-payment/{orderCode}")]
+        public async Task<IActionResult> CheckPayment(string orderCode)
+        {
+            var cleanCode = orderCode.Trim();
+            var tx = await _context.PaymentTransactions.FirstOrDefaultAsync(p => p.OrderCode == cleanCode);
+            if (tx == null)
+            {
+                return NotFound(ApiResponse<CheckPaymentResponseDto>.Fail("Không tìm thấy đơn hàng thanh toán."));
+            }
+
+            if (tx.Status == "Success")
+            {
+                var existingUser = await _context.Users.FindAsync(tx.UserId);
+                return Ok(ApiResponse<CheckPaymentResponseDto>.Ok(new CheckPaymentResponseDto
+                {
+                    IsSuccess = true,
+                    Status = "Success",
+                    Message = "Thanh toán đã được xác nhận thành công!",
+                    OrderCode = tx.OrderCode,
+                    PlanId = tx.PlanId,
+                    PaidAt = tx.PaidAt,
+                    User = existingUser != null ? MapToUserDto(existingUser) : null
+                }, "Đơn hàng đã thanh toán thành công"));
+            }
+
+            // Gọi SePay Service để đối soát trực tiếp với API SePay
+            var match = await _sePayService.FindMatchingTransactionAsync(tx.OrderCode, tx.Amount);
+            if (match != null)
+            {
+                // Đảm bảo không nạp lặp cùng 1 giao dịch SePay
+                bool isTxUsed = await _context.PaymentTransactions.AnyAsync(p => p.SePayTransactionId == match.TransactionId && p.Id != tx.Id);
+                if (!isTxUsed)
+                {
+                    tx.Status = "Success";
+                    tx.SePayTransactionId = match.TransactionId;
+                    tx.PaidAt = match.TransactionDate ?? DateTime.UtcNow;
+                    tx.BankBrandName = match.BankBrandName;
+                    tx.AccountNumber = match.AccountNumber;
+                    tx.TransactionContent = match.TransactionContent;
+                    tx.UpdatedAt = DateTime.UtcNow;
+
+                    var user = await _context.Users.FindAsync(tx.UserId);
+                    if (user != null)
+                    {
+                        bool isYearly = string.Equals(tx.BillingCycle, "Yearly", StringComparison.OrdinalIgnoreCase);
+                        user.SubscriptionType = tx.PlanId;
+                        user.SubscriptionPeriod = tx.BillingCycle;
+                        user.SubscriptionExpiresAt = DateTime.UtcNow.AddDays(isYearly ? 365 : 30);
+                        user.UpdatedAt = DateTime.UtcNow;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation("[Subscription]: Order {OrderCode} successfully upgraded to {PlanId} for User {UserId}",
+                        tx.OrderCode, tx.PlanId, tx.UserId);
+
+                    return Ok(ApiResponse<CheckPaymentResponseDto>.Ok(new CheckPaymentResponseDto
+                    {
+                        IsSuccess = true,
+                        Status = "Success",
+                        Message = $"Chúc mừng bạn đã kích hoạt thành công gói {tx.PlanId}!",
+                        OrderCode = tx.OrderCode,
+                        PlanId = tx.PlanId,
+                        PaidAt = tx.PaidAt,
+                        User = user != null ? MapToUserDto(user) : null
+                    }, "Xác nhận thanh toán SePay thành công"));
+                }
+            }
+
+            return Ok(ApiResponse<CheckPaymentResponseDto>.Ok(new CheckPaymentResponseDto
+            {
+                IsSuccess = false,
+                Status = "Pending",
+                Message = "Đang chờ chuyển khoản từ ngân hàng...",
+                OrderCode = tx.OrderCode,
+                PlanId = tx.PlanId
+            }, "Đang chờ thanh toán"));
+        }
+
+        /// <summary>
+        /// Webhook tiếp nhận tự động từ SePay (nếu cấu hình webhook trong SePay dashboard)
+        /// </summary>
+        [HttpPost("sepay-webhook")]
+        public async Task<IActionResult> SePayWebhook([FromBody] SePayWebhookDto payload)
+        {
+            if (payload == null || string.IsNullOrWhiteSpace(payload.Content))
+            {
+                return BadRequest(new { success = false, message = "Invalid payload" });
+            }
+
+            var pendingTxs = await _context.PaymentTransactions
+                .Where(p => p.Status == "Pending")
+                .ToListAsync();
+
+            PaymentTransaction? matchedTx = null;
+            foreach (var tx in pendingTxs)
+            {
+                if (payload.Content.Contains(tx.OrderCode, StringComparison.OrdinalIgnoreCase) &&
+                    payload.TransferAmount >= tx.Amount)
+                {
+                    matchedTx = tx;
+                    break;
+                }
+            }
+
+            if (matchedTx != null)
+            {
+                matchedTx.Status = "Success";
+                matchedTx.SePayTransactionId = payload.Id.ToString();
+                matchedTx.PaidAt = DateTime.UtcNow;
+                matchedTx.BankBrandName = payload.Gateway;
+                matchedTx.AccountNumber = payload.AccountNumber;
+                matchedTx.TransactionContent = payload.Content;
+                matchedTx.UpdatedAt = DateTime.UtcNow;
+
+                var user = await _context.Users.FindAsync(matchedTx.UserId);
+                if (user != null)
+                {
+                    bool isYearly = string.Equals(matchedTx.BillingCycle, "Yearly", StringComparison.OrdinalIgnoreCase);
+                    user.SubscriptionType = matchedTx.PlanId;
+                    user.SubscriptionPeriod = matchedTx.BillingCycle;
+                    user.SubscriptionExpiresAt = DateTime.UtcNow.AddDays(isYearly ? 365 : 30);
+                    user.UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("[SePayWebhook]: Processed order {OrderCode} successfully via webhook", matchedTx.OrderCode);
+            }
+
+            return Ok(new { success = true, message = "Webhook processed" });
+        }
+
+        private static UserDto MapToUserDto(User user)
+        {
+            return new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                AvatarUrl = user.AvatarUrl,
+                Gender = user.Gender,
+                Role = user.Role,
+                SubscriptionType = user.SubscriptionType,
+                SubscriptionExpiresAt = user.SubscriptionExpiresAt,
+                SubscriptionPeriod = user.SubscriptionPeriod,
+                CreatedAt = user.CreatedAt,
+                Height = user.Height,
+                Weight = user.Weight,
+                Chest = user.Chest,
+                Waist = user.Waist,
+                Hips = user.Hips,
+                BodyShape = user.BodyShape,
+                Age = user.Age,
+                AgeGroup = user.AgeGroup
+            };
         }
     }
 }

@@ -22,6 +22,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAiStylistService, AiStylistService>();
 builder.Services.AddSingleton<IFashionEcommerceTrendService, FashionEcommerceTrendService>();
+builder.Services.AddHttpClient<ISePayService, SePayService>();
 
 // 3. Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "MyFitDailySuperSecretKey2026_EXE201Group6_MustBeLongEnoughForHmacSha256SecurityKey!";
@@ -155,6 +156,36 @@ _ = Task.Run(async () =>
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""IsAffiliate"" boolean NOT NULL DEFAULT false;
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""ImageUrl"" TYPE text;
             ALTER TABLE ""ClothingItems"" ALTER COLUMN ""Description"" TYPE text;
+            CREATE TABLE IF NOT EXISTS ""PaymentTransactions"" (
+                ""Id"" serial PRIMARY KEY,
+                ""UserId"" integer NOT NULL,
+                ""OrderCode"" character varying(50) NOT NULL,
+                ""PlanId"" character varying(50) NOT NULL,
+                ""BillingCycle"" character varying(20) NOT NULL,
+                ""Amount"" numeric NOT NULL,
+                ""Status"" character varying(30) NOT NULL DEFAULT 'Pending',
+                ""SePayTransactionId"" character varying(100),
+                ""PaidAt"" timestamp with time zone,
+                ""BankBrandName"" character varying(50),
+                ""AccountNumber"" character varying(50),
+                ""TransactionContent"" text,
+                ""CreatedAt"" timestamp with time zone NOT NULL DEFAULT NOW(),
+                ""UpdatedAt"" timestamp with time zone NOT NULL DEFAULT NOW()
+            );
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""UserId"" integer;
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""OrderCode"" character varying(50);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""PlanId"" character varying(50);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""BillingCycle"" character varying(20);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""Amount"" numeric;
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""Status"" character varying(30) DEFAULT 'Pending';
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""SePayTransactionId"" character varying(100);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""PaidAt"" timestamp with time zone;
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""BankBrandName"" character varying(50);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""AccountNumber"" character varying(50);
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""TransactionContent"" text;
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""CreatedAt"" timestamp with time zone DEFAULT NOW();
+            ALTER TABLE ""PaymentTransactions"" ADD COLUMN IF NOT EXISTS ""UpdatedAt"" timestamp with time zone DEFAULT NOW();
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_PaymentTransactions_OrderCode"" ON ""PaymentTransactions"" (""OrderCode"");
         ");
         // Replace the legacy wardrobe catalogue with the approved four-piece Stylist Edit.
         await DbSeeder.SeedDemoDataAsync(dbContext);

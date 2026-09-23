@@ -1,6 +1,8 @@
 import React from 'react';
 import { PanelLeftOpen } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
+import SubscriptionCountdown from './SubscriptionCountdown';
 
 export default function TopBar({
   isSidebarOpen,
@@ -10,6 +12,8 @@ export default function TopBar({
   user
 }) {
   const { t, text } = useLanguage();
+  const isPlus = isPremiumPlusUser(user);
+  const isPrem = isPremiumUser(user);
   return (
     <header style={{
       height: '52px',
@@ -75,9 +79,9 @@ export default function TopBar({
         </div>
       </div>
 
-      {/* Right Area: VIP Badge & User Profile Pill */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        {/* VIP Status Badge */}
+      {/* Right Area: VIP Badge & Countdown & User Profile Pill */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* VIP Status Badge & Live Countdown */}
         <button
           onClick={() => setCurrentTab('premium')}
           id="btn-topbar-vip-badge"
@@ -91,31 +95,31 @@ export default function TopBar({
             cursor: 'pointer',
             fontSize: '0.76rem',
             fontWeight: 700,
-            background: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+            background: isPlus
               ? 'linear-gradient(135deg, rgba(251, 113, 133, 0.25), rgba(225, 29, 72, 0.35))'
-              : user?.subscriptionType?.toLowerCase() === 'premium'
+              : isPrem
                 ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(194, 125, 94, 0.35))'
                 : 'var(--hover-bg)',
-            color: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+            color: isPlus
               ? '#FB7185'
-              : user?.subscriptionType?.toLowerCase() === 'premium'
+              : isPrem
                 ? '#FCD34D'
                 : 'var(--text-secondary)',
-            border: (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+            border: isPlus
               ? '1px solid rgba(251, 113, 133, 0.5)'
-              : user?.subscriptionType?.toLowerCase() === 'premium'
+              : isPrem
                 ? '1px solid rgba(212, 175, 55, 0.5)'
                 : '1px solid var(--border-subtle)',
             transition: 'all 0.2s ease',
           }}
-          title={text("Xem chi tiết quyền lợi gói VIP", "View VIP membership benefits")}
+          title={text("Xem chi tiết thời hạn & quyền lợi gói VIP", "View VIP membership benefits & time remaining")}
         >
-          {(user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus') ? (
+          {isPlus ? (
             <>
               <span>💎</span>
               <span>Premium Plus</span>
             </>
-          ) : user?.subscriptionType?.toLowerCase() === 'premium' ? (
+          ) : isPrem ? (
             <>
               <span>👑</span>
               <span>VIP Premium</span>
@@ -127,6 +131,17 @@ export default function TopBar({
             </>
           )}
         </button>
+
+        {/* Live Pill Countdown for VIP Users */}
+        {(isPrem || isPlus) && user?.subscriptionExpiresAt && (
+          <div onClick={() => setCurrentTab('premium')} style={{ cursor: 'pointer' }}>
+            <SubscriptionCountdown
+              expiresAt={user.subscriptionExpiresAt}
+              planType={user.subscriptionType}
+              variant="pill"
+            />
+          </div>
+        )}
 
         {/* User Workspace Profile Pill */}
         <div

@@ -15,10 +15,17 @@ namespace MYFITDAILY_EXE201_Group6.Data
         public DbSet<Outfit> Outfits => Set<Outfit>();
         public DbSet<OutfitItem> OutfitItems => Set<OutfitItem>();
         public DbSet<AiStylistHistory> AiStylistHistories => Set<AiStylistHistory>();
+        public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // PaymentTransaction configuration
+            modelBuilder.Entity<PaymentTransaction>(entity =>
+            {
+                entity.HasIndex(p => p.OrderCode).IsUnique();
+            });
 
             // User configuration
             modelBuilder.Entity<User>(entity =>

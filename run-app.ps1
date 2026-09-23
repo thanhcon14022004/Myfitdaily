@@ -2,6 +2,27 @@ Write-Host "====================================================================
 Write-Host "            MYFITDAILY - KHOI DONG HE THONG WEB & API" -ForegroundColor Cyan
 Write-Host "======================================================================" -ForegroundColor Cyan
 
+# Giai phong port 5240 neu dang bi chiem
+$backendPort = Get-NetTCPConnection -LocalPort 5240 -State Listen -ErrorAction SilentlyContinue
+if ($backendPort) {
+    Write-Host "Dang tat tien trinh cu tren Port 5240..." -ForegroundColor Yellow
+    Stop-Process -Id $backendPort.OwningProcess -Force -ErrorAction SilentlyContinue
+}
+
+# Giai phong port 5173 neu dang bi chiem
+$frontendPort = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
+if ($frontendPort) {
+    Write-Host "Dang tat tien trinh cu tren Port 5173..." -ForegroundColor Yellow
+    Stop-Process -Id $frontendPort.OwningProcess -Force -ErrorAction SilentlyContinue
+}
+
+# Kiem tra thu vien Frontend
+if (-not (Test-Path "$PSScriptRoot\frontend\node_modules")) {
+    Write-Host "`n[THONG BAO] Chua cai dat thu vien Frontend! Dang chay npm install..." -ForegroundColor Yellow
+    Start-Process cmd -ArgumentList "/c cd /d `"$PSScriptRoot\frontend`" && npm install" -Wait
+    Write-Host "[OK] Da cai dat xong thu vien Frontend.`n" -ForegroundColor Green
+}
+
 Write-Host "`n[1/3] Dang khoi dong Backend API (Port 5240)..." -ForegroundColor Yellow
 Start-Process cmd -ArgumentList "/k", "cd /d `"$PSScriptRoot\backend`" && dotnet run"
 

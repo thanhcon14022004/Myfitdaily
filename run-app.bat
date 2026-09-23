@@ -3,25 +3,39 @@ title MYFITDAILY - All-in-One Launcher
 color 0A
 
 echo ======================================================================
-echo             MYFITDAILY - KHOI DONG HE THONG WEB ^& API
+echo             MYFITDAILY - KHOI DONG HE THONG WEB VA API
 echo ======================================================================
 echo.
 
-:: 1. Khoi dong Backend .NET Web API
+:: 1. Giai phong port 5240 va 5173 neu co tien trinh cu dang chiem
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5240"') do taskkill /f /pid %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5173"') do taskkill /f /pid %%a >nul 2>&1
+
+:: 2. Kiem tra thu vien node_modules cua Frontend
+if not exist "%~dp0frontend\node_modules\" (
+    echo [THONG BAO] Chua co thu vien Frontend. Dang chay npm install...
+    cd /d "%~dp0frontend"
+    call npm install
+    cd /d "%~dp0"
+    echo [OK] Da cai dat xong thu vien Frontend.
+    echo.
+)
+
+:: 3. Khoi dong Backend .NET Web API (Port 5240)
 echo [1/3] Dang khoi dong Backend API (Port 5240)...
 start "MYFITDAILY Backend API (Port 5240)" cmd /k "cd /d "%~dp0backend" && echo Dang chay Backend API... && dotnet run"
 
-:: Cho 3 giay de Backend khoi tao cac service va ket noi database
-timeout /t 3 /nobreak >nul
+:: Cho 3 giay bang ping (on dinh hon timeout)
+ping -n 4 127.0.0.1 >nul
 
-:: 2. Khoi dong Frontend React Vite
+:: 4. Khoi dong Frontend React Vite (Port 5173)
 echo [2/3] Dang khoi dong Frontend React (Port 5173)...
 start "MYFITDAILY Frontend (Port 5173)" cmd /k "cd /d "%~dp0frontend" && echo Dang chay Frontend React UI... && npm run dev"
 
-:: Cho 2 giay de Vite dev server san sang
-timeout /t 2 /nobreak >nul
+:: Cho 2 giay
+ping -n 3 127.0.0.1 >nul
 
-:: 3. Tu dong mo trinh duyet truc tiep vao Giao dien Web
+:: 5. Tu dong mo trinh duyet truc tiep vao Giao dien Web
 echo [3/3] Dang mo trinh duyet web den giao dien chinh...
 start http://localhost:5173
 

@@ -26,6 +26,7 @@ import {
 } from './data/initialWardrobe';
 import { INITIAL_CHAT_SESSIONS } from './data/initialChatSessions';
 import { useLanguage } from './context/LanguageContext';
+import { getSubscriptionType, sanitizeUser, isPremiumUser, isPremiumPlusUser } from './utils/subscriptionUtils';
 
 export default function App() {
   const { text } = useLanguage();
@@ -78,9 +79,13 @@ export default function App() {
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        if (parsed?.role === 'Admin') {
-          setCurrentTab('admin');
+        const cleanUser = sanitizeUser(parsed);
+        if (cleanUser) {
+          localStorage.setItem('myfitdaily_user', JSON.stringify(cleanUser));
+          setUser(cleanUser);
+          if (cleanUser?.role === 'Admin') {
+            setCurrentTab('admin');
+          }
         }
       } catch (e) {
         console.error("Failed to parse user session", e);
@@ -172,9 +177,9 @@ export default function App() {
   };
 
   const handleAddClothing = async (newItem) => {
-    const subType = user?.subscriptionType || 'Free';
-    const isPlus = subType.toLowerCase() === 'premiumplus' || subType.toLowerCase() === 'premium_plus';
-    const isPremium = subType.toLowerCase() === 'premium';
+    const subType = getSubscriptionType(user);
+    const isPlus = isPremiumPlusUser(user);
+    const isPremium = isPremiumUser(user);
     const maxLimit = isPlus ? Infinity : (isPremium ? 100 : 15);
 
     if (clothes.length >= maxLimit) {
@@ -306,9 +311,20 @@ export default function App() {
     return isNowFav;
   };
 
-  const handleUpgradePremium = async (planId = 'Premium', cycle = 'Monthly') => {
+  const handleUpgradePremium = async (planOrUser = 'Premium', cycle = 'Monthly') => {
+    // Trường hợp 1: Nhận trực tiếp đối tượng user đã nâng cấp từ modal thanh toán SePay
+    if (typeof planOrUser === 'object' && planOrUser !== null) {
+      const userObj = planOrUser.data?.user || planOrUser.user || planOrUser.data || planOrUser;
+      const cleanUser = sanitizeUser({ ...user, ...userObj });
+      setUser(cleanUser);
+      localStorage.setItem('myfitdaily_user', JSON.stringify(cleanUser));
+      return cleanUser;
+    }
+
+    // Trường hợp 2: Nhận chuỗi planId ('Premium', 'PremiumPlus', 'Free')
+    const planId = typeof planOrUser === 'string' ? planOrUser : 'Premium';
     try {
-      const res = await apiRequest('/api/subscription/upgrade', {
+      const res = await apiRequest('/subscription/upgrade', {
         method: 'POST',
         body: JSON.stringify({
           planId: planId,
@@ -317,16 +333,21 @@ export default function App() {
         })
       });
 
-      const updated = res?.data || { ...user, subscriptionType: planId };
-      setUser(updated);
-      localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
-      return updated;
+      const userFromApi = res?.data?.data || res?.data;
+      const cleanUser = sanitizeUser(
+        userFromApi && typeof userFromApi === 'object' && userFromApi.id
+          ? userFromApi
+          : { ...user, subscriptionType: planId }
+      );
+      setUser(cleanUser);
+      localStorage.setItem('myfitdaily_user', JSON.stringify(cleanUser));
+      return cleanUser;
     } catch (err) {
       console.error("Upgrade API error, fallback local:", err);
-      const updated = { ...user, subscriptionType: planId };
-      setUser(updated);
-      localStorage.setItem('myfitdaily_user', JSON.stringify(updated));
-      return updated;
+      const cleanUser = sanitizeUser({ ...user, subscriptionType: planId });
+      setUser(cleanUser);
+      localStorage.setItem('myfitdaily_user', JSON.stringify(cleanUser));
+      return cleanUser;
     }
   };
 

@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
+import { isPremiumUser, isPremiumPlusUser, getSubscriptionType } from '../utils/subscriptionUtils';
+import SubscriptionCountdown from '../components/SubscriptionCountdown';
 
 export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
   const { text, language } = useLanguage();
@@ -376,16 +378,16 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 700 }}>{fullName}</h3>
               <span className={`badge ${
-                (user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+                isPremiumPlusUser(user)
                   ? 'badge-rose'
-                  : user?.subscriptionType?.toLowerCase() === 'premium'
+                  : isPremiumUser(user)
                     ? 'badge-gold'
                     : 'badge-indigo'
               }`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 <Crown size={12} />
-                {(user?.subscriptionType?.toLowerCase() === 'premiumplus' || user?.subscriptionType?.toLowerCase() === 'premium_plus')
+                {isPremiumPlusUser(user)
                   ? 'VIP Premium Plus'
-                  : user?.subscriptionType?.toLowerCase() === 'premium'
+                  : isPremiumUser(user)
                     ? 'VIP Premium'
                     : 'Gói Free'}
               </span>
@@ -403,6 +405,15 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                 </span>
               )}
             </p>
+            {user?.subscriptionExpiresAt && (isPremiumUser(user) || isPremiumPlusUser(user)) && (
+              <div style={{ marginTop: '8px' }}>
+                <SubscriptionCountdown
+                  expiresAt={user.subscriptionExpiresAt}
+                  planType={user.subscriptionType}
+                  variant="compact"
+                />
+              </div>
+            )}
             <div style={{ marginTop: '8px' }}>
               <button
                 type="button"
@@ -418,7 +429,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
                   padding: 0
                 }}
               >
-                {user?.subscriptionType === 'PremiumPlus'
+                {isPremiumPlusUser(user)
                   ? text('Quản lý gói VIP Premium Plus →', 'Manage Premium Plus VIP →')
                   : text('Nâng cấp gói thành viên VIP (Từ 49K) →', 'Upgrade VIP Membership (From 49K) →')}
               </button>
