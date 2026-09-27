@@ -339,7 +339,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
               fontWeight: 800,
               color: '#FFFFFF',
               margin: '0 0 8px',
-              fontFamily: "'Outfit', sans-serif"
+              fontFamily: 'inherit'
             }}>
               Trung Tâm Đào Tạo AI Gợi Ý Trang Phục
             </h1>
