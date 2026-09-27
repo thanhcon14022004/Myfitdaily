@@ -233,8 +233,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'admin' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'admin' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'admin' ? (isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'admin' ? (isLight ? '#0F172A' : '#FFFFFF') : (isLight ? '#334155' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'admin' ? 600 : 500,
                   border: 'none',
@@ -243,7 +243,7 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Shield size={17} color={currentTab === 'admin' ? '#D4AF37' : '#B4B4B4'} />
+                  <Shield size={17} color={currentTab === 'admin' ? '#D4AF37' : (isLight ? '#64748B' : '#B4B4B4')} />
                   <span>{text('Quản Trị Hệ Thống', 'Admin Portal')}</span>
                 </div>
                 <span style={{
@@ -251,7 +251,7 @@ export default function Sidebar({
                   padding: '2px 6px',
                   borderRadius: '4px',
                   background: 'rgba(212, 175, 55, 0.25)',
-                  color: '#FDE68A',
+                  color: isLight ? '#B8860B' : '#FDE68A',
                   fontWeight: 700,
                   letterSpacing: '0.02em'
                 }}>
@@ -270,8 +270,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'ai-training' ? 'rgba(168, 85, 247, 0.22)' : 'transparent',
-                  color: currentTab === 'ai-training' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'ai-training' ? (isLight ? 'rgba(168, 85, 247, 0.15)' : 'rgba(168, 85, 247, 0.22)') : 'transparent',
+                  color: currentTab === 'ai-training' ? (isLight ? '#7E22CE' : '#FFFFFF') : (isLight ? '#334155' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'ai-training' ? 600 : 500,
                   border: currentTab === 'ai-training' ? '1px solid rgba(168, 85, 247, 0.45)' : 'none',
@@ -280,7 +280,7 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <BrainCircuit size={17} color={currentTab === 'ai-training' ? '#C084FC' : '#B4B4B4'} />
+                  <BrainCircuit size={17} color={currentTab === 'ai-training' ? '#A855F7' : (isLight ? '#64748B' : '#B4B4B4')} />
                   <span>{text('Huấn Luyện AI Stylist', 'AI Training Studio')}</span>
                 </div>
                 <span style={{
@@ -288,7 +288,7 @@ export default function Sidebar({
                   padding: '2px 6px',
                   borderRadius: '4px',
                   background: 'rgba(168, 85, 247, 0.25)',
-                  color: '#C084FC',
+                  color: isLight ? '#7E22CE' : '#C084FC',
                   fontWeight: 700,
                   letterSpacing: '0.02em'
                 }}>
@@ -307,8 +307,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'wardrobe' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'wardrobe' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'wardrobe' ? (isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'wardrobe' ? (isLight ? '#0F172A' : '#FFFFFF') : (isLight ? '#334155' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'wardrobe' ? 600 : 500,
                   border: 'none',
@@ -317,7 +317,7 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
+                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : (isLight ? '#64748B' : '#B4B4B4')} />
                   <span>{text('Kho Đồ Toàn Sàn', 'Global Catalog')}</span>
                 </div>
                 <span style={{
@@ -896,7 +896,7 @@ export default function Sidebar({
                   gap: '8px',
                   padding: '8px 10px',
                   borderRadius: '6px',
-                  color: '#ECECEC',
+                  color: 'var(--text-primary)',
                   fontSize: '0.84rem',
                   background: 'transparent',
                   border: 'none',

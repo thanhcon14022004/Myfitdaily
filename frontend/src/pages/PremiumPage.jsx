@@ -21,12 +21,15 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { apiRequest } from '../api/apiClient';
 import { getSubscriptionType, isPremiumUser, isPremiumPlusUser, sanitizeUser } from '../utils/subscriptionUtils';
 import SubscriptionCountdown from '../components/SubscriptionCountdown';
 
 export default function PremiumPage({ user, onUpgrade }) {
   const { text, isEnglish } = useLanguage();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'yearly'
   const [modalCountdown, setModalCountdown] = useState(900); // 15 phút đếm ngược
 
@@ -351,8 +354,8 @@ export default function PremiumPage({ user, onUpgrade }) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px',
-          background: 'rgba(255, 255, 255, 0.04)',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
+          background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.04)',
+          border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)',
           padding: '6px',
           borderRadius: '9999px',
           marginTop: '28px',
@@ -368,7 +371,7 @@ export default function PremiumPage({ user, onUpgrade }) {
               fontSize: '0.9rem',
               fontWeight: billingCycle === 'monthly' ? 700 : 500,
               background: billingCycle === 'monthly' ? 'var(--primary)' : 'transparent',
-              color: billingCycle === 'monthly' ? '#080A0F' : 'var(--text-secondary)',
+              color: billingCycle === 'monthly' ? (isLight ? '#FFFFFF' : '#080A0F') : (isLight ? '#475569' : 'var(--text-secondary)'),
               transition: 'all 0.2s ease',
             }}
           >
@@ -386,7 +389,7 @@ export default function PremiumPage({ user, onUpgrade }) {
               fontSize: '0.9rem',
               fontWeight: billingCycle === 'yearly' ? 700 : 500,
               background: billingCycle === 'yearly' ? 'var(--primary)' : 'transparent',
-              color: billingCycle === 'yearly' ? '#080A0F' : 'var(--text-secondary)',
+              color: billingCycle === 'yearly' ? (isLight ? '#FFFFFF' : '#080A0F') : (isLight ? '#475569' : 'var(--text-secondary)'),
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
@@ -395,8 +398,8 @@ export default function PremiumPage({ user, onUpgrade }) {
           >
             <span>{text('Thanh toán theo Năm', 'Yearly Billing')}</span>
             <span style={{
-              background: billingCycle === 'yearly' ? '#080A0F' : '#10B981',
-              color: billingCycle === 'yearly' ? '#D4AF37' : '#FFFFFF',
+              background: billingCycle === 'yearly' ? (isLight ? '#FFFFFF' : '#080A0F') : '#10B981',
+              color: billingCycle === 'yearly' ? 'var(--primary)' : '#FFFFFF',
               fontSize: '0.72rem',
               fontWeight: 800,
               padding: '2px 8px',
@@ -444,20 +447,20 @@ export default function PremiumPage({ user, onUpgrade }) {
                 borderRadius: '24px',
                 overflow: 'visible',
                 border: plan.isPopular
-                  ? '2px solid rgba(212, 175, 55, 0.85)'
+                  ? (isLight ? '2px solid #D4AF37' : '2px solid rgba(212, 175, 55, 0.85)')
                   : plan.isVipPlus
-                    ? '2px solid rgba(251, 113, 133, 0.85)'
-                    : '1px solid rgba(255, 255, 255, 0.12)',
+                    ? (isLight ? '2px solid #FB7185' : '2px solid rgba(251, 113, 133, 0.85)')
+                    : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)'),
                 boxShadow: plan.isPopular
-                  ? '0 16px 50px rgba(212, 175, 55, 0.18)'
+                  ? (isLight ? '0 12px 36px rgba(212, 175, 55, 0.2)' : '0 16px 50px rgba(212, 175, 55, 0.18)')
                   : plan.isVipPlus
-                    ? '0 16px 50px rgba(251, 113, 133, 0.18)'
-                    : '0 8px 30px rgba(0, 0, 0, 0.3)',
+                    ? (isLight ? '0 12px 36px rgba(251, 113, 133, 0.2)' : '0 16px 50px rgba(251, 113, 133, 0.18)')
+                    : (isLight ? '0 4px 20px rgba(0, 0, 0, 0.07)' : '0 8px 30px rgba(0, 0, 0, 0.3)'),
                 background: plan.isPopular
-                  ? 'linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, rgba(17, 24, 39, 0.95) 100%)'
+                  ? (isLight ? 'linear-gradient(180deg, #FFFDF5 0%, #FFFFFF 100%)' : 'linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, rgba(17, 24, 39, 0.95) 100%)')
                   : plan.isVipPlus
-                    ? 'linear-gradient(180deg, rgba(251, 113, 133, 0.08) 0%, rgba(17, 24, 39, 0.95) 100%)'
-                    : 'rgba(17, 24, 39, 0.6)',
+                    ? (isLight ? 'linear-gradient(180deg, #FFF5F7 0%, #FFFFFF 100%)' : 'linear-gradient(180deg, rgba(251, 113, 133, 0.08) 0%, rgba(17, 24, 39, 0.95) 100%)')
+                    : (isLight ? '#FFFFFF' : 'rgba(17, 24, 39, 0.6)'),
                 transition: 'all 0.3s ease',
                 height: '100%',
               }}
@@ -498,7 +501,7 @@ export default function PremiumPage({ user, onUpgrade }) {
               {/* Phần trên: Tên gói & Giá & Phân khúc */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '36px', marginBottom: '8px' }}>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFF' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                     {plan.name}
                   </h3>
                   {plan.isVipPlus && <Sparkles size={20} color="#FB7185" />}
@@ -517,21 +520,21 @@ export default function PremiumPage({ user, onUpgrade }) {
                   gap: '6px',
                   padding: '6px 12px',
                   borderRadius: '8px',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
                   fontSize: '0.8rem',
                   color: 'var(--text-secondary)',
                   marginBottom: '18px',
                   minHeight: '34px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)'
+                  border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)'
                 }}>
                   <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{text('Mục tiêu:', 'Target:')}</span>
                   <span style={{ color: plan.accentColor, fontWeight: 600 }}>{plan.targetSegment}</span>
                 </div>
 
                 {/* Giá tiền */}
-                <div style={{ marginBottom: '22px', paddingBottom: '18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ marginBottom: '22px', paddingBottom: '18px', borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 'clamp(1.65rem, 2vw, 2.15rem)', fontWeight: 800, color: '#FFF', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                    <span style={{ fontSize: 'clamp(1.65rem, 2vw, 2.15rem)', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                       {formattedPrice}
                     </span>
                     {price > 0 && (
@@ -562,7 +565,7 @@ export default function PremiumPage({ user, onUpgrade }) {
                           style={{ minWidth: '16px', marginTop: '2px', flexShrink: 0 }}
                         />
                         <span style={{
-                          color: feat.highlight ? '#FFFFFF' : 'var(--text-secondary)',
+                          color: feat.highlight ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontWeight: feat.highlight ? 600 : 400
                         }}>
                           {feat.text}
@@ -602,8 +605,8 @@ export default function PremiumPage({ user, onUpgrade }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px dashed rgba(255, 255, 255, 0.12)',
+                    background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.03)',
+                    border: isLight ? '1px dashed #CBD5E1' : '1px dashed rgba(255, 255, 255, 0.12)',
                     color: 'var(--text-muted)',
                     textAlign: 'center',
                     minHeight: '48px'
@@ -628,17 +631,17 @@ export default function PremiumPage({ user, onUpgrade }) {
                       gap: '8px',
                       cursor: isCurrentPlan ? 'default' : 'pointer',
                       transition: 'all 0.2s ease',
-                      border: 'none',
+                      border: isLight && plan.id === 'Free' && !isCurrentPlan ? '1px solid #CBD5E1' : 'none',
                       background: isCurrentPlan
-                        ? 'rgba(255, 255, 255, 0.08)'
+                        ? (isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)')
                         : plan.isPopular
                           ? 'linear-gradient(135deg, #D4AF37, #C27D5E)'
                           : plan.isVipPlus
                             ? 'linear-gradient(135deg, #FB7185, #E11D48)'
-                            : 'rgba(255, 255, 255, 0.1)',
+                            : (isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.1)'),
                       color: isCurrentPlan
                         ? 'var(--text-secondary)'
-                        : (plan.isPopular || plan.isVipPlus) ? '#080A0F' : '#FFF',
+                        : (plan.isPopular || plan.isVipPlus) ? '#080A0F' : (isLight ? '#0F172A' : '#FFF'),
                     }}
                   >
                     {isCurrentPlan ? (
@@ -675,7 +678,7 @@ export default function PremiumPage({ user, onUpgrade }) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.92rem', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)' }}>
                 <th style={{ padding: '14px 16px', color: 'var(--text-secondary)', fontWeight: 600 }}>{text('Tính năng / Hạn mức', 'Feature / Limit')}</th>
                 <th style={{ padding: '14px 16px', color: '#6366F1', fontWeight: 700, textAlign: 'center' }}>Free (0 VNĐ)</th>
                 <th style={{ padding: '14px 16px', color: '#D4AF37', fontWeight: 700, textAlign: 'center' }}>Premium (49k/tháng)</th>
@@ -683,37 +686,37 @@ export default function PremiumPage({ user, onUpgrade }) {
               </tr>
             </thead>
             <tbody>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Sức chứa tủ đồ (Quản lý món đồ)', 'Wardrobe item capacity')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#F87171' }}>{text('Tối đa 15 món', 'Up to 15 items')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#FCD34D' }}>{text('Tối đa 100 món', 'Up to 100 items')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#34D399', fontWeight: 700 }}>{text('Không giới hạn (Unlimited)', 'Unlimited')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#EF4444' }}>{text('Tối đa 15 món', 'Up to 15 items')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: isLight ? '#B8860B' : '#FCD34D' }}>{text('Tối đa 100 món', 'Up to 100 items')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981', fontWeight: 700 }}>{text('Không giới hạn (Unlimited)', 'Unlimited')}</td>
               </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Gợi ý phối đồ AI Stylist', 'AI Stylist consultations')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#F87171' }}>{text('5 lượt / ngày', '5 daily')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#34D399', fontWeight: 700 }}>{text('Không giới hạn', 'Unlimited')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#34D399', fontWeight: 700 }}>{text('Không giới hạn (Ưu tiên VIP)', 'Unlimited + Priority')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#EF4444' }}>{text('5 lượt / ngày', '5 daily')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981', fontWeight: 700 }}>{text('Không giới hạn', 'Unlimited')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981', fontWeight: 700 }}>{text('Không giới hạn (Ưu tiên VIP)', 'Unlimited + Priority')}</td>
               </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Phối đồ theo thời tiết & sự kiện', 'Weather & occasion styling')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>✕</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981' }}>✓</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981' }}>✓</td>
               </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Thử đồ người ảo 3D Haute Couture', 'Haute Couture 3D Mannequin')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>{text('Cơ bản', 'Basic')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981' }}>✓ {text('Đầy đủ', 'Full')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#10B981' }}>✓ {text('Độc quyền', 'Exclusive')}</td>
               </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Giả lập phom dáng AI (AI body simulation)', 'AI body simulation & fit')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>✕</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>✕</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#FB7185', fontWeight: 700 }}>✓ {text('Đặc quyền Plus', 'Plus Exclusive')}</td>
               </tr>
-              <tr style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+              <tr style={{ borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)' }}>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Phân tích tủ đồ & báo cáo xu hướng', 'Closet analytics & trend reports')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>✕</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-muted)' }}>{text('Cơ bản', 'Basic')}</td>
@@ -722,7 +725,7 @@ export default function PremiumPage({ user, onUpgrade }) {
               <tr>
                 <td style={{ padding: '14px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{text('Phân khúc người dùng mục tiêu', 'Target user segment')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>{text('Người dùng mới', 'New Users')}</td>
-                <td style={{ padding: '14px 16px', textAlign: 'center', color: '#D4AF37', fontWeight: 600 }}>{text('Gen Z & Giới văn phòng trẻ', 'Gen Z & Young Pros')}</td>
+                <td style={{ padding: '14px 16px', textAlign: 'center', color: isLight ? '#B8860B' : '#D4AF37', fontWeight: 600 }}>{text('Gen Z & Giới văn phòng trẻ', 'Gen Z & Young Pros')}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'center', color: '#FB7185', fontWeight: 600 }}>{text('Tín đồ thời trang', 'Fashionistas')}</td>
               </tr>
             </tbody>
@@ -749,8 +752,9 @@ export default function PremiumPage({ user, onUpgrade }) {
             width: '100%',
             padding: '28px 26px',
             borderRadius: '24px',
-            border: '1px solid rgba(212, 175, 55, 0.4)',
-            boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(212, 175, 55, 0.4)',
+            boxShadow: isLight ? '0 20px 50px rgba(0, 0, 0, 0.15)' : '0 25px 60px rgba(0, 0, 0, 0.7)',
+            background: isLight ? '#FFFFFF' : 'var(--bg-modal)',
             position: 'relative',
             maxHeight: '90vh',
             overflowY: 'auto'
@@ -763,8 +767,8 @@ export default function PremiumPage({ user, onUpgrade }) {
                 position: 'absolute',
                 top: '18px',
                 right: '18px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: 'none',
+                background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)',
+                border: isLight ? '1px solid #E2E8F0' : 'none',
                 borderRadius: '50%',
                 width: '32px',
                 height: '32px',
@@ -797,10 +801,10 @@ export default function PremiumPage({ user, onUpgrade }) {
                 }}>
                   <CheckCircle2 size={46} color="#10B981" />
                 </div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '10px', color: '#FFF' }}>
+                <h3 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '10px', color: isLight ? '#0F172A' : '#FFF' }}>
                   {text('Kích Hoạt VIP Thành Công!', 'VIP Activated Successfully!')}
                 </h3>
-                <p style={{ color: '#D1D5DB', fontSize: '1.02rem', lineHeight: 1.6, maxWidth: '420px', margin: '0 auto 16px' }}>
+                <p style={{ color: isLight ? '#475569' : '#D1D5DB', fontSize: '1.02rem', lineHeight: 1.6, maxWidth: '420px', margin: '0 auto 16px' }}>
                   {text(
                     `Hệ thống SePay đã ghi nhận thanh toán! Bạn đã trở thành hội viên ${paymentModal.plan.name}. Tận hưởng ngay các đặc quyền thời trang cao cấp.`,
                     `SePay transaction confirmed! You are now a ${paymentModal.plan.name} member. Enjoy your exclusive fashion styling features.`
@@ -815,7 +819,7 @@ export default function PremiumPage({ user, onUpgrade }) {
               /* Đang khởi tạo mã thanh toán */
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <Loader2 size={44} color="#D4AF37" className="spinning" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 20px' }} />
-                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#FFF', marginBottom: '8px' }}>
+                <h4 style={{ fontSize: '1.25rem', fontWeight: 700, color: isLight ? '#0F172A' : '#FFF', marginBottom: '8px' }}>
                   {text('Đang khởi tạo mã VietQR SePay...', 'Generating SePay VietQR...')}
                 </h4>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
@@ -838,7 +842,7 @@ export default function PremiumPage({ user, onUpgrade }) {
                 }}>
                   <X size={32} color="#EF4444" />
                 </div>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#FFF', marginBottom: '8px' }}>
+                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, color: isLight ? '#0F172A' : '#FFF', marginBottom: '8px' }}>
                   {text('Khởi tạo thanh toán chưa thành công', 'Payment Initialization Failed')}
                 </h4>
                 <p style={{ color: '#F87171', fontSize: '0.9rem', marginBottom: '20px' }}>
@@ -870,7 +874,7 @@ export default function PremiumPage({ user, onUpgrade }) {
                     <Crown size={22} color="#D4AF37" />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '1.28rem', fontWeight: 800, margin: 0, color: '#FFF' }}>
+                    <h3 style={{ fontSize: '1.28rem', fontWeight: 800, margin: 0, color: isLight ? '#0F172A' : '#FFF' }}>
                       {text(`Thanh Toán Gói ${paymentModal.plan.name}`, `Pay for ${paymentModal.plan.name}`)}
                     </h3>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>

@@ -213,7 +213,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         {/* CỘT PHẢI: CHỈ LƯỚI CÁC Ô ĐỒ TRONG TỦ ĐỒ (GỌN GÀNG, KHÔNG RỐI MẮT) */}
         <aside className="glass-card" style={{
           padding: 20,
-          border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,.10)',
+          border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,.10)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -223,8 +223,8 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             {/* Header tủ đồ */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
-                <div style={{ color: '#f6cf70', fontSize: 11, fontWeight: 800, letterSpacing: '.12em' }}>TỦ ĐỒ CỦA BẠN</div>
-                <h2 style={{ fontSize: 20, margin: '4px 0 0', fontWeight: 800 }}>Chọn món muốn thử</h2>
+                <div style={{ color: isLight ? '#B8860B' : '#f6cf70', fontSize: 11, fontWeight: 800, letterSpacing: '.12em' }}>TỦ ĐỒ CỦA BẠN</div>
+                <h2 style={{ fontSize: 20, margin: '4px 0 0', fontWeight: 800, color: 'var(--text-primary)' }}>Chọn món muốn thử</h2>
               </div>
               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                 {inventory.length} món có sẵn
@@ -244,12 +244,12 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
                   style={{
-                    border: 0,
+                    border: isLight && activeTab !== tab.key ? '1px solid #E2E8F0' : 0,
                     cursor: 'pointer',
                     borderRadius: 999,
                     padding: '6px 14px',
-                    color: activeTab === tab.key ? '#17130a' : 'var(--text-secondary)',
-                    background: activeTab === tab.key ? '#f6cf70' : 'rgba(255,255,255,.07)',
+                    color: activeTab === tab.key ? '#17130a' : (isLight ? '#475569' : 'var(--text-secondary)'),
+                    background: activeTab === tab.key ? (isLight ? '#D4AF37' : '#f6cf70') : (isLight ? '#F1F5F9' : 'rgba(255,255,255,.07)'),
                     fontWeight: 800,
                     fontSize: 12,
                     transition: 'all 0.2s ease'
@@ -277,14 +277,20 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                     onClick={() => toggleItem(item)}
                     style={{
                       position: 'relative',
-                      background: isSelected ? 'rgba(246,207,112,.12)' : 'rgba(255, 255, 255, 0.035)',
-                      border: isSelected ? '2px solid #f6cf70' : '1px solid rgba(255, 255, 255, 0.1)',
+                      background: isSelected 
+                        ? (isLight ? '#FEF9C3' : 'rgba(246,207,112,.12)') 
+                        : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.035)'),
+                      border: isSelected 
+                        ? '2px solid #D4AF37' 
+                        : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
                       borderRadius: 14,
                       padding: 10,
                       cursor: 'pointer',
                       textAlign: 'center',
                       transition: 'all 0.2s ease',
-                      boxShadow: isSelected ? '0 4px 16px rgba(246,207,112,.2)' : 'none'
+                      boxShadow: isSelected 
+                        ? '0 4px 16px rgba(212,175,55,.25)' 
+                        : (isLight ? '0 1px 3px rgba(0,0,0,0.06)' : 'none')
                     }}
                   >
                     {/* Badge đã chọn */}
@@ -325,7 +331,9 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                     <div style={{
                       fontSize: 12,
                       fontWeight: 700,
-                      color: isSelected ? '#f6cf70' : '#fff',
+                      color: isSelected 
+                        ? (isLight ? '#92400E' : '#f6cf70') 
+                        : (isLight ? '#0F172A' : '#fff'),
                       lineHeight: 1.3,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
@@ -342,7 +350,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           </div>
 
           {/* NÚT LƯU OUTFIT ĐƠN GIẢN */}
-          <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,.08)' }}>
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,.08)' }}>
             {savedSuccess && (
               <div style={{ color: '#9ee6b8', fontSize: 12, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>
                 ✓ Đã lưu bộ đồ vào Tủ đồ thành công!

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2, Plus, Sparkles, Check, Heart, ExternalLink, Tag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function ClothingCard({ 
   item, 
@@ -12,6 +13,8 @@ export default function ClothingCard({
   onToggleSelect,
 }) {
   const { text } = useLanguage();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const getCategoryBadgeClass = (categoryName) => {
     switch (categoryName?.toLowerCase()) {
       case 'tops': return 'badge-rose';
@@ -72,15 +75,20 @@ export default function ClothingCard({
         flexDirection: 'column',
         position: 'relative',
         borderRadius: 'var(--radius-md)',
+        background: isLight ? '#FFFFFF' : 'var(--bg-card)',
         border: isChecked 
           ? '2px solid #F43F5E' 
           : isSelected 
           ? '2px solid var(--primary)' 
+          : isLight
+          ? '1px solid #CBD5E1'
           : '1px solid rgba(255, 255, 255, 0.09)',
         boxShadow: isChecked 
           ? '0 0 25px rgba(244, 63, 94, 0.4)' 
           : isSelected 
           ? '0 0 30px var(--primary-glow)' 
+          : isLight
+          ? '0 2px 8px rgba(0, 0, 0, 0.06)'
           : 'var(--shadow-md)',
         transition: 'var(--transition)',
         cursor: isSelectionMode ? 'pointer' : 'default',
@@ -126,15 +134,17 @@ export default function ClothingCard({
         />
 
         {/* Ambient Bottom Gradient Overlay */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '60px',
-          background: 'linear-gradient(to top, rgba(7, 10, 17, 0.8), transparent)',
-          pointerEvents: 'none',
-        }} />
+        {!isLight && (
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '60px',
+            background: 'linear-gradient(to top, rgba(7, 10, 17, 0.8), transparent)',
+            pointerEvents: 'none',
+          }} />
+        )}
 
         {/* Bulk Selection Checkbox Overlay */}
         {isSelectionMode && (
@@ -297,7 +307,7 @@ export default function ClothingCard({
             fontSize: '0.98rem',
             fontWeight: 700,
             marginBottom: '8px',
-            color: '#FFFFFF',
+            color: isLight ? '#0F172A' : '#FFFFFF',
             lineHeight: 1.35,
             display: '-webkit-box',
             WebkitLineClamp: 3,
@@ -316,17 +326,17 @@ export default function ClothingCard({
               gap: '5px',
               fontSize: '0.74rem',
               color: 'var(--text-secondary)',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
               padding: '3px 9px',
               borderRadius: 'var(--radius-full)',
-              border: '1px solid rgba(255, 255, 255, 0.07)',
+              border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.07)',
             }}>
               <span style={{
                 width: '8px',
                 height: '8px',
                 borderRadius: '50%',
                 backgroundColor: getColorHex(item.color),
-                border: '1px solid rgba(255,255,255,0.4)'
+                border: '1px solid rgba(0,0,0,0.15)'
               }} />
               <span>{item.color || text('Đa sắc', 'Multicolor')}</span>
             </div>
@@ -334,7 +344,8 @@ export default function ClothingCard({
             <div style={{
               fontSize: '0.74rem',
               color: 'var(--text-muted)',
-              background: 'rgba(255, 255, 255, 0.04)',
+              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.04)',
+              border: isLight ? '1px solid #E2E8F0' : 'none',
               padding: '3px 8px',
               borderRadius: 'var(--radius-full)',
             }}>
@@ -344,10 +355,10 @@ export default function ClothingCard({
             {item.size && (
               <div style={{
                 fontSize: '0.74rem',
-                color: '#F3D98A',
+                color: isLight ? '#B8860B' : '#F3D98A',
                 fontWeight: 700,
-                background: 'rgba(212, 175, 55, 0.12)',
-                border: '1px solid rgba(212, 175, 55, 0.3)',
+                background: isLight ? 'rgba(184, 134, 11, 0.1)' : 'rgba(212, 175, 55, 0.12)',
+                border: isLight ? '1px solid rgba(184, 134, 11, 0.25)' : '1px solid rgba(212, 175, 55, 0.3)',
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-full)',
               }}>
@@ -374,9 +385,19 @@ export default function ClothingCard({
               gap: '6px',
               background: isSelected 
                 ? 'linear-gradient(135deg, var(--primary), #9F1239)' 
+                : isLight
+                ? '#F1F5F9'
                 : 'rgba(255, 255, 255, 0.07)',
-              color: '#FFFFFF',
-              border: isSelected ? '1px solid var(--primary)' : '1px solid rgba(255, 255, 255, 0.12)',
+              color: isSelected 
+                ? '#FFFFFF' 
+                : isLight
+                ? '#0F172A'
+                : '#FFFFFF',
+              border: isSelected 
+                ? '1px solid var(--primary)' 
+                : isLight
+                ? '1px solid #CBD5E1'
+                : '1px solid rgba(255, 255, 255, 0.12)',
               boxShadow: isSelected ? '0 4px 14px var(--primary-glow)' : 'none',
               transition: 'var(--transition)',
             }}

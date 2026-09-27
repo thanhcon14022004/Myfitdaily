@@ -80,18 +80,18 @@
 }
 
 [data-theme="light"] {
-  /* Color Palette - ChatGPT Light Mode (Pure White & Elegant Soft Gray) */
-  --bg-dark: #F7F7F8;
-  --bg-sidebar: #F9F9F9;
-  --bg-main: #FFFFFF;
+  /* Color Palette - Facebook / Modern Consumer Light Mode (Crisp White on Soft Neutral Gray) */
+  --bg-dark: #F0F2F5;
+  --bg-sidebar: #FFFFFF;
+  --bg-main: #F0F2F5;
   --bg-surface: #FFFFFF;
-  --bg-surface-elevated: #F3F4F6;
+  --bg-surface-elevated: #F8F9FA;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F9FAFB;
+  --bg-card-hover: #F8FAFC;
   --bg-glass: rgba(0, 0, 0, 0.02);
   --bg-popover: #FFFFFF;
   --bg-modal: #FFFFFF;
-  --bg-topbar: rgba(255, 255, 255, 0.88);
+  --bg-topbar: rgba(255, 255, 255, 0.95);
   --bg-input: #FFFFFF;
   --bg-input-focus: #FFFFFF;
 
@@ -113,28 +113,28 @@
   --accent-emerald: #059669;
 
   /* Text Shades - High Legibility Dark Typography */
-  --text-primary: #0D0D0D;
-  --text-secondary: #4B5563;
-  --text-muted: #6B7280;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
   --text-inverse: #FFFFFF;
 
-  /* Clean Crisp Borders */
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-medium: rgba(0, 0, 0, 0.15);
-  --border-highlight: rgba(184, 134, 11, 0.35);
-  --border-primary: rgba(184, 134, 11, 0.5);
-  --border-gold: rgba(184, 134, 11, 0.45);
+  /* Clean Crisp Visible Borders */
+  --border-subtle: #E2E8F0;
+  --border-medium: #CBD5E1;
+  --border-highlight: #B8860B;
+  --border-primary: #D4AF37;
+  --border-gold: #B8860B;
 
   /* Interactive States */
-  --hover-bg: rgba(0, 0, 0, 0.06);
-  --hover-bg-subtle: rgba(0, 0, 0, 0.03);
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --hover-bg-subtle: rgba(0, 0, 0, 0.025);
 
-  /* Soft Light Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 25px var(--primary-glow);
-  --shadow-gold-glow: 0 0 25px var(--accent-gold-glow);
+  /* Soft Light Shadows with Definition */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.10), 0 4px 10px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+  --shadow-gold-glow: 0 0 20px var(--accent-gold-glow);
 
   /* Subtle ambient radial glow on light background */
   --body-ambient-glow-1: rgba(184, 134, 11, 0.06);
@@ -298,6 +298,21 @@ textarea:focus {
   border-color: var(--border-highlight);
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] .glass-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .glass-card::before {
+  display: none;
+}
+
+[data-theme="light"] .glass-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .glass-card-interactive {

@@ -16,6 +16,7 @@ import {
 import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { sanitizeClothesForGender } from '../data/initialWardrobe';
 import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
 
@@ -30,6 +31,8 @@ export default function WardrobePage({
   onNavigate 
 }) {
   const { text, isEnglish } = useLanguage();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
 
   // Lọc sạch toàn bộ đồ phụ nữ (Đầm, Chân váy, v.v.) nếu tài khoản là Nam
@@ -284,10 +287,11 @@ export default function WardrobePage({
 
         return (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.04)',
+            background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.04)',
             border: isAtLimit 
               ? '1px solid rgba(239, 68, 68, 0.4)' 
-              : '1px solid rgba(255, 255, 255, 0.08)',
+              : isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: isLight ? '0 1px 3px rgba(0, 0, 0, 0.06)' : 'none',
             borderRadius: '16px',
             padding: '16px 20px',
             marginBottom: '28px',
@@ -300,14 +304,14 @@ export default function WardrobePage({
             <div style={{ flex: '1 1 280px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: '#FFF' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: isLight ? '#0F172A' : '#FFF' }}>
                     {text('Sức Chứa Tủ Đồ:', 'Wardrobe Capacity:')}
                   </span>
                   <span className={`badge ${isPlus ? 'badge-rose' : isPremium ? 'badge-gold' : 'badge-indigo'}`} style={{ fontSize: '0.74rem' }}>
                     {isPlus ? '💎 Premium Plus' : isPremium ? '👑 Premium' : 'Free (Cơ Bản)'}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: isAtLimit ? '#EF4444' : isNearLimit ? '#F59E0B' : '#D4AF37' }}>
+                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: isAtLimit ? '#EF4444' : isNearLimit ? '#F59E0B' : (isLight ? '#B8860B' : '#D4AF37') }}>
                   {isPlus 
                     ? `${currentCount} / Không giới hạn (∞)` 
                     : `${currentCount} / ${maxLimit} ${text('món', 'items')} (${percent}%)`}
@@ -317,7 +321,7 @@ export default function WardrobePage({
               {/* Progress bar */}
               <div style={{
                 height: '7px',
-                background: 'rgba(255, 255, 255, 0.08)',
+                background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.08)',
                 borderRadius: '9999px',
                 overflow: 'hidden'
               }}>
@@ -458,7 +462,9 @@ export default function WardrobePage({
                 paddingRight: '16px',
                 height: '46px',
                 borderRadius: 'var(--radius-full)',
-                background: 'rgba(7, 10, 17, 0.6)',
+                background: isLight ? '#FFFFFF' : 'rgba(7, 10, 17, 0.6)',
+                border: isLight ? '1px solid #CBD5E1' : '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
               }}
             />
           </div>
@@ -473,7 +479,9 @@ export default function WardrobePage({
                 height: '46px',
                 borderRadius: 'var(--radius-full)',
                 padding: '0 20px',
-                background: 'rgba(7, 10, 17, 0.6)',
+                background: isLight ? '#FFFFFF' : 'rgba(7, 10, 17, 0.6)',
+                border: isLight ? '1px solid #CBD5E1' : '1px solid var(--border-subtle)',
+                color: 'var(--text-primary)',
                 cursor: 'pointer',
               }}
             >
