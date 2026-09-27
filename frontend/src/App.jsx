@@ -527,6 +527,10 @@ export default function App() {
               onNewChat={handleNewChat}
               activeChatPrompt={activeChatPrompt}
               resetChatSignal={resetChatSignal}
+              chatSessions={chatSessions}
+              selectedChatId={selectedChatId}
+              onSelectChat={handleSelectChat}
+              onDeleteChat={handleDeleteChat}
             />
           )}
 
@@ -572,8 +576,7 @@ export default function App() {
           <footer style={{
             background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
-            padding: '32px 0 24px',
-            textAlign: 'center',
+            padding: '36px 0 24px',
             marginTop: 'auto',
             flexShrink: 0,
             width: '100%',
@@ -581,29 +584,116 @@ export default function App() {
             zIndex: 10,
             transition: 'background 0.3s ease, border-color 0.3s ease'
           }}>
-            <div className="container">
+            <div className="container" style={{ maxWidth: '1120px', margin: '0 auto', padding: '0 24px' }}>
               <div style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginBottom: '8px',
-                fontSize: '1rem',
-                fontWeight: 800,
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: '28px',
+                marginBottom: '28px',
+                textAlign: 'left'
               }}>
-                MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span>
+                {/* Brand & Slogan */}
+                <div style={{ maxWidth: '380px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '10px',
+                    fontSize: '1.25rem',
+                    fontWeight: 800,
+                  }}>
+                    <div style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '8px',
+                      background: '#FFFFFF',
+                      border: '1.2px solid rgba(212, 175, 55, 0.7)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'hidden',
+                      padding: '2.5px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                      flexShrink: 0
+                    }}>
+                      <img 
+                        src="/assets/logo.png" 
+                        alt="MYFITDAILY Logo" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                      />
+                    </div>
+                    <span>MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span></span>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+                    {text(
+                      'Hệ sinh thái Tủ Đồ Số & Trợ Lý Stylist Cá Nhân Hóa công nghệ AI thông minh, mang phong cách thời trang chuẩn studio đến từng outfit mỗi ngày.',
+                      'Smart Digital Wardrobe & AI Personal Stylist Platform empowering your daily fashion with studio lookbook precision.'
+                    )}
+                  </p>
+                </div>
+
+                {/* Quick Navigation Links */}
+                <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      {text('Tính năng', 'Features')}
+                    </div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li><a href="#wardrobe" onClick={(e) => { e.preventDefault(); setCurrentTab('wardrobe'); }} style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}>{text('Tủ đồ số cá nhân', 'Digital Wardrobe')}</a></li>
+                      <li><a href="#ai-stylist" onClick={(e) => { e.preventDefault(); setCurrentTab('ai-stylist'); }} style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}>{text('AI Stylist Studio', 'AI Stylist Studio')}</a></li>
+                      <li><a href="#outfits" onClick={(e) => { e.preventDefault(); setCurrentTab('outfits'); }} style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}>{text('Phòng phối Lookbook', 'Outfit Atelier')}</a></li>
+                      <li><a href="#premium" onClick={(e) => { e.preventDefault(); setCurrentTab('premium'); }} style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}>{text('Gói Hội Viên VIP', 'VIP Membership')}</a></li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      {text('Chính sách', 'Policies')}
+                    </div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li><span style={{ cursor: 'pointer' }}>{text('Điều khoản dịch vụ', 'Terms of Service')}</span></li>
+                      <li><span style={{ cursor: 'pointer' }}>{text('Chính sách bảo mật', 'Privacy Policy')}</span></li>
+                      <li><span style={{ cursor: 'pointer' }}>{text('Bảo mật dữ liệu tủ đồ', 'Wardrobe Security')}</span></li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                      {text('Hỗ trợ', 'Support')}
+                    </div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li><span>support@myfitdaily.vn</span></li>
+                      <li><span>Hotline: 1900 6868</span></li>
+                      <li><span>{text('Hà Nội & TP. Hồ Chí Minh', 'Vietnam')}</span></li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                {text(
-                  'Nền tảng Tủ Đồ Số & Trợ Lý Phối Đồ AI Cho Giới Trẻ Việt Nam – PRN232 EXE201 Group 6',
-                  'Digital Wardrobe & AI Stylist Platform – PRN232 EXE201 Group 6'
-                )}
-              </p>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {text(
-                  `© ${new Date().getFullYear()} MYFITDAILY. Đã đăng ký bản quyền. Được xây dựng với React & ASP.NET Core 8.`,
-                  `© ${new Date().getFullYear()} MYFITDAILY. All rights reserved. Built with React & ASP.NET Core 8.`
-                )}
+
+              {/* Bottom Copyright Divider */}
+              <div style={{
+                borderTop: '1px solid var(--border-subtle)',
+                paddingTop: '16px',
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '0.75rem',
+                color: 'var(--text-muted)'
+              }}>
+                <div>
+                  {text(
+                    `© ${new Date().getFullYear()} MYFITDAILY Technology Platform. Tất cả các quyền được bảo lưu.`,
+                    `© ${new Date().getFullYear()} MYFITDAILY Technology Platform. All rights reserved.`
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  <span>Tiếng Việt (VN)</span>
+                  <span>Phiên bản v2.5 Official</span>
+                </div>
               </div>
             </div>
           </footer>
