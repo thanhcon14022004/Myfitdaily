@@ -101,7 +101,7 @@ export default function SettingsModal({ isOpen, onClose }) {
                 fontWeight: 700,
                 color: 'var(--text-primary)',
                 margin: 0,
-                fontFamily: "'Outfit', sans-serif"
+                fontFamily: 'inherit'
               }}>
                 {t('settings_title')}
               </h3>

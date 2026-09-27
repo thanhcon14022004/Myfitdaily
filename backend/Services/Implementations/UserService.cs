@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MYFITDAILY_EXE201_Group6.Common;
 using MYFITDAILY_EXE201_Group6.Data;
 using MYFITDAILY_EXE201_Group6.DTOs.User;
@@ -33,14 +33,15 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             // Fallback tài khoản demo nếu DB offline
             var isFemale = userId == 1;
+            var isAdmin = userId == 3;
             var fallbackUser = new User
             {
                 Id = userId,
-                Email = isFemale ? "demo@myfitdaily.com" : "test@myfitdaily.com",
-                FullName = isFemale ? "Demo Nữ Châu Á" : "Demo Nam Châu Á",
+                Email = isAdmin ? "admin" : (isFemale ? "testnu" : "testnam"),
+                FullName = isAdmin ? "Ban Quản Trị Hệ Thống" : (isFemale ? "Fashionista (Test Nữ)" : "Gentleman (Test Nam)"),
                 Gender = isFemale ? "Nữ" : "Nam",
-                Role = "User",
-                SubscriptionType = "Free",
+                Role = isAdmin ? "Admin" : "User",
+                SubscriptionType = isAdmin ? "PremiumPlus" : "Premium",
                 Height = isFemale ? 165 : 178,
                 Weight = isFemale ? 52 : 70,
                 Chest = isFemale ? 88 : 98,
