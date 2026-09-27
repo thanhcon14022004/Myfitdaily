@@ -28,10 +28,12 @@ export default function ClothingCard({
     const c = colorName?.toLowerCase() || '';
     if (c.includes('trắng') || c.includes('white')) return '#FFFFFF';
     if (c.includes('đen') || c.includes('black')) return '#1E293B';
-    if (c.includes('xanh denim') || c.includes('blue')) return '#38BDF8';
+    if (c.includes('navy') || c.includes('xanh than')) return '#1E293B';
+    if (c.includes('denim') || c.includes('jeans')) return '#55789B';
+    if (c.includes('blue') || c.includes('xanh dương') || c.includes('xanh lam')) return '#3B82F6';
     if (c.includes('nâu') || c.includes('brown')) return '#A16207';
     if (c.includes('hồng') || c.includes('pink')) return '#F472B6';
-    if (c.includes('be') || c.includes('beige')) return '#FDE68A';
+    if (c.includes('be') || c.includes('beige') || c.includes('khaki')) return '#D8C3A5';
     if (c.includes('đỏ') || c.includes('red')) return '#EF4444';
     return '#94A3B8';
   };
@@ -91,7 +93,7 @@ export default function ClothingCard({
         width: '100%',
         aspectRatio: '4 / 5',
         overflow: 'hidden',
-        backgroundColor: '#0A0F1D',
+        background: 'linear-gradient(145deg, #F4F2ED 0%, #E7E4DC 100%)',
       }}>
         <img 
           src={item.imageUrl} 
@@ -99,14 +101,27 @@ export default function ClothingCard({
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
-            transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-            filter: isChecked ? 'brightness(0.7)' : 'none',
+            objectFit: 'contain',
+            padding: '14px',
+            boxSizing: 'border-box',
+            transition: 'transform 0.3s ease',
+            filter: isChecked ? 'brightness(0.7)' : 'drop-shadow(0 8px 12px rgba(15, 23, 42, 0.16))',
           }}
           onMouseEnter={(e) => { if (!isChecked) e.currentTarget.style.transform = 'scale(1.08)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1.0)'; }}
           onError={(e) => {
-            e.target.src = "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=600&auto=format&fit=crop&q=80";
+            const image = e.currentTarget;
+            if (image.dataset.fallbackApplied) {
+              image.style.display = 'none';
+              return;
+            }
+            image.dataset.fallbackApplied = 'true';
+            const categoryId = Number(item.categoryId);
+            image.src = categoryId === 2 || categoryId === 3
+              ? '/assets/clothes/jeans_blue.svg'
+              : categoryId === 5
+                ? '/assets/clothes/shoes_sneaker.svg'
+                : '/assets/clothes/shirt_white.svg';
           }}
         />
 
@@ -285,9 +300,10 @@ export default function ClothingCard({
             color: '#FFFFFF',
             lineHeight: 1.35,
             display: '-webkit-box',
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            overflowWrap: 'anywhere',
           }}>
             {item.name}
           </h4>

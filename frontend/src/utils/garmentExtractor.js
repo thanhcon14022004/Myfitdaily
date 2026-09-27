@@ -1,31 +1,10 @@
-// Utility: AI Garment Extractor & Background Removal (HTML5 Canvas Engine)
-// Bóc tách trang phục tự động: Chỉ cắt lọc duy nhất item áo hoặc quần/váy/giày, loại bỏ 100% cảnh vật xung quanh (phòng ngủ, sàn nhà, móc treo, người mặc, tường).
+// Local garment image cleanup using Canvas. It removes only background regions
+// connected to image edges, crops whitespace, and keeps the original if the mask
+// would discard too much of the source image.
 
 /**
  * Kiểm tra xem một điểm ảnh có phải là màu da người (Human Skin Tone) hay không
  */
-function isHumanSkinPixel(r, g, b) {
-  // Điều kiện dải màu da chuẩn trong không gian RGB và YCbCr/HSV
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  
-  if (r < 75 || g < 40 || b < 25) return false;
-  if (r <= g || r <= b) return false;
-  if ((r - g) < 10) return false;
-
-  // Tỉ lệ tương phản da
-  const diff = max - min;
-  if (diff < 15) return false;
-
-  // Tính hue
-  let h = 0;
-  if (max === r) {
-    h = ((g - b) / diff) * 60;
-    if (h < 0) h += 360;
-  }
-  return (h >= 0 && h <= 45) || (h >= 345 && h <= 360);
-}
-
 /**
  * Tự động phân tích và loại bỏ hoàn toàn cảnh vật quanh trang phục, chỉ giữ lại item áo/quần
  * @param {string} imageSrc - URL hoặc Base64 của ảnh gốc
@@ -36,8 +15,6 @@ export async function extractGarmentImage(imageSrc, options = {}) {
   const {
     tolerance = 32,            // Ngưỡng phân tách màu (10 - 70)
     autoCrop = true,           // Tự động xén sát mép trang phục (Bounding Box)
-    removeHanger = true,        // Loại bỏ móc treo ở đỉnh áo
-    removeHumanBody = true,     // Loại bỏ da người (cổ, mặt, tay, chân) nếu người đang mặc
     edgeSmoothing = true       // Làm mịn viền vải tự nhiên (Anti-aliasing)
   } = options;
 
@@ -72,6 +49,10 @@ export async function extractGarmentImage(imageSrc, options = {}) {
 
         const imgData = ctx.getImageData(0, 0, procW, procH);
         const data = imgData.data;
+        let totalOpaquePixels = 0;
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] >= 20) totalOpaquePixels++;
+        }
 
         // =========================================================================
         // BƯỚC 1: LẤY MẪU MÀU CẢNH VẬT XUNG QUANH (MULTI-PALETTE BORDER SAMPLING)
@@ -129,10 +110,21 @@ export async function extractGarmentImage(imageSrc, options = {}) {
         const visited = new Uint8Array(procW * procH); // 0: chưa xét, 1: là nền/cảnh vật, 2: là trang phục
         const queue = [];
 
-        // Đẩy toàn bộ các điểm ảnh ở mép 4 biên vào hàng đợi
+        const isColorMatchBg = (r, g, b, tol) => {
+          const tolSq = (tol * 2.5) ** 2;
+          for (const c of dominantBgColors) {
+            const dist = (r - c.r) ** 2 + (g - c.g) ** 2 + (b - c.b) ** 2;
+            if (dist < tolSq) return true;
+          }
+          return false;
+        };
+
+        // Chỉ bắt đầu từ pixel ở mép có màu nền; không mặc định mép ảnh nào
+        // cũng là nền vì ảnh sản phẩm có thể chạm sát biên.
         const pushBorder = (x, y) => {
           const p = y * procW + x;
-          if (!visited[p]) {
+          const i = p * 4;
+          if (!visited[p] && isColorMatchBg(data[i], data[i + 1], data[i + 2], tolerance)) {
             visited[p] = 1;
             queue.push(p);
           }
@@ -146,15 +138,6 @@ export async function extractGarmentImage(imageSrc, options = {}) {
           pushBorder(0, y);
           pushBorder(procW - 1, y);
         }
-
-        const isColorMatchBg = (r, g, b, tol) => {
-          const tolSq = (tol * 2.5) ** 2;
-          for (let c of dominantBgColors) {
-            const dist = (r - c.r) ** 2 + (g - c.g) ** 2 + (b - c.b) ** 2;
-            if (dist < tolSq) return true;
-          }
-          return false;
-        };
 
         // Lan truyền BFS
         let qIdx = 0;
@@ -200,7 +183,7 @@ export async function extractGarmentImage(imageSrc, options = {}) {
         }
 
         // =========================================================================
-        // BƯỚC 3: LỌC BỎ MÓC TREO & THỂ THÂN NGƯỜI (HANGER & HUMAN BODY SUPPRESSION)
+        // BƯỚC 3: GIỮ CHI TIẾT TIỀN CẢNH, CHỈ XÓA NỀN NỐI VỚI MÉP ẢNH
         // =========================================================================
         let minX = procW, minY = procH, maxX = 0, maxY = 0;
         let garmentPixelsCount = 0;
@@ -209,45 +192,10 @@ export async function extractGarmentImage(imageSrc, options = {}) {
           for (let x = 0; x < procW; x++) {
             const p = y * procW + x;
             const idx = p * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
             const a = data[idx + 3];
 
             // 1. Nếu đã bị BFS đánh dấu là cảnh vật xung quanh -> Làm trong suốt hoàn toàn
             if (visited[p] === 1 || a < 20) {
-              data[idx + 3] = 0;
-              continue;
-            }
-
-            // 2. Lọc bỏ Móc Treo (Hanger): thường ở 10% đỉnh trên cùng ở vị trí cổ
-            if (removeHanger && y < procH * 0.12) {
-              // Thanh móc treo thường có màu kim loại xám/đen/bạc hoặc màu gỗ nâu sẫm nằm ở giữa đỉnh
-              const isHangerArea = x > procW * 0.25 && x < procW * 0.75;
-              const isNearBg = isColorMatchBg(r, g, b, tolerance * 1.3);
-              if (isHangerArea && (isNearBg || y < procH * 0.05)) {
-                data[idx + 3] = 0;
-                continue;
-              }
-            }
-
-            // 3. Lọc bỏ Da Người (Cổ, Khuôn mặt, Cánh tay, Đôi chân) nếu là ảnh người đang mặc
-            if (removeHumanBody && isHumanSkinPixel(r, g, b)) {
-              // Da ở phần cổ áo / mặt phía trên cùng (y < 20% chiều cao)
-              // Hoặc da ở 2 bên rìa ngoài cánh tay (x < 18% hoặc x > 82%)
-              // Hoặc da ở phần chân phía dưới cùng (y > 75%)
-              const isNeckOrFace = y < procH * 0.22;
-              const isArmOrHand = (x < procW * 0.18 || x > procW * 0.82) && y > procH * 0.25;
-              const isLegOrFoot = y > procH * 0.78;
-
-              if (isNeckOrFace || isArmOrHand || isLegOrFoot) {
-                data[idx + 3] = 0;
-                continue;
-              }
-            }
-
-            // 4. Kiểm tra xem điểm này có màu trùng với màu nền cảnh vật hay không
-            if (isColorMatchBg(r, g, b, tolerance * 0.95)) {
               data[idx + 3] = 0;
               continue;
             }
@@ -293,6 +241,20 @@ export async function extractGarmentImage(imageSrc, options = {}) {
         // BƯỚC 5: TỰ ĐỘNG XÉN SÁT BIÊN TRANG PHỤC (TIGHT BOUNDING-BOX CROP)
         // Cắt bỏ hoàn toàn các khoảng trống thừa xung quanh, chỉ xuất ra hình ảnh item
         // =========================================================================
+        const retainedRatio = totalOpaquePixels ? garmentPixelsCount / totalOpaquePixels : 0;
+        if (retainedRatio < 0.18) {
+          // Failing safely is preferable to saving a nearly erased garment.
+          ctx.clearRect(0, 0, procW, procH);
+          ctx.drawImage(img, 0, 0, procW, procH);
+          resolve({
+            originalUrl: imageSrc,
+            processedUrl: imageSrc,
+            boundingBox: null,
+            success: false
+          });
+          return;
+        }
+
         if (autoCrop && garmentPixelsCount > 120 && maxX > minX && maxY > minY) {
           const padding = 8;
           const cropX = Math.max(0, minX - padding);

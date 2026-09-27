@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
 import { extractGarmentImage, SEGMENTED_PRESET_ITEMS } from '../utils/garmentExtractor';
+import { detectGarmentType, GARMENT_TEMPLATES } from '../utils/garmentClassifier';
 
 const PRESET_IMAGES_FEMALE = [
   { name: 'Áo Sơ Mi Trắng Lụa', url: '/assets/clothes/shirt_white.svg', cat: 1, brand: 'Zara', color: 'Trắng' },
@@ -65,7 +66,7 @@ const CATEGORY_OPTIONS_MALE = [
 const POPULAR_COLORS = [
   { name: 'Trắng', hex: '#FFFFFF', border: '#CBD5E1', label: 'Trắng' },
   { name: 'Đen', hex: '#0F172A', border: '#475569', label: 'Đen' },
-  { name: 'Xanh Denim', hex: '#38BDF8', border: '#0284C7', label: 'Xanh Denim' },
+  { name: 'Xanh Denim', hex: '#55789B', border: '#365775', label: 'Xanh Denim' },
   { name: 'Xanh Navy', hex: '#1E3A8A', border: '#1E40AF', label: 'Xanh Navy' },
   { name: 'Nâu', hex: '#78350F', border: '#92400E', label: 'Nâu' },
   { name: 'Be', hex: '#FDE68A', border: '#D97706', label: 'Be' },
@@ -90,7 +91,11 @@ function analyzeImageProperties(imageUrl, filename = '', isMale = true) {
 
         // 1. Phân tích loại trang phục (Áo hay Quần)
         let detectedCategory = 1; // Mặc định là Áo
-        const lowerName = (filename || '').toLowerCase();
+        const lowerName = (filename || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd');
 
         if (lowerName.includes('quan') || lowerName.includes('jean') || lowerName.includes('pant') || lowerName.includes('trouser') || lowerName.includes('short') || lowerName.includes('kaki') || lowerName.includes('jogger')) {
           detectedCategory = 2; // Quần
@@ -106,10 +111,10 @@ function analyzeImageProperties(imageUrl, filename = '', isMale = true) {
           detectedCategory = 6; // Phụ kiện
         } else {
           // Dựa vào tỉ lệ phom dáng ảnh:
-          if (aspectRatio >= 1.35) {
+          if (aspectRatio >= 1.15) {
             detectedCategory = 2; // Ảnh dọc dài: dáng quần
-          } else if (aspectRatio <= 0.75) {
-            detectedCategory = 5; // Ảnh ngang bẹt: dáng giày
+          } else if (aspectRatio <= 0.48) {
+            detectedCategory = 5; // Ảnh rất ngang: dáng giày
           } else {
             detectedCategory = 1; // Dáng áo
           }
@@ -236,6 +241,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
   const [formData, setFormData] = useState({
     name: '',
     categoryId: 1,
+    garmentType: 'tshirt_short',
     color: 'Trắng',
     style: 'Casual',
     season: 'AllSeason',
@@ -244,10 +250,17 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
     brand: '',
     size: isMale ? 'L' : 'M',
   });
+  const garmentTypeOptions = Object.entries(GARMENT_TEMPLATES).filter(([id, garment]) => {
+    if (formData.categoryId === 2) return garment.category === 'Bottoms';
+    if (formData.categoryId === 3) return id === 'dress';
+    if (formData.categoryId === 4) return ['blazer', 'jacket_bomber', 'cardigan'].includes(id);
+    if (formData.categoryId === 5) return garment.category === 'Shoes';
+    if (formData.categoryId === 1) return garment.category === 'Tops' && !['blazer', 'jacket_bomber', 'cardigan'].includes(id);
+    return false;
+  });
 
   const [suggestedSizes, setSuggestedSizes] = useState(isMale ? ['S', 'M', 'L', 'XL', 'XXL'] : ['XS', 'S', 'M', 'L', 'XL', 'XXL']);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -267,76 +280,79 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
     setFormData(prev => ({
       ...prev,
       categoryId: catId,
+      garmentType: detectGarmentType({ name: prev.name, categoryName: opt.name }, catId === 2 ? 'Bottoms' : catId === 5 ? 'Shoes' : catId === 3 ? 'Dresses' : 'Tops'),
       size: opt.sizes.includes(prev.size) ? prev.size : opt.defaultSize
     }));
     setSuggestedSizes(opt.sizes);
   };
 
-  // Kích hoạt AI Vision Scan nhận diện Hãng, Loại đồ (Áo/Quần), Màu sắc và Size
+  // Nhận diện loại đồ/màu; việc thử outfit vẫn dùng template 2D, không sinh ảnh người mẫu.
   const triggerAiScan = async (imageUrl, hint = '', explicitColor = '', explicitCategory = null) => {
     setIsScanning(true);
-    setScanResult(null);
-
-    // 1. Phân tích trực tiếp từ Canvas điểm ảnh và phom dáng
-    const analysis = await analyzeImageProperties(imageUrl, hint, isMale);
-    const detectedColor = explicitColor || analysis.color || 'Trắng';
-    let detectedCatId = explicitCategory || analysis.categoryId || 1;
-    if (isMale && detectedCatId === 3) detectedCatId = 1;
-
-    // Cập nhật ngay danh mục và dải size đề xuất
-    const catOpt = categoryOptions.find(c => c.id === detectedCatId) || categoryOptions[0];
-    setSuggestedSizes(catOpt.sizes);
-
-    setFormData(prev => ({
-      ...prev,
-      categoryId: detectedCatId,
-      color: detectedColor,
-      size: catOpt.sizes.includes(prev.size) ? prev.size : catOpt.defaultSize
-    }));
-
     try {
-      const res = await apiRequest('/ai/scan-clothing', {
+      const analysis = await analyzeImageProperties(imageUrl, hint, isMale);
+      const detectedColor = explicitColor || analysis.color || 'Trắng';
+      let detectedCatId = explicitCategory || analysis.categoryId || 1;
+      if (isMale && detectedCatId === 3) detectedCatId = 1;
+
+      const catOpt = categoryOptions.find(c => c.id === detectedCatId) || categoryOptions[0];
+      const categoryHint = detectedCatId === 2 ? 'Bottoms' : detectedCatId === 3 ? 'Dresses' : detectedCatId === 5 ? 'Shoes' : detectedCatId === 4 ? 'Outerwear' : 'Tops';
+      const localGarmentType = detectGarmentType({ name: hint, categoryName: categoryHint }, categoryHint);
+      setSuggestedSizes(catOpt.sizes);
+      setFormData(prev => ({
+        ...prev,
+        imageUrl,
+        name: prev.name || `${catOpt.name.split(' ')[0]} màu ${detectedColor}`,
+        brand: prev.brand || 'Chưa rõ hãng',
+        categoryId: detectedCatId,
+        garmentType: localGarmentType,
+        color: detectedColor,
+        size: catOpt.sizes.includes(prev.size) ? prev.size : catOpt.defaultSize
+      }));
+
+      // This endpoint returns garment metadata only; it does not generate try-on photos.
+      const response = await apiRequest('/ai/scan-clothing', {
         method: 'POST',
-        body: JSON.stringify({ 
-          imageUrl, 
-          hint: hint || (detectedCatId === 2 ? `Quần màu ${detectedColor}` : `Áo màu ${detectedColor}`),
+        body: JSON.stringify({
+          imageUrl,
+          hint: hint || `${catOpt.name} màu ${detectedColor}`,
           colorHint: detectedColor,
-          categoryHint: detectedCatId === 2 ? 'Bottoms' : detectedCatId === 3 ? 'Dresses' : detectedCatId === 5 ? 'Shoes' : 'Tops',
+          categoryHint,
           aspectRatio: analysis.aspectRatio
         })
       });
 
-      if (res.ok && res.data?.data) {
-        const scan = res.data.data;
-        setScanResult(scan);
-
-        let finalCatId = scan.categoryId || detectedCatId;
-        if (isMale && finalCatId === 3) finalCatId = 1;
-        const targetCatOpt = categoryOptions.find(c => c.id === finalCatId) || catOpt;
-        
-        const sizes = scan.suggestedSizes && scan.suggestedSizes.length > 0 
-          ? scan.suggestedSizes 
-          : targetCatOpt.sizes;
-        setSuggestedSizes(sizes);
-
-        let defaultSize = sizes.includes('M') ? 'M' : sizes.includes('30') ? '30' : sizes[Math.min(1, sizes.length - 1)];
+      if (response.ok && response.data?.data) {
+        const scan = response.data.data;
+        let finalCategoryId = scan.categoryId || detectedCatId;
+        if (isMale && finalCategoryId === 3) finalCategoryId = 1;
+        const finalCategory = categoryOptions.find(c => c.id === finalCategoryId) || catOpt;
         const finalColor = scan.color || detectedColor;
-
+        const finalCategoryHint = finalCategoryId === 2 ? 'Bottoms' : finalCategoryId === 3 ? 'Dresses' : finalCategoryId === 5 ? 'Shoes' : finalCategoryId === 4 ? 'Outerwear' : 'Tops';
+        const inferredGarmentType = detectGarmentType({
+          ...scan,
+          description: scan.description || scan.aiNotes,
+          garmentType: GARMENT_TEMPLATES[scan.garmentType] ? scan.garmentType : undefined,
+          categoryName: scan.categoryName || finalCategoryHint
+        }, finalCategoryHint);
+        const sizes = scan.suggestedSizes?.length ? scan.suggestedSizes : finalCategory.sizes;
+        setSuggestedSizes(sizes);
         setFormData(prev => ({
           ...prev,
           imageUrl,
-          brand: scan.brand || prev.brand || (finalCatId === 2 ? "Levi's" : "Zara"),
-          name: scan.name || prev.name || (finalCatId === 2 ? `Quần Thời Trang Màu ${finalColor}` : `Áo Thời Trang Màu ${finalColor}`),
-          categoryId: finalCatId,
+          name: scan.name || prev.name,
+          brand: scan.brand || prev.brand || 'Chưa rõ hãng',
+          categoryId: finalCategoryId,
+          garmentType: inferredGarmentType,
           color: finalColor,
           style: scan.style || prev.style,
           season: scan.season || prev.season,
-          size: defaultSize,
+          size: sizes.includes(prev.size) ? prev.size : (sizes.includes('M') ? 'M' : sizes[0]),
           description: scan.aiNotes || prev.description
         }));
       }
     } catch (err) {
-      console.warn("AI Scan warning:", err);
+      console.warn('Garment scan unavailable; keeping local image analysis:', err);
     } finally {
       setIsScanning(false);
     }
@@ -355,15 +371,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
         setRawImageUrl(base64Url);
         setIsExtracting(true);
 
-        // TỰ ĐỘNG BÓC TÁCH CẮT LỌC MỖI ITEM ÁO/QUẦN NGAY KHI TẢI LÊN
+        // Cắt nền/crop cục bộ; giữ nguyên ảnh nếu kết quả có nguy cơ mất chi tiết.
         let finalGarmentUrl = base64Url;
         let isSuccess = false;
         try {
           const result = await extractGarmentImage(base64Url, {
             tolerance: cutoutTolerance,
             autoCrop: true,
-            removeHanger: true,
-            removeHumanBody: true,
             edgeSmoothing: true
           });
           if (result.success && result.processedUrl) {
@@ -414,8 +428,6 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
         const result = await extractGarmentImage(url, {
           tolerance: cutoutTolerance,
           autoCrop: true,
-          removeHanger: true,
-          removeHumanBody: true,
           edgeSmoothing: true
         });
         if (result.success && result.processedUrl) {
@@ -437,7 +449,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
     }
   };
 
-  // Kích hoạt lại AI Bóc Tách Trang Phục & Xóa Nền (với độ nhạy tùy chỉnh)
+  // Cắt nền và crop lại với ngưỡng người dùng chọn.
   const handleExtractGarment = async (customTol) => {
     const currentImg = formData.imageUrl;
     if (!currentImg) {
@@ -454,8 +466,6 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
       const result = await extractGarmentImage(srcToProcess, {
         tolerance: tol,
         autoCrop: true,
-        removeHanger: true,
-        removeHumanBody: true,
         edgeSmoothing: true
       });
 
@@ -495,6 +505,8 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
     const currentCat = categoryOptions.find(c => c.id === formData.categoryId) || categoryOptions[0];
     const catLabel = currentCat?.name?.split(' ')?.[0] || 'Áo';
     const autoName = formData.name?.trim() || `${catLabel} ${formData.brand ? formData.brand + ' ' : ''}màu ${formData.color || 'Trắng'}`;
+    const garmentTemplate = GARMENT_TEMPLATES[formData.garmentType] || GARMENT_TEMPLATES[detectGarmentType({ name: autoName, categoryName: currentCat.name }, 'Tops')];
+    const savedDescription = [formData.description?.trim(), `Kiểu trang phục: ${garmentTemplate.name}.`].filter(Boolean).join(' ');
 
     setIsSubmitting(true);
     try {
@@ -510,17 +522,20 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
       await onAdd({
         ...formData,
         name: autoName,
+        garmentType: garmentTemplate.id,
         categoryId: Number(formData.categoryId),
         categoryName: categoryNames[formData.categoryId],
         brand: formData.brand?.trim() || 'Chưa rõ hãng',
         size: formData.size?.trim() || 'FreeSize',
-        color: formData.color?.trim() || 'Trắng'
+        color: formData.color?.trim() || 'Trắng',
+        description: savedDescription
       });
 
       // Reset form
       setFormData({
         name: '',
         categoryId: 1,
+        garmentType: 'tshirt_short',
         color: 'Trắng',
         style: 'Casual',
         season: 'AllSeason',
@@ -529,8 +544,6 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
         brand: '',
         size: 'M',
       });
-      setScanResult(null);
-
       onClose();
     } catch (err) {
       console.error("Add clothing error:", err);
@@ -595,13 +608,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
               marginBottom: '6px' 
             }}>
               <Sparkles size={13} color="#D4AF37" />
-              <span>✦ AI VISION SMART CLOTHING SCANNER</span>
+              <span>✦ NHẬN DIỆN TRANG PHỤC</span>
             </div>
             <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#FFF' }}>
               Tự Động Nhận Diện Áo, Quần, Hãng & Màu Sắc
             </h3>
             <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
-              AI tự động đọc <strong style={{ color: '#F3D98A' }}>Áo hay Quần</strong>, <strong style={{ color: '#F3D98A' }}>Hãng</strong> và <strong style={{ color: '#F3D98A' }}>Màu sắc</strong>. Bạn chỉ cần <strong style={{ color: '#FFF' }}>chọn Size</strong>!
+              Tự nhận diện <strong style={{ color: '#F3D98A' }}>loại trang phục và màu sắc</strong>. Phòng thử đồ áp mẫu vẽ sẵn, không tạo ảnh model mới.
             </p>
           </div>
           <button
@@ -645,7 +658,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                     gap: '4px'
                   }}
                 >
-                  <Zap size={13} /> {isScanning ? 'Đang quét...' : 'Quét lại AI'}
+                  <Zap size={13} /> {isScanning ? 'Đang quét...' : 'Nhận diện lại'}
                 </button>
               )}
             </div>
@@ -759,7 +772,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                       borderRadius: 'var(--radius-sm)',
                       overflow: 'hidden',
                       border: '2px solid var(--primary)',
-                      background: 'repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) 50% / 12px 12px'
+                      background: 'repeating-conic-gradient(#f8fafc 0% 25%, #e2e8f0 0% 50%) 50% / 12px 12px'
                     }}>
                       <img 
                         src={formData.imageUrl} 
@@ -780,7 +793,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                           borderRadius: '2px',
                           textAlign: 'center'
                         }}>
-                          ĐÃ LỌC CẢNH
+                          ĐÃ CẮT GỌN
                         </div>
                       )}
                       {(isScanning || isExtracting) && (
@@ -799,11 +812,11 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                     <div style={{ textAlign: 'left' }}>
                       {isExtracting ? (
                         <div style={{ color: '#F3D98A', fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Scissors size={15} className="animate-spin" /> AI đang cắt lọc trang phục, loại bỏ cảnh vật...
+                          <Scissors size={15} className="animate-spin" /> Đang tách nền và cắt gọn ảnh...
                         </div>
                       ) : isScanning ? (
                         <div style={{ color: '#F3D98A', fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <Sparkles size={15} className="animate-spin" /> AI đang phân tích Áo/Quần, Màu sắc & Thương hiệu...
+                          <Sparkles size={15} className="animate-spin" /> Đang nhận diện loại đồ và màu sắc...
                         </div>
                       ) : isCutoutApplied ? (
                         <div style={{ color: '#10B981', fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -811,7 +824,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                         </div>
                       ) : (
                         <div style={{ color: '#10B981', fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <ShieldCheck size={16} /> AI đã nhận diện: {currentCatObj.name} • {formData.brand || 'Thương hiệu'}
+                          <ShieldCheck size={16} /> Đã nhận diện: {currentCatObj.name} • {formData.color}
                         </div>
                       )}
                       <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
@@ -872,13 +885,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                           cursor: 'pointer',
                           position: 'relative',
                           border: isSel ? '2px solid var(--primary)' : '1px solid rgba(212, 175, 55, 0.25)',
-                          background: 'rgba(10, 15, 26, 0.8)',
+                          background: 'linear-gradient(145deg, #F4F2ED, #E7E4DC)',
                           opacity: isSel ? 1 : 0.85,
                           transition: 'var(--transition)',
                         }}
                         title={`${preset.brand} - ${preset.name} (Tách nền chuẩn)`}
                       >
-                        <img src={preset.imageUrl} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={preset.imageUrl} alt={preset.name} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 7, boxSizing: 'border-box' }} />
                         <div style={{
                           position: 'absolute',
                           top: 2,
@@ -974,7 +987,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
               </div>
             )}
 
-            {/* AI GARMENT EXTRACTOR ACTION PANEL */}
+            {/* LOCAL GARMENT CUTOUT ACTION PANEL */}
             {formData.imageUrl && (
               <div style={{
                 marginTop: '12px',
@@ -1011,13 +1024,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                     <div>
                       <div style={{ fontSize: '0.84rem', fontWeight: 800, color: isCutoutApplied ? '#A7F3D0' : '#F3D98A' }}>
                         {isCutoutApplied 
-                          ? '✅ Đã Bóc Tách: Chỉ Lưu Item Áo/Quần (Không Lấy Cảnh Vật)' 
-                          : 'AI Bóc Tách Quần Áo & Lọc Bỏ Cảnh Vật Xung Quanh'}
+                          ? '✅ Đã cắt gọn ảnh trang phục'
+                          : 'Cắt gọn nền ảnh sản phẩm'}
                       </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
                         {isCutoutApplied 
-                          ? 'Đã lọc sạch phòng ngủ, nền sàn, móc treo và người mặc để chỉ giữ lại món đồ chuẩn trong suốt.'
-                          : 'Tự động cắt lọc chỉ lấy áo/quần/váy, loại bỏ phòng, sàn gạch, móc treo và da người.'}
+                          ? 'Đã tách nền nối với mép ảnh và giữ chi tiết màu vải.'
+                          : 'Xử lý ngay trên trình duyệt. Nếu nền phức tạp, ảnh gốc được giữ nguyên để tránh làm mất chi tiết.'}
                       </div>
                     </div>
                   </div>
@@ -1114,7 +1127,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
             )}
           </div>
 
-          {/* AI SCAN RESULT HERO: LOẠI ĐỒ (ÁO/QUẦN), BRAND, COLOR & SIZE */}
+          {/* LOCAL DETECTION: CATEGORY, BRAND, COLOR & SIZE */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(20, 24, 38, 0.8))',
             border: '1px solid rgba(212, 175, 55, 0.35)',
@@ -1130,13 +1143,13 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Layers size={16} color="#D4AF37" />
                   <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#F3D98A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Loại Trang Phục (AI Phân Loại):
+                    Loại Trang Phục:
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <strong style={{ color: '#FFF', fontSize: '0.86rem' }}>{currentCatObj.icon} {currentCatObj.name}</strong>
                   <span className="badge badge-indigo" style={{ fontSize: '0.7rem', padding: '2px 7px' }}>
-                    ✦ AI Category
+                    Tự nhận diện
                   </span>
                 </div>
               </div>
@@ -1177,6 +1190,22 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
               </div>
             </div>
 
+            {garmentTypeOptions.length > 0 && (
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ color: '#E2E8F0', fontSize: '0.82rem', fontWeight: 700 }}>
+                  Kiểu dáng nhận diện{isScanning ? ' · đang phân tích ảnh…' : ''}
+                </span>
+                <select
+                  value={formData.garmentType}
+                  onChange={(e) => setFormData(prev => ({ ...prev, garmentType: e.target.value }))}
+                  aria-label="Kiểu dáng trang phục nhận diện từ ảnh"
+                  style={{ minWidth: 220, padding: '7px 10px', color: '#F8FAFC', background: '#171B25', border: '1px solid rgba(212,175,55,.45)', borderRadius: 8 }}
+                >
+                  {garmentTypeOptions.map(([id, garment]) => <option key={id} value={id}>{garment.name}</option>)}
+                </select>
+              </label>
+            )}
+
             {/* ROW 2: BRAND (HÃNG THỜI TRANG) */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1188,9 +1217,8 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-end', minWidth: '220px' }}>
                 <input
                   type="text"
-                  required
                   id="input-clothing-brand"
-                  placeholder="Hãng (VD: Zara, Uniqlo, Nike, Levi's...)"
+                  placeholder="Không bắt buộc (VD: Zara, Uniqlo...)"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                   style={{
@@ -1206,7 +1234,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                   }}
                 />
                 <span className="badge badge-gold" style={{ fontSize: '0.72rem', padding: '4px 8px' }}>
-                  ✦ AI Brand
+                  Hãng
                 </span>
               </div>
             </div>
@@ -1231,7 +1259,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                   }} />
                   <strong style={{ color: '#FFF', fontSize: '0.86rem' }}>{formData.color || 'Trắng'}</strong>
                   <span className="badge badge-emerald" style={{ fontSize: '0.7rem', padding: '2px 7px' }}>
-                    ✦ AI Color
+                  Tự nhận diện
                   </span>
                 </div>
               </div>
@@ -1359,7 +1387,7 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
                 borderRadius: 'var(--radius-sm)',
                 borderLeft: '3px solid #D4AF37'
               }}>
-                <strong style={{ color: '#FFF' }}>AI Đã Nhận Diện: </strong> 
+                <strong style={{ color: '#FFF' }}>Đang chọn: </strong>
                 <span style={{ color: '#F3D98A' }}>{currentCatObj.name}</span> • 
                 <span style={{ color: '#FFF' }}> Hãng {formData.brand || 'Zara'}</span> • 
                 <span style={{ color: activeColorObj.hex }}> Màu {formData.color}</span> • 
