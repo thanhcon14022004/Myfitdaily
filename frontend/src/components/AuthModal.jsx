@@ -11,10 +11,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
-    email: 'demo@myfitdaily.com',
-    password: 'Password123!',
-    fullName: 'Fashionista (Demo Nữ)',
-    gender: 'Female',
+    email: 'testnam',
+    password: 'testnam',
+    fullName: 'Gentleman (Test Nam)',
+    gender: 'Nam',
   });
 
   if (!isOpen) return null;
@@ -24,123 +24,155 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setLoading(true);
     setError(null);
 
+    const cleanInput = (formData.email || '').trim().toLowerCase();
     const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
     const payload = isLoginMode 
-      ? { email: formData.email, password: formData.password }
-      : { email: formData.email, password: formData.password, fullName: formData.fullName, gender: formData.gender };
+      ? { email: cleanInput, password: formData.password }
+      : { email: cleanInput, password: formData.password, fullName: formData.fullName, gender: formData.gender };
 
-    const res = await apiRequest(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await apiRequest(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
 
-    setLoading(false);
+      setLoading(false);
 
-    if (res.ok && res.data?.success) {
-      const authData = res.data.data;
-      localStorage.setItem('myfitdaily_token', authData.token);
-      localStorage.setItem('myfitdaily_user', JSON.stringify(authData.user));
-      onAuthSuccess(authData.user);
-      onClose();
-    } else {
-      // If backend is not available or returned an error
-      const msg = res.data?.message || (res.data?.errors ? Object.values(res.data.errors).flat().join(', ') : null);
-      if (msg) {
-        setError(msg);
-      } else {
-        // Backend offline fallback option
-        setError(text(
-          "Không thể kết nối đến máy chủ API. Bạn có thể nhấn 'Trải Nghiệm Chế Độ Demo' bên dưới!",
-          "Cannot reach the API server. You can click 'Demo Experience' below!"
-        ));
+      if (res.ok && res.data?.success) {
+        const authData = res.data.data;
+        localStorage.setItem('myfitdaily_token', authData.token);
+        localStorage.setItem('myfitdaily_user', JSON.stringify(authData.user));
+        onAuthSuccess(authData.user);
+        onClose();
+        return;
       }
+
+      // Offline fallback handling if DB not reachable
+      if (isLoginMode) {
+        let fallbackUser = null;
+        if ((cleanInput === 'testnam' || cleanInput === 'testnam@myfitdaily.com') && formData.password === 'testnam') {
+          fallbackUser = {
+            id: 2,
+            fullName: 'Gentleman (Test Nam)',
+            email: 'testnam',
+            gender: 'Nam',
+            height: 178,
+            weight: 70,
+            chest: 98,
+            waist: 78,
+            hips: 95,
+            bodyShape: 'Tam giác ngược',
+            role: 'User',
+            subscriptionType: 'Premium',
+            avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+          };
+        } else if ((cleanInput === 'testnu' || cleanInput === 'testnu@myfitdaily.com') && formData.password === 'testnu') {
+          fallbackUser = {
+            id: 1,
+            fullName: 'Fashionista (Test Nữ)',
+            email: 'testnu',
+            gender: 'Nữ',
+            height: 165,
+            weight: 52,
+            chest: 88,
+            waist: 64,
+            hips: 92,
+            bodyShape: 'Đồng hồ cát',
+            role: 'User',
+            subscriptionType: 'Premium',
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+          };
+        } else if ((cleanInput === 'admin' || cleanInput === 'admin@myfitdaily.com') && formData.password === 'admin') {
+          fallbackUser = {
+            id: 3,
+            fullName: 'Ban Quản Trị Hệ Thống',
+            email: 'admin',
+            gender: 'Nam',
+            role: 'Admin',
+            subscriptionType: 'PremiumPlus',
+            avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
+          };
+        }
+
+        if (fallbackUser) {
+          localStorage.setItem('myfitdaily_token', 'local_jwt_token_2026');
+          localStorage.setItem('myfitdaily_user', JSON.stringify(fallbackUser));
+          const demoClothes = getInitialClothesForGender(fallbackUser.gender || 'Nam');
+          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(demoClothes));
+          const demoOutfits = getInitialOutfitsForGender(fallbackUser.gender || 'Nam');
+          localStorage.setItem('myfitdaily_outfits', JSON.stringify(demoOutfits));
+          onAuthSuccess(fallbackUser);
+          onClose();
+          return;
+        }
+      }
+
+      const msg = res.data?.message || (res.data?.errors ? Object.values(res.data.errors).flat().join(', ') : null);
+      setError(msg || text("Tên đăng nhập hoặc mật khẩu không chính xác", "Invalid username or password"));
+    } catch (err) {
+      setLoading(false);
+      setError(text("Lỗi kết nối máy chủ", "Server connection error"));
     }
   };
 
-  const handleDemoLogin = (type = 'female') => {
-    const isMale = type === 'male' || formData.email === 'test@myfitdaily.com';
-    const isAdmin = type === 'admin' || formData.email === 'admin@myfitdaily.com';
-    const demoUser = isAdmin ? {
-      id: 1,
-      fullName: 'Quản Trị Viên (Admin)',
-      email: 'admin@myfitdaily.com',
-      gender: 'Nam',
-      role: 'Admin',
-      subscriptionType: 'PremiumPlus',
-      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
-    } : (isMale ? {
-      id: 998,
-      fullName: 'Gentleman (Demo Nam)',
-      email: 'test@myfitdaily.com',
-      gender: 'Nam',
-      height: 178,
-      weight: 70,
-      chest: 98,
-      waist: 78,
-      hips: 95,
-      bodyShape: 'Tam giác ngược',
-      role: 'User',
-      subscriptionType: 'Premium',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
-    } : {
-      id: 999,
-      fullName: 'Fashionista (Demo Nữ)',
-      email: 'demo@myfitdaily.com',
-      gender: 'Nữ',
-      height: 165,
-      weight: 52,
-      chest: 88,
-      waist: 64,
-      hips: 92,
-      bodyShape: 'Đồng hồ cát',
-      role: 'User',
-      subscriptionType: 'Premium',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-    });
-    localStorage.setItem('myfitdaily_token', 'demo_jwt_token_2026');
-    localStorage.setItem('myfitdaily_user', JSON.stringify(demoUser));
-    const demoClothes = getInitialClothesForGender(demoUser.gender || 'Nam');
-    localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(demoClothes));
-    const demoOutfits = getInitialOutfitsForGender(demoUser.gender || 'Nam');
-    localStorage.setItem('myfitdaily_outfits', JSON.stringify(demoOutfits));
-    onAuthSuccess(demoUser);
-    onClose();
-  };
-
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 100,
-      background: 'rgba(5, 8, 15, 0.85)',
-      backdropFilter: 'blur(16px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-    }}>
+    <div 
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        background: 'rgba(5, 8, 15, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+      }}
+    >
       <div 
-        className="glass-card"
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '460px',
           padding: '32px',
           position: 'relative',
+          background: 'var(--bg-modal, #181B22)',
+          border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+          borderRadius: '24px',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.85)',
         }}
       >
         {/* Close button */}
         <button
+          type="button"
           onClick={onClose}
+          aria-label="Đóng"
           style={{
             position: 'absolute',
-            top: '20px',
-            right: '20px',
-            padding: '6px',
+            top: '18px',
+            right: '18px',
+            width: '32px',
+            height: '32px',
             borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.08)',
-            color: 'var(--text-secondary)',
-            border: 'none',
+            background: 'rgba(255, 255, 255, 0.1)',
+            color: 'var(--text-secondary, #9CA3AF)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
+            zIndex: 10,
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            e.currentTarget.style.color = '#FFFFFF';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.color = 'var(--text-secondary, #9CA3AF)';
           }}
         >
           <X size={18} />
@@ -149,17 +181,23 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         {/* Brand Icon & Heading */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
-            width: '52px',
-            height: '52px',
+            width: '56px',
+            height: '56px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
+            background: '#FFFFFF',
+            border: '1.8px solid rgba(212, 175, 55, 0.75)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 6px 20px var(--primary-glow)',
+            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.35), 0 0 16px rgba(212, 175, 55, 0.35)',
             marginBottom: '14px',
+            padding: '5px'
           }}>
-            <Sparkles size={26} color="#080A0F" />
+            <img 
+              src="/assets/logo.png" 
+              alt="MYFITDAILY Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
           <h3 style={{ fontSize: '1.6rem', fontWeight: 800 }}>
             {isLoginMode ? text('Chào Mừng Trở Lại', 'Welcome Back') : text('Tạo Tài Khoản Mới', 'Create New Account')}
@@ -235,7 +273,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </div>
         )}
 
-        {/* Demo Accounts Quick Select */}
+        {/* Demo Accounts Preset Hint */}
         {isLoginMode && (
           <div style={{
             background: 'rgba(212, 175, 55, 0.08)',
@@ -257,23 +295,23 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Sparkles size={14} color="#D4AF37" />
-                {text('Tài khoản Demo có sẵn (Bấm để điền)', 'Available Demo Accounts (Click to fill)')}
+                {text('Tài khoản Test & Admin (Bấm để điền)', 'Test & Admin Accounts (Click to fill)')}
               </span>
-              <span style={{ fontSize: '0.72rem', opacity: 0.85 }}>Pass: Password123!</span>
+              <span style={{ fontSize: '0.72rem', opacity: 0.85 }}>{text('Mật khẩu = Tên đăng nhập', 'Password = Username')}</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
               <button
                 type="button"
-                id="btn-fill-demo-female"
-                onClick={() => setFormData({ ...formData, email: 'demo@myfitdaily.com', password: 'Password123!' })}
+                id="btn-fill-testnam"
+                onClick={() => setFormData({ ...formData, email: 'testnam', password: 'testnam' })}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
-                  padding: '9px 11px',
+                  padding: '8px 10px',
                   borderRadius: '10px',
-                  background: formData.email === 'demo@myfitdaily.com' ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-                  border: `1.5px solid ${formData.email === 'demo@myfitdaily.com' ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)'}`,
+                  background: formData.email === 'testnam' ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${formData.email === 'testnam' ? '#60A5FA' : 'rgba(255, 255, 255, 0.12)'}`,
                   color: '#FFF',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -281,27 +319,25 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    👩 {text('Demo Nữ', 'Demo Female')}
-                  </span>
-                  {formData.email === 'demo@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>👨 testnam</span>
+                  {formData.email === 'testnam' && <CheckCircle2 size={12} color="#60A5FA" />}
                 </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>demo@myfitdaily.com</span>
-                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>165cm • 52kg • 88-64-92</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>testnam / testnam</span>
+                <span style={{ fontSize: '0.65rem', color: '#93C5FD', marginTop: '2px' }}>Nam • Premium</span>
               </button>
 
               <button
                 type="button"
-                id="btn-fill-demo-male"
-                onClick={() => setFormData({ ...formData, email: 'test@myfitdaily.com', password: 'Password123!' })}
+                id="btn-fill-testnu"
+                onClick={() => setFormData({ ...formData, email: 'testnu', password: 'testnu' })}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
-                  padding: '9px 11px',
+                  padding: '8px 10px',
                   borderRadius: '10px',
-                  background: formData.email === 'test@myfitdaily.com' ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.04)',
-                  border: `1.5px solid ${formData.email === 'test@myfitdaily.com' ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)'}`,
+                  background: formData.email === 'testnu' ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${formData.email === 'testnu' ? '#D4AF37' : 'rgba(255, 255, 255, 0.12)'}`,
                   color: '#FFF',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -309,13 +345,37 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    👨 {text('Demo Nam', 'Demo Male')}
-                  </span>
-                  {formData.email === 'test@myfitdaily.com' && <CheckCircle2 size={13} color="#D4AF37" />}
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>👩 testnu</span>
+                  {formData.email === 'testnu' && <CheckCircle2 size={12} color="#D4AF37" />}
                 </div>
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>test@myfitdaily.com</span>
-                <span style={{ fontSize: '0.68rem', color: '#F3D98A', marginTop: '3px' }}>178cm • 70kg • 98-78-95</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>testnu / testnu</span>
+                <span style={{ fontSize: '0.65rem', color: '#F3D98A', marginTop: '2px' }}>Nữ • Premium</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-fill-admin"
+                onClick={() => setFormData({ ...formData, email: 'admin', password: 'admin' })}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '8px 10px',
+                  borderRadius: '10px',
+                  background: formData.email === 'admin' ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${formData.email === 'admin' ? '#34D399' : 'rgba(255, 255, 255, 0.12)'}`,
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 700 }}>🛡️ admin</span>
+                  {formData.email === 'admin' && <CheckCircle2 size={12} color="#34D399" />}
+                </div>
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>admin / admin</span>
+                <span style={{ fontSize: '0.65rem', color: '#6EE7B7', marginTop: '2px' }}>Admin • VIP+</span>
               </button>
             </div>
           </div>
@@ -345,14 +405,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px' }}>
-              {text('Địa chỉ Email', 'Email Address')}
+              {isLoginMode ? text('Tên đăng nhập hoặc Email', 'Username or Email') : text('Địa chỉ Email', 'Email Address')}
             </label>
             <div style={{ position: 'relative' }}>
               <input
-                type="email"
+                type={isLoginMode ? "text" : "email"}
                 required
                 id="input-auth-email"
-                placeholder="email@example.com"
+                placeholder={isLoginMode ? "testnam, testnu, admin hoặc email" : "email@example.com"}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 style={{ width: '100%', paddingLeft: '38px' }}
@@ -369,9 +429,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <input
                 type="password"
                 required
-                minLength={6}
                 id="input-auth-password"
-                placeholder={text("Ít nhất 6 ký tự", "At least 6 characters")}
+                placeholder={text("Nhập mật khẩu", "Enter password")}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 style={{ width: '100%', paddingLeft: '38px' }}
@@ -398,77 +457,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               : (isLoginMode ? text('Đăng Nhập Ngay', 'Sign In Now') : text('Tạo Tài Khoản', 'Create Account'))}
           </button>
         </form>
-
-        {/* Demo Fast Login */}
-        <div style={{
-          marginTop: '18px',
-          paddingTop: '14px',
-          borderTop: '1px solid var(--border-subtle)',
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '10px',
-        }}>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('female')}
-            id="btn-quick-female"
-            style={{
-              fontSize: '0.8rem',
-              color: '#F3D98A',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              background: 'rgba(212, 175, 55, 0.12)',
-              border: '1px solid rgba(212, 175, 55, 0.3)',
-              cursor: 'pointer',
-            }}
-          >
-            <span>👩 Vào nhanh Demo Nữ</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('male')}
-            id="btn-quick-male"
-            style={{
-              fontSize: '0.8rem',
-              color: '#93C5FD',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              background: 'rgba(59, 130, 246, 0.12)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              cursor: 'pointer',
-            }}
-          >
-            <span>👨 Vào nhanh Demo Nam</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('admin')}
-            id="btn-quick-admin"
-            style={{
-              fontSize: '0.8rem',
-              color: '#34D399',
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              cursor: 'pointer',
-            }}
-          >
-            <span>🛡️ Demo Admin</span>
-          </button>
-        </div>
       </div>
     </div>
   );
