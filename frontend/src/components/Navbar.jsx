@@ -50,23 +50,31 @@ export default function Navbar({
           id="nav-brand-logo"
         >
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: '42px',
+            height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #D4AF37 0%, #C27D5E 50%, #F3D98A 100%)',
+            background: '#FFFFFF',
+            border: '1.5px solid rgba(212, 175, 55, 0.7)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(212, 175, 55, 0.45)',
+            boxShadow: '0 4px 18px rgba(0, 0, 0, 0.35), 0 0 15px rgba(212, 175, 55, 0.4)',
+            overflow: 'hidden',
+            padding: '4px',
+            flexShrink: 0
           }}>
-            <Sparkles size={20} color="#080A0F" />
+            <img 
+              src="/assets/logo.png" 
+              alt="MYFITDAILY Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
           <div>
             <div style={{
-              fontFamily: "'Outfit', sans-serif",
+              fontFamily: "inherit",
               fontSize: '1.35rem',
               fontWeight: 800,
-              letterSpacing: '-0.03em',
+              letterSpacing: '-0.02em',
               lineHeight: 1,
             }}>
               MYFIT<span style={{ color: 'var(--primary-light)' }}>DAILY</span>

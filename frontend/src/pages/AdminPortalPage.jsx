@@ -282,7 +282,7 @@ export default function AdminPortalPage({ user, onNavigate, onEquipInStudio, onA
       margin: '0 auto',
       padding: '24px 20px 80px',
       color: 'var(--text-primary)',
-      fontFamily: "'Outfit', sans-serif"
+      fontFamily: 'inherit'
     }}>
       {/* 1. Header Banner dành cho Admin */}
       <div style={{

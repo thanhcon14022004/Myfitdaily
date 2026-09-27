@@ -21,6 +21,7 @@ import {
   BrainCircuit
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { formatChatDate } from '../utils/dateUtils';
 import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
 import SubscriptionCountdown from './SubscriptionCountdown';
 
@@ -114,23 +115,31 @@ export default function Sidebar({
             title="MYFITDAILY"
           >
             <div style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '6px',
-              background: 'linear-gradient(135deg, #D4AF37 0%, #C27D5E 100%)',
+              width: '32px',
+              height: '32px',
+              borderRadius: '9px',
+              background: '#FFFFFF',
+              border: '1.5px solid rgba(212, 175, 55, 0.7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)',
+              overflow: 'hidden',
+              padding: '2.5px',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35), 0 0 12px rgba(212, 175, 55, 0.35)',
+              flexShrink: 0
             }}>
-              <Sparkles size={14} color="#080A0F" />
+              <img 
+                src="/assets/logo.png" 
+                alt="MYFITDAILY Logo" 
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+              />
             </div>
             <span style={{
               fontWeight: 800,
               fontSize: '1.05rem',
               letterSpacing: '-0.02em',
               color: '#ECECEC',
-              fontFamily: "'Outfit', sans-serif"
+              fontFamily: "inherit"
             }}>
               MYFIT<span style={{ color: '#D4AF37' }}>DAILY</span>
             </span>
@@ -179,8 +188,8 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Primary Action Button */}
-        {isAdmin ? (
+        {/* Primary Action Button (Admin Only) */}
+        {isAdmin && (
           <button
             onClick={() => setCurrentTab('admin')}
             className="chatgpt-new-chat-btn"
@@ -203,30 +212,6 @@ export default function Sidebar({
           >
             <Link2 size={17} color="#D4AF37" />
             <span style={{ flex: 1 }}>{text('🔗 Nhập Link Affiliate', '🔗 Import Product Link')}</span>
-          </button>
-        ) : (
-          <button
-            onClick={onNewChat}
-            className="chatgpt-new-chat-btn"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '9px 12px',
-              borderRadius: '8px',
-              background: currentTab === 'ai-stylist' && !activeSessionId ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-              color: '#ECECEC',
-              fontSize: '0.88rem',
-              fontWeight: 500,
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-              marginBottom: '6px',
-            }}
-          >
-            <SquarePen size={17} color="#ECECEC" />
-            <span style={{ flex: 1 }}>{t('nav_new_chat')}</span>
           </button>
         )}
 
@@ -720,15 +705,38 @@ export default function Sidebar({
                       }}
                       title={session.title}
                     >
-                      <span style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
                         flex: 1,
-                        marginRight: '6px'
+                        overflow: 'hidden',
+                        marginRight: '6px',
+                        gap: '6px'
                       }}>
-                        {session.title}
-                      </span>
+                        <span style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          flex: 1
+                        }}>
+                          {session.title}
+                        </span>
+                        <span style={{
+                          fontSize: '0.64rem',
+                          color: isSelected ? '#FDE68A' : 'rgba(255,255,255,0.4)',
+                          background: isSelected ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                          border: isSelected ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          fontWeight: 600,
+                          letterSpacing: '0.01em'
+                        }}>
+                          {formatChatDate(session.createdAt || session.updatedAt, text('Hôm nay', 'Today'))}
+                        </span>
+                      </div>
 
                       {/* Delete button on hover */}
                       <button

@@ -272,7 +272,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                   fontSize: '2.4rem',
                   fontWeight: 800,
                   color: isLight ? '#0D0D0D' : '#FFFFFF',
-                  fontFamily: "'Outfit', sans-serif",
+                  fontFamily: 'inherit',
                   lineHeight: 1.1,
                   marginBottom: '6px',
                 }}>

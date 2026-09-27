@@ -56,12 +56,32 @@ export default function TopBar({
         )}
 
         {/* Brand & Current View Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '6px',
+            background: '#FFFFFF',
+            border: '1px solid rgba(212, 175, 55, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            padding: '2px',
+            boxShadow: '0 1px 6px rgba(0, 0, 0, 0.25)',
+            flexShrink: 0
+          }}>
+            <img 
+              src="/assets/logo.png" 
+              alt="MYFITDAILY Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
+          </div>
           <span style={{
             fontSize: '0.88rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "inherit",
             letterSpacing: '-0.01em'
           }}>
             MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span>
