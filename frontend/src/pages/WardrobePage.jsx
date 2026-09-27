@@ -218,9 +218,22 @@ export default function WardrobePage({
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.88rem',
                 fontWeight: 700,
-                border: isSelectionMode ? '1px solid #F43F5E' : '1px solid rgba(255, 255, 255, 0.12)',
-                background: isSelectionMode ? 'rgba(244, 63, 94, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                color: isSelectionMode ? '#FDA4AF' : '#FFF',
+                border: isSelectionMode 
+                  ? '1.5px solid #F43F5E' 
+                  : isLight 
+                  ? '1.5px solid #CBD5E1' 
+                  : '1px solid rgba(255, 255, 255, 0.12)',
+                background: isSelectionMode 
+                  ? (isLight ? '#FFE4E6' : 'rgba(244, 63, 94, 0.2)') 
+                  : isLight 
+                  ? '#FFFFFF' 
+                  : 'rgba(255, 255, 255, 0.06)',
+                color: isSelectionMode 
+                  ? (isLight ? '#BE123C' : '#FDA4AF') 
+                  : isLight 
+                  ? '#1E293B' 
+                  : '#FFF',
+                boxShadow: isLight ? '0 1px 3px rgba(0, 0, 0, 0.05)' : 'none',
                 cursor: 'pointer',
                 transition: 'var(--transition)',
               }}
@@ -232,7 +245,7 @@ export default function WardrobePage({
                 </>
               ) : (
                 <>
-                  <Trash2 size={16} />
+                  <Trash2 size={16} color={isLight ? '#475569' : 'currentColor'} />
                   <span>{text('Dọn Dẹp Tủ Đồ', 'Clean Up Wardrobe')}</span>
                 </>
               )}
@@ -349,9 +362,12 @@ export default function WardrobePage({
                   borderRadius: '10px',
                   background: isAtLimit 
                     ? 'linear-gradient(135deg, #EF4444, #DC2626)' 
+                    : isLight
+                    ? 'linear-gradient(135deg, #FEF3C7, #FDE68A)'
                     : 'linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(194, 125, 94, 0.3))',
-                  border: isAtLimit ? 'none' : '1px solid rgba(212, 175, 55, 0.4)',
-                  color: isAtLimit ? '#FFF' : '#FCD34D',
+                  border: isAtLimit ? 'none' : isLight ? '1.5px solid #F59E0B' : '1px solid rgba(212, 175, 55, 0.4)',
+                  color: isAtLimit ? '#FFF' : isLight ? '#92400E' : '#FCD34D',
+                  boxShadow: isLight ? '0 1px 3px rgba(245, 158, 11, 0.25)' : 'none',
                   fontSize: '0.82rem',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -445,7 +461,7 @@ export default function WardrobePage({
           }}>
             <Search 
               size={18} 
-              color="var(--text-muted)" 
+              color={isLight ? '#64748B' : 'var(--text-muted)'} 
               style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} 
             />
             <input 
@@ -463,15 +479,16 @@ export default function WardrobePage({
                 height: '46px',
                 borderRadius: 'var(--radius-full)',
                 background: isLight ? '#FFFFFF' : 'rgba(7, 10, 17, 0.6)',
-                border: isLight ? '1px solid #CBD5E1' : '1px solid var(--border-subtle)',
+                border: isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)',
                 color: 'var(--text-primary)',
+                boxShadow: isLight ? '0 1px 2px rgba(0,0,0,0.03)' : 'none',
               }}
             />
           </div>
 
           {/* Style select */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <SlidersHorizontal size={16} color="var(--text-muted)" />
+            <SlidersHorizontal size={16} color={isLight ? '#64748B' : 'var(--text-muted)'} />
             <select
               value={selectedStyle}
               onChange={(e) => setSelectedStyle(e.target.value)}
@@ -480,8 +497,9 @@ export default function WardrobePage({
                 borderRadius: 'var(--radius-full)',
                 padding: '0 20px',
                 background: isLight ? '#FFFFFF' : 'rgba(7, 10, 17, 0.6)',
-                border: isLight ? '1px solid #CBD5E1' : '1px solid var(--border-subtle)',
+                border: isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)',
                 color: 'var(--text-primary)',
+                boxShadow: isLight ? '0 1px 2px rgba(0,0,0,0.03)' : 'none',
                 cursor: 'pointer',
               }}
             >
@@ -538,38 +556,53 @@ export default function WardrobePage({
 
         {/* Row 3: Color dots filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+          <span style={{ fontSize: '0.82rem', color: isLight ? '#475569' : 'var(--text-muted)', fontWeight: 700 }}>
             {text('Lọc theo màu:', 'Filter by color:')}
           </span>
-          {colorOptions.map((col) => (
-            <button
-              key={col.value}
-              onClick={() => setSelectedColor(col.value)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.76rem',
-                fontWeight: 600,
-                color: selectedColor === col.value ? '#FFF' : 'var(--text-secondary)',
-                background: selectedColor === col.value ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid ' + (selectedColor === col.value ? 'var(--primary)' : 'rgba(255, 255, 255, 0.08)'),
-              }}
-            >
-              {col.hex && (
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: col.hex,
-                  border: '1px solid rgba(255,255,255,0.4)',
-                }} />
-              )}
-              <span>{col.label}</span>
-            </button>
-          ))}
+          {colorOptions.map((col) => {
+            const isWhite = col.value === 'white' || col.hex?.toLowerCase() === '#ffffff';
+            const isSelected = selectedColor === col.value;
+            return (
+              <button
+                key={col.value}
+                onClick={() => setSelectedColor(col.value)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '5px 13px',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: isSelected 
+                    ? (isLight ? '#92400E' : '#FFF') 
+                    : (isLight ? '#1E293B' : 'var(--text-secondary)'),
+                  background: isSelected 
+                    ? (isLight ? '#FEF3C7' : 'rgba(212, 175, 55, 0.25)') 
+                    : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.05)'),
+                  border: isSelected 
+                    ? (isLight ? '1.5px solid #D97706' : '1px solid var(--primary)') 
+                    : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.08)'),
+                  boxShadow: isLight ? '0 1px 2px rgba(0,0,0,0.04)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {col.hex && (
+                  <span style={{
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: col.hex,
+                    border: isWhite 
+                      ? '1.5px solid #94A3B8' 
+                      : (isLight ? '1px solid rgba(0,0,0,0.2)' : '1px solid rgba(255,255,255,0.4)'),
+                  }} />
+                )}
+                <span>{col.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

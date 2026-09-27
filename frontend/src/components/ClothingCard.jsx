@@ -81,7 +81,7 @@ export default function ClothingCard({
           : isSelected 
           ? '2px solid var(--primary)' 
           : isLight
-          ? '1px solid #CBD5E1'
+          ? '1.5px solid #CBD5E1'
           : '1px solid rgba(255, 255, 255, 0.09)',
         boxShadow: isChecked 
           ? '0 0 25px rgba(244, 63, 94, 0.4)' 

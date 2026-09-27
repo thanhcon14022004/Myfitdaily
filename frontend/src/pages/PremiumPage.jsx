@@ -450,7 +450,7 @@ export default function PremiumPage({ user, onUpgrade }) {
                   ? (isLight ? '2px solid #D4AF37' : '2px solid rgba(212, 175, 55, 0.85)')
                   : plan.isVipPlus
                     ? (isLight ? '2px solid #FB7185' : '2px solid rgba(251, 113, 133, 0.85)')
-                    : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)'),
+                    : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)'),
                 boxShadow: plan.isPopular
                   ? (isLight ? '0 12px 36px rgba(212, 175, 55, 0.2)' : '0 16px 50px rgba(212, 175, 55, 0.18)')
                   : plan.isVipPlus
