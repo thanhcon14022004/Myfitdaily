@@ -158,19 +158,19 @@ export default function DashboardPage({
           style={{ 
             padding: '22px',
             background: isLight ? '#FFFFFF' : undefined,
-            border: isLight ? '1px solid rgba(244, 63, 94, 0.25)' : undefined,
+            border: isLight ? '1.5px solid rgba(244, 63, 94, 0.35)' : undefined,
             boxShadow: isLight ? '0 8px 25px rgba(0, 0, 0, 0.04)' : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '0.82rem', color: isLight ? '#6B7280' : 'var(--text-secondary)', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.82rem', color: isLight ? '#475569' : 'var(--text-secondary)', fontWeight: 700 }}>
               {text('TỔNG OUTFIT YÊU THÍCH', 'TOTAL FAVORITES')}
             </span>
             <div style={{ padding: '7px', borderRadius: '10px', background: 'rgba(244, 63, 94, 0.15)', color: '#F43F5E' }}>
               <Heart size={18} fill="#F43F5E" />
             </div>
           </div>
-          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0D0D0D' : '#FFF', lineHeight: 1 }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFF', lineHeight: 1 }}>
             {favoriteOutfits.length}
           </div>
           <div style={{ fontSize: '0.78rem', color: '#F43F5E', marginTop: '8px', fontWeight: 600 }}>
@@ -184,19 +184,19 @@ export default function DashboardPage({
           style={{ 
             padding: '22px',
             background: isLight ? '#FFFFFF' : undefined,
-            border: isLight ? '1px solid #E5E7EB' : undefined,
+            border: isLight ? '1.5px solid #CBD5E1' : undefined,
             boxShadow: isLight ? '0 8px 25px rgba(0, 0, 0, 0.04)' : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '0.82rem', color: isLight ? '#6B7280' : 'var(--text-secondary)', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.82rem', color: isLight ? '#475569' : 'var(--text-secondary)', fontWeight: 700 }}>
               {text('GỢI Ý TỪ AI STYLIST', 'FROM AI STYLIST')}
             </span>
             <div style={{ padding: '7px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.15)', color: '#F3D98A' }}>
               <Sparkles size={18} color="#D4AF37" />
             </div>
           </div>
-          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0D0D0D' : '#FFF', lineHeight: 1 }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFF', lineHeight: 1 }}>
             {aiFavCount}
           </div>
           <div style={{ fontSize: '0.78rem', color: '#10B981', marginTop: '8px', fontWeight: 600 }}>
@@ -210,19 +210,19 @@ export default function DashboardPage({
           style={{ 
             padding: '22px',
             background: isLight ? '#FFFFFF' : undefined,
-            border: isLight ? '1px solid #E5E7EB' : undefined,
+            border: isLight ? '1.5px solid #CBD5E1' : undefined,
             boxShadow: isLight ? '0 8px 25px rgba(0, 0, 0, 0.04)' : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '0.82rem', color: isLight ? '#6B7280' : 'var(--text-secondary)', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.82rem', color: isLight ? '#475569' : 'var(--text-secondary)', fontWeight: 700 }}>
               {text('TỰ PHỐI TẠI ATELIER', 'STUDIO CREATED')}
             </span>
             <div style={{ padding: '7px', borderRadius: '10px', background: 'rgba(129, 140, 248, 0.15)', color: '#818CF8' }}>
               <Layers size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0D0D0D' : '#FFF', lineHeight: 1 }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFF', lineHeight: 1 }}>
             {customFavCount}
           </div>
           <div style={{ fontSize: '0.78rem', color: '#818CF8', marginTop: '8px', fontWeight: 600 }}>
@@ -236,22 +236,22 @@ export default function DashboardPage({
           style={{ 
             padding: '22px',
             background: isLight ? '#FFFFFF' : undefined,
-            border: isLight ? '1px solid #E5E7EB' : undefined,
+            border: isLight ? '1.5px solid #CBD5E1' : undefined,
             boxShadow: isLight ? '0 8px 25px rgba(0, 0, 0, 0.04)' : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <span style={{ fontSize: '0.82rem', color: isLight ? '#6B7280' : 'var(--text-secondary)', fontWeight: 700 }}>
+            <span style={{ fontSize: '0.82rem', color: isLight ? '#475569' : 'var(--text-secondary)', fontWeight: 700 }}>
               {text('MÓN ĐỒ TRONG TỦ', 'WARDROBE ITEMS')}
             </span>
             <div style={{ padding: '7px', borderRadius: '10px', background: 'rgba(194, 125, 94, 0.15)', color: '#E6CCB2' }}>
               <Shirt size={18} />
             </div>
           </div>
-          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0D0D0D' : '#FFF', lineHeight: 1 }}>
+          <div style={{ fontSize: '2.2rem', fontWeight: 800, color: isLight ? '#0F172A' : '#FFF', lineHeight: 1 }}>
             {clothes.length}
           </div>
-          <div style={{ fontSize: '0.78rem', color: isLight ? '#6B7280' : 'var(--text-muted)', marginTop: '8px', fontWeight: 600 }}>
+          <div style={{ fontSize: '0.78rem', color: isLight ? '#64748B' : 'var(--text-muted)', marginTop: '8px', fontWeight: 600 }}>
             {text('Đã số hóa ngăn nắp', 'Organized digitally')}
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function DashboardPage({
           flexWrap: 'wrap',
           gap: '14px',
           background: isLight ? '#FFFFFF' : undefined,
-          border: isLight ? '1px solid #E5E7EB' : undefined,
+          border: isLight ? '1.5px solid #CBD5E1' : undefined,
           boxShadow: isLight ? '0 4px 15px rgba(0, 0, 0, 0.03)' : undefined,
         }}
       >
@@ -284,10 +284,10 @@ export default function DashboardPage({
               fontWeight: 700,
               cursor: 'pointer',
               border: activeFilter === 'all' 
-                ? '1px solid #F43F5E' 
-                : (isLight ? '1px solid #E5E7EB' : '1px solid var(--border-subtle)'),
-              background: activeFilter === 'all' ? 'rgba(244, 63, 94, 0.15)' : 'transparent',
-              color: activeFilter === 'all' ? '#F43F5E' : 'var(--text-secondary)',
+                ? '1.5px solid #F43F5E' 
+                : (isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)'),
+              background: activeFilter === 'all' ? (isLight ? '#FFF1F2' : 'rgba(244, 63, 94, 0.15)') : (isLight ? '#FFFFFF' : 'transparent'),
+              color: activeFilter === 'all' ? '#E11D48' : (isLight ? '#334155' : 'var(--text-secondary)'),
               transition: 'all 0.2s ease',
             }}
           >
@@ -303,17 +303,17 @@ export default function DashboardPage({
               fontWeight: 700,
               cursor: 'pointer',
               border: activeFilter === 'ai' 
-                ? '1px solid #D4AF37' 
-                : (isLight ? '1px solid #E5E7EB' : '1px solid var(--border-subtle)'),
-              background: activeFilter === 'ai' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-              color: activeFilter === 'ai' ? '#D4AF37' : 'var(--text-secondary)',
+                ? '1.5px solid #D4AF37' 
+                : (isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)'),
+              background: activeFilter === 'ai' ? (isLight ? '#FEFCE8' : 'rgba(212, 175, 55, 0.15)') : (isLight ? '#FFFFFF' : 'transparent'),
+              color: activeFilter === 'ai' ? (isLight ? '#854D0E' : '#D4AF37') : (isLight ? '#334155' : 'var(--text-secondary)'),
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               transition: 'all 0.2s ease',
             }}
           >
-            <Sparkles size={14} />
+            <Sparkles size={14} color={activeFilter === 'ai' ? (isLight ? '#854D0E' : '#D4AF37') : (isLight ? '#64748B' : 'currentColor')} />
             <span>{text('Gợi Ý Từ AI Stylist', 'AI Curated')}</span> ({aiFavCount})
           </button>
 
@@ -326,10 +326,10 @@ export default function DashboardPage({
               fontWeight: 700,
               cursor: 'pointer',
               border: activeFilter === 'custom' 
-                ? '1px solid #818CF8' 
-                : (isLight ? '1px solid #E5E7EB' : '1px solid var(--border-subtle)'),
-              background: activeFilter === 'custom' ? 'rgba(129, 140, 248, 0.15)' : 'transparent',
-              color: activeFilter === 'custom' ? '#818CF8' : 'var(--text-secondary)',
+                ? '1.5px solid #6366F1' 
+                : (isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)'),
+              background: activeFilter === 'custom' ? (isLight ? '#EEF2FF' : 'rgba(129, 140, 248, 0.15)') : (isLight ? '#FFFFFF' : 'transparent'),
+              color: activeFilter === 'custom' ? (isLight ? '#4338CA' : '#818CF8') : (isLight ? '#334155' : 'var(--text-secondary)'),
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
@@ -346,8 +346,8 @@ export default function DashboardPage({
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: isLight ? '#F3F4F6' : 'rgba(0, 0, 0, 0.3)',
-          border: isLight ? '1px solid #E5E7EB' : '1px solid var(--border-subtle)',
+          background: isLight ? '#FFFFFF' : 'rgba(0, 0, 0, 0.3)',
+          border: isLight ? '1.5px solid #CBD5E1' : '1px solid var(--border-subtle)',
           borderRadius: '20px',
           padding: '6px 14px',
           minWidth: '240px',

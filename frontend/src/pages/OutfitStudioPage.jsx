@@ -125,7 +125,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           background: isLight 
             ? 'linear-gradient(145deg, #F8FAFC, #EDF2F7)' 
             : 'radial-gradient(circle at 50% 15%, rgba(224,184,91,.15), transparent 45%), linear-gradient(145deg, #15140f, #090b11 65%)',
-          border: isLight ? '1px solid rgba(184, 134, 11, 0.25)' : '1px solid rgba(246,207,112,.22)',
+          border: isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(246,207,112,.22)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between'
@@ -213,7 +213,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         {/* CỘT PHẢI: CHỈ LƯỚI CÁC Ô ĐỒ TRONG TỦ ĐỒ (GỌN GÀNG, KHÔNG RỐI MẮT) */}
         <aside className="glass-card" style={{
           padding: 20,
-          border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,.10)',
+          border: isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255,255,255,.10)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -244,12 +244,13 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   type="button"
                   onClick={() => setActiveTab(tab.key)}
                   style={{
-                    border: isLight && activeTab !== tab.key ? '1px solid #E2E8F0' : 0,
+                    border: isLight && activeTab !== tab.key ? '1.5px solid #CBD5E1' : 0,
                     cursor: 'pointer',
                     borderRadius: 999,
                     padding: '6px 14px',
-                    color: activeTab === tab.key ? '#17130a' : (isLight ? '#475569' : 'var(--text-secondary)'),
-                    background: activeTab === tab.key ? (isLight ? '#D4AF37' : '#f6cf70') : (isLight ? '#F1F5F9' : 'rgba(255,255,255,.07)'),
+                    color: activeTab === tab.key ? '#17130a' : (isLight ? '#1E293B' : 'var(--text-secondary)'),
+                    background: activeTab === tab.key ? (isLight ? '#D4AF37' : '#f6cf70') : (isLight ? '#FFFFFF' : 'rgba(255,255,255,.07)'),
+                    boxShadow: isLight ? '0 1px 2px rgba(0,0,0,0.04)' : 'none',
                     fontWeight: 800,
                     fontSize: 12,
                     transition: 'all 0.2s ease'
@@ -282,7 +283,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                         : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.035)'),
                       border: isSelected 
                         ? '2px solid #D4AF37' 
-                        : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
+                        : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
                       borderRadius: 14,
                       padding: 10,
                       cursor: 'pointer',
