@@ -2,19 +2,19 @@
 export const INITIAL_CHAT_SESSIONS = [
   {
     id: 'chat-1',
-    title: 'Nhớ dự án MYFITDAILY',
+    title: 'Nhớ dự án MyFitDaily',
     createdAt: Date.now() - 1000 * 60 * 60 * 2, // 2 giờ trước
     messages: [
       {
         id: 101,
         sender: 'user',
-        text: 'Nhớ dự án MYFITDAILY và hỗ trợ lên kế hoạch trang phục tuần này nhé',
+        text: 'Nhớ dự án MyFitDaily và hỗ trợ lên kế hoạch trang phục tuần này nhé',
         isFashionRelated: true,
       },
       {
         id: 102,
         sender: 'ai',
-        text: 'Tôi đã ghi nhớ rõ dự án **MYFITDAILY** của chúng ta! Dưới đây là kế hoạch trang phục đề xuất cho tuần làm việc và hoạt động của bạn:\n\n' +
+        text: 'Tôi đã ghi nhớ rõ dự án **MyFitDaily** của chúng ta! Dưới đây là kế hoạch trang phục đề xuất cho tuần làm việc và hoạt động của bạn:\n\n' +
               '• **Thứ 2 - Thứ 3 (Đầu tuần năng lượng):** Áo sơ mi trắng phom rộng kết hợp quần tây âu ống suông màu than chì và giày tây hoặc loafer da bóng.\n' +
               '• **Thứ 4 - Thứ 5 (Smart Casual):** Áo thun polo dệt kim kết hợp quần chinos beige và blazer nhẹ.\n' +
               '• **Thứ 6 (Creative Friday):** Áo thun basic trắng, khoác denim jacket hoặc overshirt, đi cùng quần jeans tối màu và sneakers trắng.\n' +

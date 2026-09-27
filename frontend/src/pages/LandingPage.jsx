@@ -115,7 +115,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             color: 'var(--text-primary)',
           }}>
             {text('Tái Khám Phá Tủ Đồ Của Bạn Với ', 'Rediscover Your Wardrobe With ')}
-            <span className="gradient-text">MYFITDAILY</span>
+            <span className="gradient-text">MyFitDaily</span>
           </h1>
 
           <p style={{
@@ -130,8 +130,8 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
               {text('"Hôm nay mặc gì?"', '"What should I wear today?"')}
             </strong>. 
             {text(
-              ' MYFITDAILY giúp bạn quản lý khoa học, tái kết hợp những món đồ bạn đang sở hữu và nhận gợi ý chuẩn stylist quốc tế trong tích tắc.',
-              ' MYFITDAILY helps you organize, mix-and-match clothes you already own, and receive international styling suggestions in seconds.'
+              ' MyFitDaily giúp bạn quản lý khoa học, tái kết hợp những món đồ bạn đang sở hữu và nhận gợi ý chuẩn stylist quốc tế trong tích tắc.',
+              ' MyFitDaily helps you organize, mix-and-match clothes you already own, and receive international styling suggestions in seconds.'
             )}
           </p>
 
@@ -384,7 +384,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 {text('Sự Thay Đổi Đột Phá', 'Breakthrough Transformation')}
               </span>
               <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {text('Tủ Đồ Trước & Sau Khi Có MYFITDAILY', 'Your Wardrobe: Before & After MYFITDAILY')}
+                {text('Tủ Đồ Trước & Sau Khi Có MyFitDaily', 'Your Wardrobe: Before & After MyFitDaily')}
               </h2>
             </div>
 
@@ -401,7 +401,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 padding: '24px',
               }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 800, color: isLight ? '#DC2626' : '#F87171', marginBottom: '16px' }}>
-                  {text('❌ Trước khi sử dụng', '❌ Before MYFITDAILY')}
+                  {text('❌ Trước khi có MyFitDaily', '❌ Before MyFitDaily')}
                 </div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <li style={{ fontSize: '0.9rem', color: isLight ? '#4B5563' : 'var(--text-secondary)' }}>
@@ -424,7 +424,7 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
                 padding: '24px',
               }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 800, color: isLight ? '#059669' : '#34D399', marginBottom: '16px' }}>
-                  {text('✨ Với MYFITDAILY', '✨ With MYFITDAILY')}
+                  {text('✨ Với MyFitDaily', '✨ With MyFitDaily')}
                 </div>
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <li style={{ fontSize: '0.9rem', color: isLight ? '#1F2937' : 'var(--text-primary)', fontWeight: 500 }}>

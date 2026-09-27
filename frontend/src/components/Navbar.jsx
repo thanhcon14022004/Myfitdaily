@@ -65,7 +65,7 @@ export default function Navbar({
           }}>
             <img 
               src="/assets/logo.png" 
-              alt="MYFITDAILY Logo" 
+              alt="MyFitDaily Logo" 
               style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
             />
           </div>
@@ -77,7 +77,7 @@ export default function Navbar({
               letterSpacing: '-0.02em',
               lineHeight: 1,
             }}>
-              MYFIT<span style={{ color: 'var(--primary-light)' }}>DAILY</span>
+              MyFit<span style={{ color: 'var(--primary-light)' }}>Daily</span>
             </div>
             <div style={{
               fontSize: '0.62rem',

@@ -112,7 +112,7 @@ export default function Sidebar({
               gap: '8px',
               cursor: 'pointer',
             }}
-            title="MYFITDAILY"
+            title="MyFitDaily"
           >
             <div style={{
               width: '32px',
@@ -130,7 +130,7 @@ export default function Sidebar({
             }}>
               <img 
                 src="/assets/logo.png" 
-                alt="MYFITDAILY Logo" 
+                alt="MyFitDaily Logo" 
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
               />
             </div>
@@ -141,7 +141,7 @@ export default function Sidebar({
               color: '#ECECEC',
               fontFamily: "inherit"
             }}>
-              MYFIT<span style={{ color: '#D4AF37' }}>DAILY</span>
+              MyFit<span style={{ color: '#D4AF37' }}>Daily</span>
             </span>
           </div>
 

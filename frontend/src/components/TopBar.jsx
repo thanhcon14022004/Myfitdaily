@@ -73,7 +73,7 @@ export default function TopBar({
           }}>
             <img 
               src="/assets/logo.png" 
-              alt="MYFITDAILY Logo" 
+              alt="MyFitDaily Logo" 
               style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
             />
           </div>
@@ -84,7 +84,7 @@ export default function TopBar({
             fontFamily: "inherit",
             letterSpacing: '-0.01em'
           }}>
-            MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span>
+            MyFit<span style={{ color: 'var(--primary)' }}>Daily</span>
           </span>
           <span style={{ color: 'var(--border-medium)', fontSize: '0.8rem' }}>/</span>
           <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>

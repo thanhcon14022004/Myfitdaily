@@ -1,5 +1,5 @@
 // ==========================================================================
-// MYFITDAILY - Live Real-Time Weather & Hyper-Local Geolocation Service
+// MyFitDaily - Live Real-Time Weather & Hyper-Local Geolocation Service
 // Powered by Open-Meteo & GeoJS (100% Free, No API Key Required)
 // Supports District-level weather (Quận / Huyện chi tiết)
 // ==========================================================================
