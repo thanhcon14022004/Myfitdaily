@@ -300,7 +300,7 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <span className="badge badge-gold">MYFITDAILY BIOMETRICS</span>
+          <span className="badge badge-gold">MyFitDaily Biometrics</span>
           <span className="badge badge-subtle">{text('Hồ Sơ Vóc Dáng', 'Body Profile')}</span>
         </div>
         <h2 style={{ fontSize: '2.4rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
@@ -333,8 +333,8 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
             </h4>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.5 }}>
               {text(
-                'Hiện tại bạn chưa cập nhật Chiều cao và Cân nặng. Theo quy định của MYFITDAILY, AI Stylist chỉ có thể trò chuyện và phân tích outfit khi đã có đầy đủ thông số vóc dáng nhằm đảm bảo trang phục phối ra chuẩn form và tôn dáng nhất cho bạn.',
-                'You have not configured your Height and Weight yet. MYFITDAILY requires complete body biometrics so that our AI Stylist can generate outfits that authentically flatter your frame and silhouette.'
+                'Hiện tại bạn chưa cập nhật Chiều cao và Cân nặng. Theo quy định của MyFitDaily, AI Stylist chỉ có thể trò chuyện và phân tích outfit khi đã có đầy đủ thông số vóc dáng nhằm đảm bảo trang phục phối ra chuẩn form và tôn dáng nhất cho bạn.',
+                'You have not configured your Height and Weight yet. MyFitDaily requires complete body biometrics so that our AI Stylist can generate outfits that authentically flatter your frame and silhouette.'
               )}
             </p>
           </div>

@@ -331,7 +331,7 @@ export default function PremiumPage({ user, onUpgrade }) {
           boxShadow: '0 4px 20px rgba(212, 175, 55, 0.2)'
         }}>
           <Crown size={18} />
-          <span>{text('Hệ Thống Gói Thành Viên VIP MYFITDAILY', 'MYFITDAILY VIP Membership System')}</span>
+          <span>{text('Hệ Thống Gói Thành Viên VIP MyFitDaily', 'MyFitDaily VIP Membership System')}</span>
         </div>
 
         <h1 style={{ fontSize: '2.8rem', fontWeight: 800, marginBottom: '14px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>

@@ -131,9 +131,9 @@ export default function AiStylistPage({
       id: 1,
       sender: 'ai',
       text: isEnglish
-        ? `Hello ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'there'}! I am your personal **AI Stylist** at MYFITDAILY ✨.\n\n` +
+        ? `Hello ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'there'}! I am your personal **AI Stylist** at MyFitDaily ✨.\n\n` +
           `What occasion are you dressing for today, or do you have a specific garment you'd like styling advice on? Let me know!`
-        : `Chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist Cá Nhân** của bạn tại MYFITDAILY ✨.\n\n` +
+        : `Chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist Cá Nhân** của bạn tại MyFitDaily ✨.\n\n` +
           `Hôm nay bạn muốn lên đồ cho dịp nào (đi làm công sở, hẹn hò, dự tiệc hay dạo phố...) hoặc cần tư vấn phối với món đồ cụ thể nào? Hãy chia sẻ với tôi nhé!`,
       isFashionRelated: true,
       accompanyingOutfits: [],
@@ -712,7 +712,7 @@ export default function AiStylistPage({
             </div>
             <div>
               <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{activeSession?.title || 'MYFITDAILY Stylist AI'}</span>
+                <span>{activeSession?.title || 'MyFitDaily Stylist AI'}</span>
                 <span style={{ fontSize: '0.68rem', padding: '2px 7px', borderRadius: '10px', background: 'rgba(212, 175, 55, 0.15)', color: '#D4AF37', fontWeight: 700 }}>
                   2.5D Studio
                 </span>
@@ -1343,7 +1343,7 @@ export default function AiStylistPage({
                     {/* Header line for AI message */}
                     {isAi && (
                       <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>MYFITDAILY Stylist AI</span>
+                        <span>MyFitDaily Stylist AI</span>
                       </div>
                     )}
 
@@ -2260,8 +2260,8 @@ export default function AiStylistPage({
               marginTop: '6px'
             }}>
               {text(
-                'MYFITDAILY Stylist AI có thể đưa ra gợi ý chưa hoàn hảo. Nhấn "Mặc thử lên người ảo" để ngắm nhìn trực quan.',
-                'MYFITDAILY Stylist AI can make mistakes. Click "Try on virtual model" to view visually.'
+                'MyFitDaily Stylist AI có thể đưa ra gợi ý chưa hoàn hảo. Nhấn "Mặc thử lên người ảo" để ngắm nhìn trực quan.',
+                'MyFitDaily Stylist AI can make mistakes. Click "Try on virtual model" to view visually.'
               )}
             </div>
           </div>

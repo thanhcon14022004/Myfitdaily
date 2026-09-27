@@ -595,8 +595,8 @@ export default function WardrobePage({
           </h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.96rem', lineHeight: 1.65, marginBottom: '32px' }}>
             {text(
-              'Chào mừng bạn đến với MYFITDAILY! Bạn chưa tải lên món đồ nào. Hãy bắt đầu số hóa tủ đồ của bạn bằng cách tự chụp ảnh hoặc tải lên áo, quần, váy, blazer, giày dép... để AI Stylist phối đồ chuẩn xác nhất từ trang phục thực tế của bạn!',
-              'Welcome to MYFITDAILY! You have not uploaded any clothes yet. Start digitizing your wardrobe by uploading or taking photos of your shirts, pants, dresses, blazers, and shoes so the AI Stylist can coordinate real outfits for you!'
+              'Chào mừng bạn đến với MyFitDaily! Bạn chưa tải lên món đồ nào. Hãy bắt đầu số hóa tủ đồ của bạn bằng cách tự chụp ảnh hoặc tải lên áo, quần, váy, blazer, giày dép... để AI Stylist phối đồ chuẩn xác nhất từ trang phục thực tế của bạn!',
+              'Welcome to MyFitDaily! You have not uploaded any clothes yet. Start digitizing your wardrobe by uploading or taking photos of your shirts, pants, dresses, blazers, and shoes so the AI Stylist can coordinate real outfits for you!'
             )}
           </p>
           <button

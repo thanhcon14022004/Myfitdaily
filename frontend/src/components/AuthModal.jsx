@@ -195,7 +195,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           }}>
             <img 
               src="/assets/logo.png" 
-              alt="MYFITDAILY Logo" 
+              alt="MyFitDaily Logo" 
               style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
             />
           </div>
@@ -205,7 +205,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
             {isLoginMode 
               ? text('Đăng nhập để quản lý tủ đồ số và nhận gợi ý từ AI Stylist', 'Sign in to manage your digital wardrobe and get AI styling') 
-              : text('Gia nhập cộng đồng thời trang thông minh MYFITDAILY', 'Join the MYFITDAILY smart fashion community')}
+              : text('Gia nhập cộng đồng thời trang thông minh MyFitDaily', 'Join the MyFitDaily smart fashion community')}
           </p>
         </div>
 

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const translations = {
   vi: {
     // Brand
-    brand_name: 'MYFITDAILY',
+    brand_name: 'MyFitDaily',
     brand_subtitle: 'Nền tảng Tủ Đồ Số & Trợ Lý Phối Đồ AI Cho Giới Trẻ Việt Nam',
 
     // Sidebar & Navigation
@@ -41,7 +41,7 @@ const translations = {
 
     // Settings Modal
     settings_title: 'Cài Đặt Hệ Thống',
-    settings_subtitle: 'Tùy chỉnh ngôn ngữ & trải nghiệm ứng dụng MYFITDAILY',
+    settings_subtitle: 'Tùy chỉnh ngôn ngữ & trải nghiệm ứng dụng MyFitDaily',
     settings_lang_heading: 'Ngôn ngữ hiển thị (Language)',
     settings_lang_desc: 'Chọn ngôn ngữ giao diện và phong cách phản hồi của AI Stylist.',
     lang_vi_name: 'Tiếng Việt',
@@ -69,7 +69,7 @@ const translations = {
   },
   en: {
     // Brand
-    brand_name: 'MYFITDAILY',
+    brand_name: 'MyFitDaily',
     brand_subtitle: 'Digital Wardrobe & AI Stylist Platform for Modern Fashion',
 
     // Sidebar & Navigation

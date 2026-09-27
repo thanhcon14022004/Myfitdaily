@@ -620,11 +620,11 @@ export default function App() {
                     }}>
                       <img 
                         src="/assets/logo.png" 
-                        alt="MYFITDAILY Logo" 
+                        alt="MyFitDaily Logo" 
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                       />
                     </div>
-                    <span>MYFIT<span style={{ color: 'var(--primary)' }}>DAILY</span></span>
+                    <span>MyFit<span style={{ color: 'var(--primary)' }}>Daily</span></span>
                   </div>
                   <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
                     {text(
@@ -686,8 +686,8 @@ export default function App() {
               }}>
                 <div>
                   {text(
-                    `© ${new Date().getFullYear()} MYFITDAILY Technology Platform. Tất cả các quyền được bảo lưu.`,
-                    `© ${new Date().getFullYear()} MYFITDAILY Technology Platform. All rights reserved.`
+                    `© ${new Date().getFullYear()} MyFitDaily Technology Platform. Tất cả các quyền được bảo lưu.`,
+                    `© ${new Date().getFullYear()} MyFitDaily Technology Platform. All rights reserved.`
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>
