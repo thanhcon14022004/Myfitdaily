@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MYFITDAILY_EXE201_Group6.Common;
@@ -53,7 +53,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
 
             if (!userId.HasValue)
             {
-                var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "demo@myfitdaily.com")
+                var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower() == "demo@myfitdaily.com")
                                ?? await _context.Users.FirstOrDefaultAsync();
                 if (demoUser != null)
                 {

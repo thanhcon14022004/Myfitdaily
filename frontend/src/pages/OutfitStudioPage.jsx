@@ -1,43 +1,50 @@
 import React, { useMemo, useState } from 'react';
-import { Check, RotateCcw, Save, Sparkles, UserRound, Wand2, Key, X, ShieldCheck, Cpu } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, UserRound } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
 
 const SLOTS = [
-  { key: 'top', label: 'Áo', categoryId: 1, icon: '01' },
-  { key: 'bottom', label: 'Quần', categoryId: 2, icon: '02' },
-  { key: 'shoes', label: 'Giày', categoryId: 5, icon: '03' }
+  { key: 'top', label: 'Áo', categoryIds: [1, 4], icon: '01' },
+  { key: 'bottom', label: 'Quần', categoryIds: [2, 3], icon: '02' },
+  { key: 'shoes', label: 'Giày', categoryIds: [5], icon: '03' }
 ];
+
+function normalizeLabel(value = '') {
+  return String(value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+}
+
+function getItemSlot(item) {
+  const categoryId = Number(item?.categoryId);
+  const category = normalizeLabel(item?.categoryName);
+  const name = normalizeLabel(`${item?.name || ''} ${item?.description || ''}`);
+  if (categoryId === 6 || /accessor/.test(category)) return null;
+  if (categoryId === 5 || /shoe|giay|dep/.test(category) || /sneaker|loafer|boots?|giay|sandal/.test(name)) return 'shoes';
+  if ([2, 3].includes(categoryId) || /bottom|quan|dress|dam|vay/.test(category) || /quan|pant|trouser|jean|short|skirt|dress|dam|vay/.test(name)) return 'bottom';
+  if ([1, 4].includes(categoryId) || /top|outerwear|ao/.test(category) || /ao|shirt|tee|polo|hoodie|sweater|blazer|jacket|coat/.test(name)) return 'top';
+  return 'top';
+}
 
 export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, onToggleFavorite, onDeleteOutfit, user }) {
   const { text } = useLanguage();
   const inventory = clothes?.length ? clothes : getInitialClothesForGender(user?.gender);
 
   const defaults = useMemo(() => ({
-    top: inventory.find(item => item.id === 202 || item.name.includes('Sweatshirt')) || inventory.find(item => item.categoryId === 1),
-    bottom: inventory.find(item => item.categoryId === 2),
-    shoes: inventory.find(item => item.categoryId === 5)
+    top: inventory.find(item => item.id === 210) || inventory.find(item => item.name?.includes('Áo Thun')) || inventory.find(item => item.categoryId === 1),
+    bottom: inventory.find(item => item.id === 220) || inventory.find(item => item.name?.includes('Đùi')) || inventory.find(item => item.categoryId === 2),
+    shoes: inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5)
   }), [inventory]);
 
   const [selection, setSelection] = useState(defaults);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'bottom', 'shoes'
-  const [tryOnState, setTryOnState] = useState({ loading: false, message: '' });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
-  const [showKeyModal, setShowKeyModal] = useState(false);
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
-    let catId = item.categoryId;
-    const lowerName = (item.name || '').toLowerCase();
-    const isPants = (item.imageUrl && item.imageUrl.includes('media_1790076823583')) ||
-                    lowerName.includes('quần') || lowerName.includes('pant') || lowerName.includes('trouser') || lowerName.includes('jean');
-    if (isPants) catId = 2; // Tự động đưa về đúng slot Quần
-
     let slot = activeTab !== 'all' ? activeTab : null;
     if (!slot) {
-      slot = SLOTS.find(s => s.categoryId === catId)?.key || (catId === 2 ? 'bottom' : 'top');
+      slot = getItemSlot(item);
     }
     if (!slot) return;
 
@@ -54,8 +61,8 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   // Lọc đồ theo tab
   const filteredItems = useMemo(() => {
     if (activeTab === 'all') return inventory;
-    const targetCatId = SLOTS.find(s => s.key === activeTab)?.categoryId;
-    return inventory.filter(item => item.categoryId === targetCatId);
+    const targetCatIds = SLOTS.find(s => s.key === activeTab)?.categoryIds || [];
+    return inventory.filter(item => targetCatIds.includes(Number(item.categoryId)));
   }, [inventory, activeTab]);
 
   const handleSave = (e) => {
@@ -83,89 +90,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   };
 
 
-  const [colabUrl, setColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
-  const [tempColabUrl, setTempColabUrl] = useState(() => localStorage.getItem('myfitdaily_colab_url') || '');
 
-  const handleSaveColabUrl = () => {
-    let trimmed = tempColabUrl.trim().replace(/\/$/, '');
-    if (trimmed && !trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
-      trimmed = 'https://' + trimmed;
-    }
-    if (trimmed.includes('api.trycloudflare.com')) {
-      alert('⚠️ Đường link không thể là "https://api.trycloudflare.com". Bạn hãy copy link dạng "https://tên-ngẫu-nhiên.trycloudflare.com" được in ra tại Ô Số 4 trên Google Colab!');
-      return;
-    }
-    setColabUrl(trimmed);
-    if (trimmed) {
-      localStorage.setItem('myfitdaily_colab_url', trimmed);
-      setTryOnState({ loading: false, message: '✓ Đã kết nối GPU Server Google Colab riêng!' });
-    } else {
-      localStorage.removeItem('myfitdaily_colab_url');
-      setTryOnState({ loading: false, message: '✓ Đã chuyển về AI Server miễn phí mặc định.' });
-    }
-    setShowKeyModal(false);
-    setTimeout(() => setTryOnState({ loading: false, message: '' }), 3000);
-  };
-
-  const handleTriggerAiTryOn = async () => {
-    const isFemale = user?.gender?.toLowerCase() === 'nữ' || user?.gender?.toLowerCase() === 'female';
-
-    setTryOnState({
-      loading: true,
-      message: colabUrl 
-        ? 'Server Colab riêng đang dệt trang phục thật lên người mẫu… (~4-6s)'
-        : 'AI IDM-VTON đang dệt trang phục thật lên người mẫu… (~8-12s)'
-    });
-
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (colabUrl) {
-        headers['X-Colab-Url'] = colabUrl;
-      }
-
-      // 1. Ưu tiên gọi Model Thử Đồ Thật (IDM-VTON / Colab GPU)
-      let res = await fetch('/api/ai/idm-vton-try-on', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          gender: isFemale ? 'Nữ' : 'Nam',
-          topName: selection.top?.name || '',
-          topImageUrl: selection.top?.imageUrl || '',
-          bottomName: selection.bottom?.name || '',
-          bottomImageUrl: selection.bottom?.imageUrl || '',
-          shoesName: selection.shoes?.name || ''
-        })
-      });
-
-      let data = await res.json();
-      if (res.ok && data?.data?.imageUrl) {
-        setAiGeneratedImage(data.data.imageUrl);
-        setTryOnState({ loading: false, message: `✓ Hoàn tất thử đồ thật bằng ${data.data.model || 'IDM-VTON'}!` });
-        setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-        return;
-      }
-
-      // Nếu không có kết quả từ AI, giữ nguyên Bàn Phối Đồ Chuẩn Fits
-      setAiGeneratedImage(null);
-      setTryOnState({
-        loading: false,
-        message: data?.message || (colabUrl
-          ? '⚠️ Không kết nối được URL Colab. Hãy kiểm tra lại Ô Số 4 trên Colab.'
-          : '⚠️ AI bận. Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.')
-      });
-      setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-    } catch (err) {
-      console.warn('AI Try-on error:', err);
-      setAiGeneratedImage(null);
-      setTryOnState({
-        loading: false,
-        message: colabUrl
-          ? '⚠️ Không kết nối được URL Colab. Hãy kiểm tra lại link Cloudflare Tunnel.'
-          : '⚠️ Đang hiển thị trực tiếp Bàn Phối Đồ Chuẩn Fits của bạn.'
-      });
-      setTimeout(() => setTryOnState({ loading: false, message: '' }), 4000);
-    }
-  };
 
   return (
     <div className="container model-stylist" style={{ padding: '32px 24px 60px' }}>
@@ -218,8 +143,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               top={selection.top}
               bottom={selection.bottom}
               shoes={selection.shoes}
-              isAiProcessing={tryOnState.loading}
-              aiGeneratedModelImage={aiGeneratedImage}
+              selectionKey={selectedIds.join('|')}
             />
           </div>
 
@@ -227,21 +151,6 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           {/* Thanh trạng thái Fits Live & 3 Slot món đồ đang mặc */}
           <div>
             <div style={{ textAlign: 'center', marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '5px 12px',
-                borderRadius: 999,
-                background: 'rgba(74, 222, 128, 0.1)',
-                border: '1px solid rgba(74, 222, 128, 0.25)',
-                color: '#86efac',
-                fontSize: 12,
-                fontWeight: 700
-              }}>
-                <Check size={13} style={{ color: '#4ade80' }} />
-                <span>{text('Đang phối đồ trực tiếp từ tủ đồ (Chuẩn Fits)', 'Fitting live from your wardrobe (Fits style)')}</span>
-              </div>
 
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button
@@ -250,74 +159,23 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   style={{
                     border: 0,
                     borderRadius: 9,
-                    padding: '8px 18px',
+                    padding: '8px 24px',
                     cursor: 'pointer',
                     background: savedSuccess ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f6cf70, #c89536)',
                     color: savedSuccess ? '#fff' : '#17130a',
                     fontWeight: 800,
-                    fontSize: 12.5,
+                    fontSize: 13,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
+                    gap: 7,
                     boxShadow: '0 4px 14px rgba(246, 207, 112, 0.25)',
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  <Save size={14} />
+                  <Save size={15} />
                   <span>{savedSuccess ? '✓ Đã Lưu Outfit!' : 'Lưu Outfit Này'}</span>
                 </button>
-
-                <button
-                  type="button"
-                  disabled={tryOnState.loading}
-                  onClick={handleTriggerAiTryOn}
-                  title="Thử tạo ảnh người mẫu AI Studio 8K"
-                  style={{
-                    border: '1px solid rgba(255,255,255,0.14)',
-                    borderRadius: 9,
-                    padding: '8px 12px',
-                    cursor: tryOnState.loading ? 'wait' : 'pointer',
-                    background: 'rgba(255,255,255,0.06)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5
-                  }}
-                >
-                  <Wand2 size={13} style={{ color: '#f6cf70' }} />
-                  <span>{tryOnState.loading ? 'Đang tạo…' : 'Thử AI 8K'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowKeyModal(true)}
-                  title="Cấu hình AI Server hoặc Google Colab GPU"
-                  style={{
-                    border: colabUrl ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255,255,255,0.14)',
-                    borderRadius: 9,
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    background: colabUrl ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255,255,255,0.06)',
-                    color: colabUrl ? '#38bdf8' : '#fff',
-                    fontWeight: 600,
-                    fontSize: 12,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5
-                  }}
-                >
-                  <Cpu size={13} style={{ color: colabUrl ? '#38bdf8' : '#f6cf70' }} />
-                  <span>{colabUrl ? '🟢 Colab GPU' : 'Cấu hình AI'}</span>
-                </button>
               </div>
-
-              {tryOnState.message && (
-                <div style={{ marginTop: 2, color: '#9ee6b8', fontSize: 11.5, fontWeight: 600 }}>
-                  {tryOnState.message}
-                </div>
-              )}
             </div>
 
             {/* 3 ô tóm tắt đồ đang mặc */}
@@ -446,7 +304,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                     )}
 
                     {/* Ảnh sản phẩm */}
-                    <div style={{ width: '100%', height: 105, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <div style={{ width: '100%', height: 105, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, background: 'linear-gradient(145deg, #F4F2ED, #E7E4DC)', borderRadius: 10, overflow: 'hidden' }}>
                       <img
                         src={item.imageUrl}
                         alt={item.name}
@@ -511,149 +369,6 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           </div>
         </aside>
       </div>
-
-      {/* MODAL CẤU HÌNH AI SERVER & GOOGLE COLAB */}
-      {showKeyModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.78)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: 16
-        }}>
-          <div style={{
-            background: 'linear-gradient(145deg, #161922, #0d0f15)',
-            border: '1px solid rgba(246, 207, 112, 0.35)',
-            borderRadius: 16,
-            maxWidth: 520,
-            width: '100%',
-            padding: 24,
-            boxShadow: '0 20px 50px rgba(0,0,0,0.85)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f6cf70', fontWeight: 800, fontSize: 16 }}>
-                <Cpu size={20} />
-                <span>Cấu Hình AI Server Thử Đồ (Virtual Try-On)</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowKeyModal(false)}
-                style={{ background: 'transparent', border: 0, color: 'var(--text-muted)', cursor: 'pointer' }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* GOOGLE COLAB T4 GPU RIÊNG */}
-            <div style={{
-              background: 'rgba(56, 189, 248, 0.08)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 16
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38bdf8', fontWeight: 800, fontSize: 13.5 }}>
-                  <span>⚡ Máy Chủ Google Colab T4 GPU (Miễn phí 100%)</span>
-                </div>
-                {colabUrl ? (
-                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'rgba(74,222,128,0.2)', color: '#86efac', fontWeight: 700 }}>
-                    🟢 Đã kết nối
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#bbb' }}>
-                    ⚪ Chưa kết nối
-                  </span>
-                )}
-              </div>
-              <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.55, margin: '0 0 12px 0' }}>
-                Chạy file <code>MyFitDaily_Virtual_TryOn_Colab.ipynb</code> trên Google Colab với GPU Tesla T4 (16GB VRAM) hoàn toàn miễn phí, sau đó dán link Cloudflare Tunnel vào đây:
-              </p>
-
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="text"
-                  placeholder="https://tên-ngẫu-nhiên.trycloudflare.com"
-                  value={tempColabUrl}
-                  onChange={(e) => setTempColabUrl(e.target.value)}
-                  style={{
-                    flex: 1,
-                    background: 'rgba(0,0,0,0.5)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    borderRadius: 8,
-                    padding: '9px 12px',
-                    color: '#fff',
-                    fontSize: 12.5,
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveColabUrl}
-                  style={{
-                    background: 'linear-gradient(135deg, #38bdf8, #0284c7)',
-                    border: 0,
-                    color: '#fff',
-                    borderRadius: 8,
-                    padding: '9px 16px',
-                    fontSize: 12.5,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Lưu & Kết Nối
-                </button>
-              </div>
-
-              <div style={{
-                marginTop: 10,
-                fontSize: 11.5,
-                color: '#93c5fd',
-                background: 'rgba(56, 189, 248, 0.08)',
-                padding: '8px 10px',
-                borderRadius: 8,
-                lineHeight: 1.4
-              }}>
-                💡 <strong>Lưu ý quan trọng:</strong> Đường link đúng có dạng <code>https://...trycloudflare.com</code> được in ra ở cuối <strong>Ô Số 4</strong> trên Google Colab (không phải <code>api.trycloudflare.com</code>).
-              </div>
-
-              {colabUrl && (
-                <button
-                  type="button"
-                  onClick={() => { setTempColabUrl(''); setColabUrl(''); localStorage.removeItem('myfitdaily_colab_url'); }}
-                  style={{ marginTop: 8, background: 'transparent', border: 0, color: '#f87171', fontSize: 11.5, cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  Ngắt kết nối Colab
-                </button>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setShowKeyModal(false)}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: 0,
-                  color: '#fff',
-                  borderRadius: 8,
-                  padding: '7px 22px',
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         .model-stylist-grid {

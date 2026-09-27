@@ -42,7 +42,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo
                 if (!userId.HasValue)
                 {
-                    var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "demo@myfitdaily.com")
+                    var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower() == "demo@myfitdaily.com")
                                    ?? await _context.Users.FirstOrDefaultAsync();
                     if (demoUser != null)
                     {
