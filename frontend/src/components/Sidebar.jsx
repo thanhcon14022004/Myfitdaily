@@ -21,6 +21,7 @@ import {
   BrainCircuit
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { formatChatDate } from '../utils/dateUtils';
 import { getSubscriptionType, isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
 import SubscriptionCountdown from './SubscriptionCountdown';
@@ -44,6 +45,7 @@ export default function Sidebar({
   favoriteCount = 0
 }) {
   const { t, language, text } = useLanguage();
+  const { theme, isLight } = useTheme();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
@@ -138,7 +140,7 @@ export default function Sidebar({
               fontWeight: 800,
               fontSize: '1.05rem',
               letterSpacing: '-0.02em',
-              color: '#ECECEC',
+              color: isLight ? '#0F172A' : '#ECECEC',
               fontFamily: "inherit"
             }}>
               MyFit<span style={{ color: '#D4AF37' }}>Daily</span>
@@ -158,7 +160,7 @@ export default function Sidebar({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#B4B4B4',
+                color: isLight ? '#475569' : '#B4B4B4',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -177,7 +179,7 @@ export default function Sidebar({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#B4B4B4',
+                color: isLight ? '#475569' : '#B4B4B4',
                 background: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
@@ -372,8 +374,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'wardrobe' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'wardrobe' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'wardrobe' ? (isLight ? 'rgba(184, 134, 11, 0.12)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'wardrobe' ? (isLight ? '#996F08' : '#FFFFFF') : (isLight ? '#1F2937' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'wardrobe' ? 600 : 500,
                   border: 'none',
@@ -382,15 +384,15 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : '#B4B4B4'} />
+                  <Shirt size={17} color={currentTab === 'wardrobe' ? '#D4AF37' : (isLight ? '#475569' : '#B4B4B4')} />
                   <span>{t('nav_wardrobe')}</span>
                 </div>
                 <span style={{
                   fontSize: '0.62rem',
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  background: 'rgba(212, 175, 55, 0.15)',
-                  color: '#F3D98A',
+                  background: isLight ? 'rgba(184, 134, 11, 0.15)' : 'rgba(212, 175, 55, 0.15)',
+                  color: isLight ? '#996F08' : '#F3D98A',
                   fontWeight: 600,
                   letterSpacing: '0.02em'
                 }}>
@@ -409,8 +411,8 @@ export default function Sidebar({
                   gap: '10px',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'outfits' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'outfits' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'outfits' ? (isLight ? 'rgba(184, 134, 11, 0.12)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'outfits' ? (isLight ? '#996F08' : '#FFFFFF') : (isLight ? '#1F2937' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'outfits' ? 600 : 500,
                   border: 'none',
@@ -418,7 +420,7 @@ export default function Sidebar({
                   textAlign: 'left',
                 }}
               >
-                <Layers size={17} color={currentTab === 'outfits' ? '#D4AF37' : '#B4B4B4'} />
+                <Layers size={17} color={currentTab === 'outfits' ? '#D4AF37' : (isLight ? '#475569' : '#B4B4B4')} />
                 <span>{t('nav_outfits')}</span>
               </button>
 
@@ -433,8 +435,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'dashboard' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'dashboard' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  background: currentTab === 'dashboard' ? (isLight ? 'rgba(244, 63, 94, 0.12)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'dashboard' ? (isLight ? '#E11D48' : 'var(--text-primary)') : (isLight ? '#1F2937' : 'var(--text-secondary)'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'dashboard' ? 600 : 500,
                   border: 'none',
@@ -445,7 +447,7 @@ export default function Sidebar({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Heart 
                     size={17} 
-                    color={currentTab === 'dashboard' ? '#F43F5E' : 'var(--text-muted)'} 
+                    color={currentTab === 'dashboard' ? '#F43F5E' : (isLight ? '#475569' : 'var(--text-muted)')} 
                     fill={currentTab === 'dashboard' ? '#F43F5E' : 'none'} 
                   />
                   <span>{t('nav_dashboard')}</span>
@@ -476,8 +478,8 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'ai-stylist' ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                  color: currentTab === 'ai-stylist' ? '#FFFFFF' : '#ECECEC',
+                  background: currentTab === 'ai-stylist' ? (isLight ? 'rgba(184, 134, 11, 0.12)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                  color: currentTab === 'ai-stylist' ? (isLight ? '#996F08' : '#FFFFFF') : (isLight ? '#1F2937' : '#ECECEC'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'ai-stylist' ? 600 : 500,
                   border: 'none',
@@ -486,13 +488,13 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Sparkles size={17} color={currentTab === 'ai-stylist' ? '#D4AF37' : '#B4B4B4'} />
+                  <Sparkles size={17} color={currentTab === 'ai-stylist' ? '#D4AF37' : (isLight ? '#475569' : '#B4B4B4')} />
                   <span>{t('nav_ai_stylist')}</span>
                 </div>
                 <span style={{
                   fontSize: '0.62rem',
                   background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
-                  color: '#080A0F',
+                  color: '#FFFFFF',
                   padding: '1px 6px',
                   borderRadius: '4px',
                   fontWeight: 800,
@@ -512,8 +514,8 @@ export default function Sidebar({
                   gap: '10px',
                   padding: '8px 12px',
                   borderRadius: '8px',
-                  background: currentTab === 'premium' ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-                  color: currentTab === 'premium' ? '#FDE68A' : '#F3D98A',
+                  background: currentTab === 'premium' ? (isLight ? 'rgba(184, 134, 11, 0.12)' : 'rgba(212, 175, 55, 0.15)') : 'transparent',
+                  color: currentTab === 'premium' ? (isLight ? '#996F08' : '#FDE68A') : (isLight ? '#B8860B' : '#F3D98A'),
                   fontSize: '0.88rem',
                   fontWeight: currentTab === 'premium' ? 600 : 500,
                   border: 'none',
@@ -538,8 +540,8 @@ export default function Sidebar({
               gap: '10px',
               padding: '8px 12px',
               borderRadius: '8px',
-              background: currentTab === 'landing' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-              color: currentTab === 'landing' ? '#ECECEC' : 'var(--text-secondary)',
+              background: currentTab === 'landing' ? (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)') : 'transparent',
+              color: currentTab === 'landing' ? (isLight ? '#0F172A' : '#ECECEC') : (isLight ? '#475569' : 'var(--text-secondary)'),
               fontSize: '0.88rem',
               fontWeight: currentTab === 'landing' ? 600 : 500,
               border: 'none',
@@ -547,7 +549,7 @@ export default function Sidebar({
               textAlign: 'left',
             }}
           >
-            <Compass size={17} color="#B4B4B4" />
+            <Compass size={17} color={isLight ? '#475569' : '#B4B4B4'} />
             <span>{text('Khám phá giới thiệu', 'Explore Features')}</span>
           </button>
         </div>
@@ -670,12 +672,12 @@ export default function Sidebar({
                 <span style={{
                   fontSize: '0.74rem',
                   fontWeight: 600,
-                  color: '#8E8E8E',
+                  color: isLight ? '#475569' : '#8E8E8E',
                   letterSpacing: '0.01em',
                 }}>
                   {text('Đoạn chat', 'Chats')}
                 </span>
-                <span style={{ fontSize: '0.68rem', color: '#666' }}>
+                <span style={{ fontSize: '0.68rem', color: isLight ? '#64748B' : '#666' }}>
                   {chatSessions.length}
                 </span>
               </div>
@@ -695,10 +697,10 @@ export default function Sidebar({
                         justifyContent: 'space-between',
                         padding: '7px 10px 7px 12px',
                         borderRadius: '8px',
-                        background: isSelected ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
-                        color: isSelected ? '#FFFFFF' : '#C7C7C7',
+                        background: isSelected ? (isLight ? 'rgba(184, 134, 11, 0.12)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                        color: isSelected ? (isLight ? '#996F08' : '#FFFFFF') : (isLight ? '#1F2937' : '#C7C7C7'),
                         fontSize: '0.86rem',
-                        fontWeight: isSelected ? 500 : 400,
+                        fontWeight: isSelected ? 600 : 400,
                         cursor: 'pointer',
                         transition: 'background 0.15s, color 0.15s',
                         position: 'relative',
@@ -724,9 +726,9 @@ export default function Sidebar({
                         </span>
                         <span style={{
                           fontSize: '0.64rem',
-                          color: isSelected ? '#FDE68A' : 'rgba(255,255,255,0.4)',
-                          background: isSelected ? 'rgba(212, 175, 55, 0.22)' : 'rgba(255, 255, 255, 0.05)',
-                          border: isSelected ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          color: isSelected ? (isLight ? '#996F08' : '#FDE68A') : (isLight ? '#475569' : 'rgba(255,255,255,0.4)'),
+                          background: isSelected ? (isLight ? 'rgba(184, 134, 11, 0.15)' : 'rgba(212, 175, 55, 0.22)') : (isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255, 255, 255, 0.05)'),
+                          border: isSelected ? (isLight ? '1px solid rgba(184, 134, 11, 0.3)' : '1px solid rgba(212, 175, 55, 0.4)') : (isLight ? '1px solid rgba(0,0,0,0.08)' : '1px solid rgba(255, 255, 255, 0.08)'),
                           padding: '1px 5px',
                           borderRadius: '4px',
                           whiteSpace: 'nowrap',
@@ -793,7 +795,7 @@ export default function Sidebar({
         </div>
 
         {/* BOTTOM SECTION: User Profile Card */}
-        <div style={{ position: 'relative', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+        <div style={{ position: 'relative', marginTop: 'auto', paddingTop: '8px', borderTop: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)' }}>
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className="sidebar-profile-card"
@@ -804,7 +806,7 @@ export default function Sidebar({
               gap: '10px',
               padding: '6px 8px',
               borderRadius: '8px',
-              background: profileMenuOpen ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              background: profileMenuOpen ? (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)') : 'transparent',
               border: 'none',
               cursor: 'pointer',
               textAlign: 'left',
@@ -832,7 +834,7 @@ export default function Sidebar({
               <div style={{
                 fontSize: '0.84rem',
                 fontWeight: 600,
-                color: '#ECECEC',
+                color: isLight ? '#0F172A' : '#ECECEC',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -841,7 +843,7 @@ export default function Sidebar({
               </div>
               <div style={{
                 fontSize: '0.7rem',
-                color: '#8E8E8E',
+                color: isLight ? '#475569' : '#8E8E8E',
                 marginTop: '1px'
               }}>
                 {displayPlan}
@@ -916,7 +918,7 @@ export default function Sidebar({
                   justifyContent: 'space-between',
                   padding: '8px 10px',
                   borderRadius: '6px',
-                  color: '#ECECEC',
+                  color: 'var(--text-primary)',
                   fontSize: '0.84rem',
                   background: 'transparent',
                   border: 'none',
@@ -932,7 +934,7 @@ export default function Sidebar({
                   fontSize: '0.68rem',
                   padding: '1px 6px',
                   borderRadius: '4px',
-                  background: 'rgba(255, 255, 255, 0.08)',
+                  background: 'var(--hover-bg)',
                   color: '#D4AF37',
                   fontWeight: 600
                 }}>
@@ -951,7 +953,7 @@ export default function Sidebar({
                     gap: '8px',
                     padding: '8px 10px',
                     borderRadius: '6px',
-                    color: '#FDE68A',
+                    color: isLight ? '#B8860B' : '#FDE68A',
                     fontSize: '0.84rem',
                     background: 'transparent',
                     border: 'none',
@@ -973,7 +975,7 @@ export default function Sidebar({
                     gap: '8px',
                     padding: '8px 10px',
                     borderRadius: '6px',
-                    color: '#FDE68A',
+                    color: isLight ? '#B8860B' : '#FDE68A',
                     fontSize: '0.84rem',
                     background: 'transparent',
                     border: 'none',
@@ -986,7 +988,7 @@ export default function Sidebar({
                 </button>
               )}
 
-              <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+              <div style={{ height: '1px', background: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
 
               {user ? (
                 <button
