@@ -1,6 +1,7 @@
 import React from 'react';
-import { PanelLeftOpen } from 'lucide-react';
+import { PanelLeftOpen, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
 import SubscriptionCountdown from './SubscriptionCountdown';
 
@@ -12,6 +13,7 @@ export default function TopBar({
   user
 }) {
   const { t, text } = useLanguage();
+  const { theme, isLight, toggleTheme } = useTheme();
   const isPlus = isPremiumPlusUser(user);
   const isPrem = isPremiumUser(user);
   return (
@@ -196,6 +198,27 @@ export default function TopBar({
             {text('Cá nhân', 'Personal')}
           </span>
         </div>
+
+        {/* Quick Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isLight ? '#B8860B' : '#FCD34D',
+            background: isLight ? 'rgba(184, 134, 11, 0.1)' : 'rgba(255, 255, 255, 0.08)',
+            border: isLight ? '1px solid rgba(184, 134, 11, 0.25)' : '1px solid rgba(255, 255, 255, 0.12)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+          }}
+          title={isLight ? text("Chuyển sang Giao diện Tối êm dịu mắt (Đen)", "Switch to Dark Mode") : text("Chuyển sang Giao diện Sáng (Trắng)", "Switch to Light Mode")}
+        >
+          {isLight ? <Moon size={16} /> : <Sun size={16} />}
+        </button>
       </div>
     </header>
   );

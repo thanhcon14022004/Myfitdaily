@@ -41,11 +41,11 @@ const ThemeContext = createContext({
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
-    const saved = localStorage.getItem('myfitdaily_theme');
+    const saved = localStorage.getItem('myfitdaily_theme_v2');
     if (saved === 'light' || saved === 'dark') {
       return saved;
     }
-    // Backward compatibility if user had previous color names
+    // Default to dark luxury theme
     return 'dark';
   });
 
@@ -55,6 +55,7 @@ export function ThemeProvider({ children }) {
     document.documentElement.setAttribute('data-theme', validTheme);
     document.body.setAttribute('data-theme', validTheme);
     try {
+      localStorage.setItem('myfitdaily_theme_v2', validTheme);
       localStorage.setItem('myfitdaily_theme', validTheme);
     } catch (e) {
       console.warn('Failed to persist theme preference', e);

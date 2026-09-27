@@ -3,6 +3,7 @@ import { Check, RotateCcw, Save, Sparkles, UserRound } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 const SLOTS = [
   { key: 'top', label: 'Áo', categoryIds: [1, 4], icon: '01' },
@@ -27,6 +28,7 @@ function getItemSlot(item) {
 
 export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, onToggleFavorite, onDeleteOutfit, user }) {
   const { text } = useLanguage();
+  const { isLight } = useTheme();
   const inventory = clothes?.length ? clothes : getInitialClothesForGender(user?.gender);
 
   const defaults = useMemo(() => ({
@@ -120,18 +122,20 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           minHeight: 640,
           position: 'relative',
           overflow: 'hidden',
-          background: 'radial-gradient(circle at 50% 15%, rgba(224,184,91,.15), transparent 45%), linear-gradient(145deg, #15140f, #090b11 65%)',
-          border: '1px solid rgba(246,207,112,.22)',
+          background: isLight 
+            ? 'linear-gradient(145deg, #F8FAFC, #EDF2F7)' 
+            : 'radial-gradient(circle at 50% 15%, rgba(224,184,91,.15), transparent 45%), linear-gradient(145deg, #15140f, #090b11 65%)',
+          border: isLight ? '1px solid rgba(184, 134, 11, 0.25)' : '1px solid rgba(246,207,112,.22)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 2 }}>
             <div>
-              <div style={{ color: '#f6cf70', fontSize: 11, fontWeight: 800, letterSpacing: '.12em' }}>SÂN KHẤU THỬ ĐỒ</div>
-              <div style={{ fontSize: 17, fontWeight: 800, marginTop: 2 }}>Người mẫu & outfit</div>
+              <div style={{ color: isLight ? '#B8860B' : '#f6cf70', fontSize: 11, fontWeight: 800, letterSpacing: '.12em' }}>SÂN KHẤU THỬ ĐỒ</div>
+              <div style={{ fontSize: 17, fontWeight: 800, marginTop: 2, color: isLight ? '#0F172A' : '#FFFFFF' }}>Người mẫu & outfit</div>
             </div>
-            <button type="button" onClick={reset} title="Đặt lại outfit mặc định" style={{ border: '1px solid rgba(255,255,255,.16)', background: 'rgba(0,0,0,.18)', color: '#fff', borderRadius: 9, padding: 8, cursor: 'pointer' }}>
+            <button type="button" onClick={reset} title="Đặt lại outfit mặc định" style={{ border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,.16)', background: isLight ? '#FFFFFF' : 'rgba(0,0,0,.18)', color: isLight ? '#475569' : '#fff', borderRadius: 9, padding: 8, cursor: 'pointer' }}>
               <RotateCcw size={16}/>
             </button>
           </div>
@@ -186,14 +190,14 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                   <div
                     key={slot.key}
                     style={{
-                      border: item ? '1px solid rgba(246,207,112,0.35)' : '1px solid rgba(255,255,255,.08)',
-                      background: item ? 'rgba(246,207,112,.08)' : 'rgba(0,0,0,.25)',
-                      color: '#fff',
+                      border: item ? (isLight ? '1px solid rgba(184, 134, 11, 0.4)' : '1px solid rgba(246,207,112,0.35)') : (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,.08)'),
+                      background: item ? (isLight ? 'rgba(184, 134, 11, 0.08)' : 'rgba(246,207,112,.08)') : (isLight ? '#FFFFFF' : 'rgba(0,0,0,.25)'),
+                      color: isLight ? '#0F172A' : '#fff',
                       borderRadius: 10,
                       padding: '8px 10px'
                     }}
                   >
-                    <span style={{ display: 'block', color: '#f6cf70', fontSize: 10, fontWeight: 800 }}>
+                    <span style={{ display: 'block', color: isLight ? '#B8860B' : '#f6cf70', fontSize: 10, fontWeight: 800 }}>
                       {slot.icon} / {slot.label.toUpperCase()}
                     </span>
                     <span style={{ display: 'block', fontSize: 12, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600 }}>
@@ -209,7 +213,7 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
         {/* CỘT PHẢI: CHỈ LƯỚI CÁC Ô ĐỒ TRONG TỦ ĐỒ (GỌN GÀNG, KHÔNG RỐI MẮT) */}
         <aside className="glass-card" style={{
           padding: 20,
-          border: '1px solid rgba(255,255,255,.10)',
+          border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,.10)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
