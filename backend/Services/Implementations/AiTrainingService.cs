@@ -58,6 +58,39 @@ public class AiTrainingService : IAiTrainingService
                 {
                     new()
                     {
+                        Id = "rule-greeting-intake",
+                        Category = "General",
+                        Name = "Chào Hỏi Tinh Gọn & Lắng Nghe Nhu Cầu (Conversational Intake First)",
+                        Description = "Khi chào hỏi mở đầu, AI chỉ chào lại ngắn gọn (1-2 câu) và hỏi nhu cầu người dùng, không tuôn ra thông tin dồn dập.",
+                        RuleContent = "Khi người dùng mới bắt đầu cuộc trò chuyện hoặc chỉ chào hỏi mở đầu ('chào bạn', 'hi', 'hello'...) mà chưa nêu câu hỏi thời trang cụ thể, AI BẮT BUỘC chỉ chào lại ngắn gọn, thân thiện (dưới 2-3 câu) và hỏi ý kiến xem hôm nay người dùng muốn lên đồ cho dịp gì hoặc cần phối với món đồ nào. TUYỆT ĐỐI KHÔNG tuôn ra thông tin dồn dập, không tự ý liệt kê số đo 3 vòng, và không đưa ra các bộ phối trang phục khi người dùng chưa chia sẻ mong muốn.",
+                        Priority = "High",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new()
+                    {
+                        Id = "rule-recommend-simple-1",
+                        Category = "Style",
+                        Name = "Tư Vấn Tinh Gọn (Kiểu Áo & Bảng Màu Trước, Affiliate Sau)",
+                        Description = "Gợi ý đơn giản về kiểu áo/loại áo và màu sắc trước, không ép sản phẩm cụ thể ngay; sau đó mới đưa ra 1 ví dụ affiliate.",
+                        RuleContent = "Khi bắt đầu tư vấn, hãy đưa ra gợi ý đơn giản về KIỂU DÁNG / LOẠI ÁO (ví dụ: áo polo dệt kim, sơ mi relaxed, thun boxy, blazer croptop...) và BẢNG MÀU SẮC NÊN DÙNG trước tiên để người dùng dễ hình dung nguyên lý phối. Tuyệt đối KHÔNG gán ghép tên sản phẩm hay thương hiệu cụ thể ngay từ đầu. Sau khi phân tích xong kiểu dáng và màu sắc, mới đưa ra 1 ví dụ cụ thể kèm thông tin/link affiliate để người dùng tham khảo nếu có nhu cầu sắm đồ.",
+                        Priority = "High",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new()
+                    {
+                        Id = "rule-recommend-limit-2",
+                        Category = "General",
+                        Name = "Giới Hạn 2 Mẫu Mỗi Lần Hỏi (Tránh Ngợp Thông Tin)",
+                        Description = "Chỉ đưa ra đúng 2 mẫu mỗi lần tư vấn, kèm nút 'Mẫu khác' nếu người dùng muốn đổi xem thêm.",
+                        RuleContent = "Mỗi lần người dùng hỏi, chỉ tư vấn và đưa ra ĐÚNG 2 MẪU OUTFIT PHÙ HỢP NHẤT. Tuyệt đối không liệt kê dồn dập quá nhiều bộ phối cùng lúc làm người dùng bị ngợp thông tin và khó chọn lựa. Phía dưới sẽ có nút 'Mẫu khác' để người dùng đổi xem 2 mẫu tiếp theo nếu chưa ưng ý.",
+                        Priority = "High",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    },
+                    new()
+                    {
                         Id = "rule-color-1",
                         Category = "Color",
                         Name = "Quy Tắc 3 Màu Tối Giản (Rule of Three)",
@@ -374,7 +407,6 @@ public class AiTrainingService : IAiTrainingService
             {
                 var client = _httpClientFactory.CreateClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
 
                 var payload = new
                 {
@@ -384,8 +416,28 @@ public class AiTrainingService : IAiTrainingService
                     }
                 };
 
-                var res = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
-                if (res.IsSuccessStatusCode)
+                HttpResponseMessage? res = null;
+                var candidateModels = new[] { "gemini-3.6-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-3.5-flash-lite", "gemini-2.5-flash" };
+                foreach (var modelName in candidateModels)
+                {
+                    try
+                    {
+                        var url = $"https://generativelanguage.googleapis.com/v1beta/models/{modelName}:generateContent?key={apiKey}";
+                        var req = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                        var resp = await client.PostAsync(url, req);
+                        if (resp.IsSuccessStatusCode)
+                        {
+                            res = resp;
+                            break;
+                        }
+                    }
+                    catch
+                    {
+                        // thử model kế tiếp
+                    }
+                }
+
+                if (res != null && res.IsSuccessStatusCode)
                 {
                     var resJson = await res.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(resJson);

@@ -25,13 +25,17 @@ import {
   Calendar,
   Briefcase,
   Tag,
-  Eye
+  Eye,
+  SquarePen,
+  Clock,
+  Plus
 } from 'lucide-react';
 
 import { apiRequest } from '../api/apiClient';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { useLanguage } from '../context/LanguageContext';
 import { getLiveWeather, ALL_LOCATIONS, setManualCity, clearManualCity } from '../services/weatherService';
+import { formatChatDate, formatChatFullDate } from '../utils/dateUtils';
 
 export default function AiStylistPage({ 
   clothes = [], 
@@ -45,7 +49,11 @@ export default function AiStylistPage({
   onSaveSession = null,
   onNewChat = null,
   activeChatPrompt = null,
-  resetChatSignal = 0
+  resetChatSignal = 0,
+  chatSessions = [],
+  selectedChatId = null,
+  onSelectChat = null,
+  onDeleteChat = null
 }) {
   const { text, isEnglish } = useLanguage();
   // Thông số cơ thể người dùng
@@ -62,6 +70,8 @@ export default function AiStylistPage({
   // Chatbot State
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  // Quản lý trang hiển thị 2 mẫu mỗi lần hỏi (đổi sang 2 mẫu khác khi bấm nút)
+  const [outfitPageMap, setOutfitPageMap] = useState({});
 
   // Modal Gợi Ý Phối Đồ: "Bây giờ" hoặc "Sự kiện trong tương lai"
   const [showRecommendModal, setShowRecommendModal] = useState(false);
@@ -73,6 +83,7 @@ export default function AiStylistPage({
   const [recEventWeather, setRecEventWeather] = useState('24°C, Tiết trời mát mẻ');
   const [recEventDate, setRecEventDate] = useState('');
   const [selectedOutfitForDetail, setSelectedOutfitForDetail] = useState(null);
+  const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
 
   // Live Weather State (Tự động nhận diện khu vực và thời tiết theo thời gian thực)
   const [weather, setWeather] = useState(null);
@@ -120,48 +131,32 @@ export default function AiStylistPage({
       id: 1,
       sender: 'ai',
       text: isEnglish
-        ? `Hello ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'there'}! I am your **AI Wardrobe & Outfit Stylist** at MYFITDAILY ✨.\n\n` +
-          `${isMaleUser ? '👔' : '👗'} **Current Wardrobe:** Connected with **${clothes.length} garments** (${isMaleUser ? 'Tops, Bottoms, Outerwear, Shoes & Accessories' : 'Tops, Bottoms, Dresses, Outerwear, Shoes & Accessories'}) from your personal closet.\n` +
-          (user?.height && user?.weight ? `📏 **Silhouette Guide:** Recorded body profile (${user.height}cm • ${user.weight}kg${user.bodyShape ? ` • ${user.bodyShape} shape` : ''}) to prioritize flattering cuts, masculine/feminine proportions, and trendy styling.\n\n` : '\n') +
-          `Here is how I can style you today:\n` +
-          `• ✦ **Complete Outfits by Occasion:** Work & smart casual, romantic date night, wedding guest, weekend cafe, traveling...\n` +
-          `• ✦ **Mix & Match Any Garment:** Click on any shirt, jeans, or blazer from the wardrobe slider below for immediate outfit ideas!\n` +
-          `• ✦ **Color Rules & Layering:** The 60-30-10 color principle, tone-sur-tone harmony, and chic blazer layering.\n\n` +
-          `Type your request or pick a wardrobe item below to start!`
-        : `Xin chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist Cá Nhân Chuyên Sâu Về Quần Áo & Phối Đồ** của bạn tại MYFITDAILY ✨.\n\n` +
-          `${isMaleUser ? '👔' : '👗'} **Tủ đồ hiện tại:** Đã kết nối với **${clothes.length} món trang phục** (${isMaleUser ? 'Áo, Quần, Áo khoác, Giày & Phụ kiện Nam' : 'Áo, Quần, Đầm, Áo khoác, Giày & Phụ kiện'}) trong tủ đồ cá nhân của bạn.\n` +
-          (user?.height && user?.weight ? `📏 **Tối ưu form dáng:** Đã ghi nhận thông số vóc dáng (${user.height}cm • ${user.weight}kg${user.bodyShape ? ` • dáng ${user.bodyShape}` : ''}) để ưu tiên phom dáng chuẩn mực, hack dáng và tôn khí chất.\n\n` : '\n') +
-          `Tôi có thể hỗ trợ bạn ngay hôm nay:\n` +
-          `• ✦ **Gợi ý trọn bộ outfit theo dịp:** Đi làm công sở, hẹn hò cuốn hút, dạ tiệc sự kiện, cafe dạo phố cuối tuần...\n` +
-          `• ✦ **Mix & Match món đồ bất kỳ:** Click chọn một chiếc áo, quần hoặc blazer trong thanh tủ đồ bên dưới để tôi gợi ý cách phối ngay!\n` +
-          `• ✦ **Nguyên tắc phối màu & chất liệu:** Quy tắc 60-30-10, phối tone-sur-tone, cách phối layer chuẩn xu hướng thịnh hành.\n\n` +
-          `Hãy nhập yêu cầu hoặc click chọn một món đồ trong tủ bên dưới để bắt đầu nhé!`,
+        ? `Hello ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'there'}! I am your personal **AI Stylist** at MYFITDAILY ✨.\n\n` +
+          `What occasion are you dressing for today, or do you have a specific garment you'd like styling advice on? Let me know!`
+        : `Chào ${user?.fullName ? user.fullName.split(' ').slice(-1)[0] : 'bạn'}! Tôi là **AI Stylist Cá Nhân** của bạn tại MYFITDAILY ✨.\n\n` +
+          `Hôm nay bạn muốn lên đồ cho dịp nào (đi làm công sở, hẹn hò, dự tiệc hay dạo phố...) hoặc cần tư vấn phối với món đồ cụ thể nào? Hãy chia sẻ với tôi nhé!`,
       isFashionRelated: true,
       accompanyingOutfits: [],
       suggestedFollowUpQuestions: isEnglish ? (isMaleUser ? [
-        "What should I wear for today's weather?",
-        "Sharp office outfit from my closet",
-        "Clean fit date night styling ideas",
+        "What should I wear to work today?",
+        "Clean Fit date night outfit ideas",
         "How to style vintage straight-leg jeans",
-        "Best shirt fit for my body shape"
+        "Best fit for my body shape"
       ] : [
-        "What should I wear for today's weather?",
+        "What should I wear to work today?",
         "Style an outfit with a white button-up shirt",
-        "How to mix wide-leg vintage jeans",
-        "Elegant office outfit from my closet",
-        "Romantic weekend date outfit"
+        "Romantic weekend date outfit",
+        "How to mix wide-leg vintage jeans"
       ]) : (isMaleUser ? [
-        "Thời tiết hôm nay ở khu vực của tôi nên mặc gì?",
-        "Gợi ý outfit nam công sở thanh lịch & đĩnh đạc từ tủ đồ",
-        "Phối đồ nam hẹn hò cuốn hút theo xu hướng Clean Fit",
-        "Cách mix quần jeans ống suông và sơ mi nam hack chiều cao",
-        "Dáng người của tôi nên chọn áo thun và sơ mi phom gì?"
+        "Gợi ý outfit đi làm công sở thanh lịch",
+        "Phối đồ hẹn hò nam cuốn hút theo Clean Fit",
+        "Hôm nay thời tiết thế này nên mặc gì?",
+        "Cách mix quần jeans ống suông và sơ mi nam"
       ] : [
-        "Thời tiết hôm nay ở khu vực của tôi nên mặc gì?",
-        "Trời đang mưa phối đồ thế nào để không bẩn gấu quần?",
-        "Phối đồ với áo sơ mi trắng",
-        "Cách mix quần jeans ống suông tôn dáng",
-        "Gợi ý outfit công sở thanh lịch từ tủ đồ"
+        "Gợi ý outfit công sở thanh lịch",
+        "Phối đồ hẹn hò lãng mạn cuối tuần",
+        "Hôm nay thời tiết thế này nên mặc gì?",
+        "Cách phối đồ với áo sơ mi trắng tôn dáng"
       ])
     };
   };
@@ -483,16 +478,25 @@ export default function AiStylistPage({
         ];
 
         const isWeatherQuery = /thời tiết|thoi tiet|mưa|mua|nắng|nang|nhiệt độ|nhiet do|lạnh|lanh|nóng|nong|weather|rain|sun|hot|cold/i.test(messageToSend);
-        let fallbackText = `Dựa trên câu hỏi "${messageToSend}", tỷ lệ thể trạng (${uHeight}cm • ${user?.weight || 52}kg • dáng ${uShape}) và xu hướng thời trang hiện tại, AI Stylist đã chuẩn bị **3 bộ phối từ tủ đồ cá nhân** và **3 style ngẫu nhiên cực hot trên mạng & sàn TMĐT** dưới đây để bạn tham khảo!`;
+        let fallbackText = `Dựa trên yêu cầu của bạn và đặc điểm vóc dáng (${uHeight}cm • ${user?.weight || 52}kg • dáng ${uShape}):\n\n` +
+          `✦ **Gợi ý kiểu áo & màu sắc phù hợp:**\n` +
+          `• **Kiểu dáng khuyên dùng:** Ưu tiên các loại áo có phom đứng vừa vặn như **áo sơ mi cổ bẻ phom relaxed, áo polo dệt kim knit** hoặc **áo thun cotton phom boxy**. Những kiểu dáng này giúp vai trông vuông vức, phần thân trên gọn gàng và dễ tạo tỷ lệ 1/3 - 2/3 hack chiều cao.\n` +
+          `• **Bảng màu đề xuất:** Nên chọn các gam màu thanh lịch, nhã nhặn như **trắng kem, be cát, xanh navy đậm hoặc xám melange** để dễ phối với quần âu hoặc quần jeans tối màu tạo độ tương phản sáng - tối hài hòa.\n\n` +
+          `✦ **Ví dụ sản phẩm tham khảo (Affiliate):**\n` +
+          `Bạn có thể tham khảo mẫu *${isMaleUser ? 'Áo Polo Dệt Kim Cổ Bẻ Be Cát' : 'Áo Sơ Mi Lụa Satin Trắng Ngà'}* từ đối tác liên kết (Coolmate / Shopee Mall) với mức giá ưu đãi tham khảo ~280.000đ - 350.000đ.\n\n` +
+          `👉 Dưới đây là **2 bộ phối trang phục gợi ý chuẩn gu** dành cho bạn (bạn có thể bấm nút **"🔄 Mẫu khác"** bên dưới nếu muốn đổi sang 2 phương án khác):`;
 
         if (isWeatherQuery && weather) {
           fallbackText = `📍 **Thời tiết thực tế tại ${weather.city}:** Hiện tại khoảng **${weather.temperature}°C**, ${weather.conditionText.toLowerCase()}.\n\n` +
+            `✦ **Gợi ý kiểu áo & màu sắc:**\n` +
             (weather.temperature >= 28 
-              ? `☀️ **Tư vấn phong cách trời nóng:** Với nền nhiệt ${weather.temperature}°C, bạn nên ưu tiên chất liệu cotton thoáng khí, sơ mi đũi mát mẻ hoặc áo thun phom rộng kết hợp quần ống suông nhẹ để giải nhiệt tối đa!`
+              ? `• **Kiểu dáng & chất liệu:** Trời nắng ấm (${weather.temperature}°C), ưu tiên áo polo pique cotton thoáng khí, sơ mi cộc tay linen (đũi) hoặc thun boxy cotton 100% thấm hút mồ hôi tốt.\n• **Màu sắc:** Gam màu sáng phản xạ nhiệt như trắng ngà, be cát, xanh baby pastel.`
               : weather.temperature <= 22
-              ? `🧥 **Tư vấn phong cách trời se lạnh:** Với ${weather.temperature}°C, hãy chọn phối layer cùng áo khoác cardigan dệt kim hoặc blazer thanh lịch để vừa ấm áp vừa sang trọng!`
-              : `🌤️ **Tư vấn phong cách lý tưởng:** Thời tiết ${weather.temperature}°C rất đẹp, cực kỳ thích hợp cho các set đồ Smart Casual năng động từ tủ đồ của bạn!`) +
-            `\n\nDưới đây là **3 set từ tủ đồ** và **3 style hot trend trên mạng** tối ưu riêng cho vóc dáng của bạn:`;
+              ? `• **Kiểu dáng & chất liệu:** Trời se lạnh (${weather.temperature}°C), ưu tiên phối layer: lớp trong áo thun/sơ mi mỏng, lớp ngoài cardigan dệt kim hoặc blazer dạ nhẹ.\n• **Màu sắc:** Gam màu ấm áp như nâu cacao, be đậm, xanh rêu, xám than.`
+              : `• **Kiểu dáng:** Thời tiết mát mẻ (${weather.temperature}°C), rất lý tưởng để diện sơ mi relaxed hoặc polo phối quần tây/jeans đứng phom.\n• **Màu sắc:** Bảng màu tương phản trắng - navy hoặc be - xám.`) +
+            `\n\n✦ **Ví dụ sản phẩm tham khảo (Affiliate):**\n` +
+            `Tham khảo mẫu *${isMaleUser ? 'Áo Polo Pique Thoáng Khí Coolmate' : 'Áo Cardigan Dệt Kim Mỏng Shopee Mall'}* với giá ưu đãi ~250.000đ - 320.000đ.\n\n` +
+            `👉 Dưới đây là **2 bộ phối trang phục phù hợp nhất** (bấm **"🔄 Mẫu khác"** để đổi 2 mẫu tiếp theo):`;
         }
 
         let fallbackFutureOutfits = null;
@@ -1031,30 +1035,250 @@ export default function AiStylistPage({
               <span>{text('Gợi Ý Phối Đồ AI', 'AI Stylist Recommend')}</span>
             </button>
 
-            {/* New Chat Button */}
+            {/* 1. Nút Tạo Đoạn Chat Mới */}
             <button
               onClick={() => {
                 if (onNewChat) onNewChat();
                 else setChatMessages([getInitialAiMessage()]);
               }}
-              title={text('Bắt đầu đoạn chat mới', 'New chat')}
+              title={text('Bắt đầu đoạn chat mới với AI Stylist', 'New chat with AI Stylist')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 12px',
-                background: 'var(--hover-bg)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
+                padding: '7px 14px',
+                background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.22), rgba(200, 149, 54, 0.22))',
+                border: '1.5px solid #D4AF37',
+                borderRadius: '20px',
+                color: '#FDE68A',
                 cursor: 'pointer',
                 fontSize: '0.8rem',
-                fontWeight: 600
+                fontWeight: 800,
+                boxShadow: '0 2px 10px rgba(212, 175, 55, 0.22)',
+                transition: 'all 0.2s ease'
               }}
             >
-              <RotateCcw size={13} />
-              <span>{text('Đoạn chat mới', 'New chat')}</span>
+              <SquarePen size={14} color="#FDE68A" />
+              <span>{text('+ Đoạn chat mới', '+ New chat')}</span>
             </button>
+
+            {/* 2. Nút Xem Các Đoạn Chat Cũ (Kèm số lượng) */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowSessionsDrawer(prev => !prev)}
+                title={text('Xem lại các đoạn chat cũ kèm ngày tháng', 'View past chats with date notes')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 12px',
+                  background: showSessionsDrawer ? 'rgba(255, 255, 255, 0.15)' : 'var(--hover-bg)',
+                  border: showSessionsDrawer ? '1px solid #D4AF37' : '1px solid var(--border-subtle)',
+                  borderRadius: '20px',
+                  color: showSessionsDrawer ? '#FDE68A' : 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Clock size={13} style={{ color: '#D4AF37' }} />
+                <span>{text('Đoạn chat cũ', 'Past chats')}</span>
+                <span style={{
+                  fontSize: '0.66rem',
+                  background: 'rgba(212, 175, 55, 0.25)',
+                  color: '#F3D98A',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  fontWeight: 800
+                }}>
+                  {chatSessions?.length || 0}
+                </span>
+                <ChevronDown size={11} style={{ transform: showSessionsDrawer ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+
+              {/* 3. Dropdown Menu Các Đoạn Chat Cũ Kèm Ghi Chú Ngày Tháng */}
+              {showSessionsDrawer && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  width: '380px',
+                  maxHeight: '480px',
+                  background: 'rgba(15, 23, 42, 0.98)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1.5px solid rgba(246, 207, 112, 0.35)',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 45px rgba(0, 0, 0, 0.75)',
+                  zIndex: 999,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden'
+                }}>
+                  {/* Tiêu đề Menu */}
+                  <div style={{
+                    padding: '12px 14px',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'rgba(255, 255, 255, 0.03)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                      <Clock size={15} color="#F6CF70" />
+                      <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#FFF' }}>
+                        {text('Lịch Sử Các Đoạn Chat', 'Chat History')}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setShowSessionsDrawer(false)}
+                      style={{ background: 'transparent', border: 0, color: '#94A3B8', cursor: 'pointer', padding: '2px 4px' }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  {/* Nút Tạo đoạn chat mới nhanh trong menu */}
+                  <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                    <button
+                      onClick={() => {
+                        setShowSessionsDrawer(false);
+                        if (onNewChat) onNewChat();
+                        else setChatMessages([getInitialAiMessage()]);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.22), rgba(200, 149, 54, 0.22))',
+                        border: '1px solid #D4AF37',
+                        borderRadius: '9px',
+                        color: '#FDE68A',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Plus size={14} />
+                      <span>{text('Bắt đầu đoạn chat mới', 'Start new chat')}</span>
+                    </button>
+                  </div>
+
+                  {/* Danh sách các đoạn chat cũ kèm ghi chú ngày tháng */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {(!chatSessions || chatSessions.length === 0) ? (
+                      <div style={{ textAlign: 'center', padding: '24px 10px', color: '#94A3B8', fontSize: '0.82rem' }}>
+                        {text('Chưa có đoạn chat nào trong lịch sử.', 'No chat history yet.')}
+                      </div>
+                    ) : (
+                      chatSessions.map((session) => {
+                        const isSelected = selectedChatId === session.id;
+                        const dateStr = formatChatDate(session.createdAt || session.updatedAt, text('Hôm nay', 'Today'));
+                        const lastMsg = session.messages && session.messages.length > 0
+                          ? session.messages[session.messages.length - 1]?.text
+                          : '';
+
+                        return (
+                          <div
+                            key={session.id}
+                            onClick={() => {
+                              if (onSelectChat) onSelectChat(session.id);
+                              setShowSessionsDrawer(false);
+                            }}
+                            style={{
+                              padding: '10px 12px',
+                              borderRadius: '10px',
+                              background: isSelected ? 'rgba(246, 207, 112, 0.16)' : 'rgba(255, 255, 255, 0.04)',
+                              border: isSelected ? '1.5px solid #D4AF37' : '1px solid rgba(255, 255, 255, 0.06)',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                              <span style={{
+                                fontWeight: isSelected ? 800 : 600,
+                                fontSize: '0.86rem',
+                                color: isSelected ? '#FDE68A' : '#F1F5F9',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1
+                              }}>
+                                {session.title || 'Đoạn chat'}
+                              </span>
+
+                              {/* GHI CHÚ NGÀY CHAT BÊN CẠNH */}
+                              <span style={{
+                                fontSize: '0.66rem',
+                                color: isSelected ? '#F6CF70' : '#CBD5E1',
+                                background: isSelected ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                                border: isSelected ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                flexShrink: 0
+                              }}>
+                                <Calendar size={10} />
+                                <span>{dateStr}</span>
+                              </span>
+
+                              {/* Nút xóa đoạn chat */}
+                              {onDeleteChat && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm(text("Xóa đoạn chat này khỏi lịch sử?", "Delete this chat?"))) {
+                                      onDeleteChat(session.id);
+                                    }
+                                  }}
+                                  title={text("Xóa đoạn chat", "Delete chat")}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 0,
+                                    color: '#64748B',
+                                    cursor: 'pointer',
+                                    padding: '2px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
+                                  onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
+                                >
+                                  <X size={13} />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Preview nội dung gần nhất */}
+                            {lastMsg && (
+                              <div style={{
+                                fontSize: '0.74rem',
+                                color: '#94A3B8',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {lastMsg.slice(0, 55)}...
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -1140,13 +1364,21 @@ export default function AiStylistPage({
                       })}
                     </div>
 
-                    {/* Accompanying Outfits Embedded in AI Reply */}
+                    {/* Accompanying Outfits Embedded in AI Reply: Hiển thị đúng 2 mẫu mỗi lần kèm nút 'Mẫu khác' */}
                     {isAi && msg.accompanyingOutfits && msg.accompanyingOutfits.length > 0 && (() => {
-                      const wardrobeSets = msg.accompanyingOutfits.filter(o => o.sourceType === 'Wardrobe' || !o.sourceType);
-                      const trendingSets = msg.accompanyingOutfits.filter(o => o.sourceType === 'TrendingOnline');
-                      
-                      const displayWardrobe = wardrobeSets.length > 0 ? wardrobeSets : msg.accompanyingOutfits.slice(0, 3);
-                      const displayTrending = trendingSets.length > 0 ? trendingSets : msg.accompanyingOutfits.slice(3);
+                      const allOutfits = msg.accompanyingOutfits;
+                      const totalSets = allOutfits.length;
+                      const currentOffset = outfitPageMap[msg.id] || 0;
+                      const visibleOutfits = allOutfits.slice(currentOffset, currentOffset + 2);
+                      const hasMoreThanTwo = totalSets > 2;
+
+                      const handleNextOutfits = (e) => {
+                        e.stopPropagation();
+                        setOutfitPageMap(prev => ({
+                          ...prev,
+                          [msg.id]: (currentOffset + 2) % totalSets
+                        }));
+                      };
 
                       const renderOutfitCard = (set, sIdx, isOnline = false) => {
                         const isCurrentlyWearing = activeOutfitSet?.name === set.name && showMannequinDrawer;
@@ -1253,6 +1485,23 @@ export default function AiStylistPage({
                               ))}
                             </div>
 
+                            {/* Lý do chọn & Nguyên tắc phối đồ theo quy tắc training */}
+                            {set.description && (
+                              <div style={{
+                                background: 'rgba(212, 175, 55, 0.08)',
+                                border: '1px solid rgba(212, 175, 55, 0.22)',
+                                borderRadius: '10px',
+                                padding: '9px 12px',
+                                fontSize: '0.78rem',
+                                color: 'var(--text-secondary)',
+                                lineHeight: 1.5,
+                                marginTop: '2px'
+                              }}>
+                                <span style={{ color: '#D4AF37', fontWeight: 700, marginRight: '5px' }}>💡 Lý do chọn & Nguyên tắc phối:</span>
+                                {set.description}
+                              </div>
+                            )}
+
                             {/* Action Buttons: Xem Chi Tiết, Mặc Thử Lên Người Ảo & Lưu */}
                             <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }} onClick={(e) => e.stopPropagation()}>
                               <button
@@ -1330,66 +1579,73 @@ export default function AiStylistPage({
                       };
 
                       return (
-                        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
-                          {/* PHẦN 1: 3 BỘ TỪ TỦ ĐỒ CÁ NHÂN */}
-                          {displayWardrobe.length > 0 && (
-                            <div>
-                              <div style={{ 
-                                fontSize: '0.86rem', 
-                                fontWeight: 800, 
-                                color: '#D4AF37', 
-                                marginBottom: '12px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                background: 'rgba(212, 175, 55, 0.08)',
-                                padding: '9px 13px',
-                                borderRadius: '10px',
-                                borderLeft: '4px solid #D4AF37'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                  <span>👗 3 Set Tuyển Chọn Từ Tủ Đồ Cá Nhân</span>
-                                </div>
-                                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                                  Tối ưu cho dáng {user?.bodyShape || 'Chuẩn'}
-                                </span>
-                              </div>
-
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                {displayWardrobe.map((set, sIdx) => renderOutfitCard(set, sIdx, false))}
-                              </div>
+                        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          {/* Header 2 Mẫu */}
+                          <div style={{ 
+                            fontSize: '0.86rem', 
+                            fontWeight: 800, 
+                            color: '#D4AF37', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            background: 'rgba(212, 175, 55, 0.08)',
+                            padding: '9px 13px',
+                            borderRadius: '10px',
+                            borderLeft: '4px solid #D4AF37'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                              <span>✨ 2 Mẫu Phối Đồ Gợi Ý Chuẩn Gu</span>
                             </div>
-                          )}
+                            <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                              {hasMoreThanTwo 
+                                ? `Mẫu ${currentOffset + 1} - ${Math.min(currentOffset + 2, totalSets)} / ${totalSets}` 
+                                : `Tối ưu cho dáng ${user?.bodyShape || 'Chuẩn'}`}
+                            </span>
+                          </div>
 
-                          {/* PHẦN 2: 3 STYLE NGẪU NHIÊN HOT TREND MẠNG & TMĐT */}
-                          {displayTrending.length > 0 && (
-                            <div>
-                              <div style={{ 
-                                fontSize: '0.86rem', 
-                                fontWeight: 800, 
-                                color: '#F87171', 
-                                marginBottom: '12px', 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
-                                background: 'rgba(239, 68, 68, 0.08)',
-                                padding: '9px 13px',
-                                borderRadius: '10px',
-                                borderLeft: '4px solid #EF4444'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                  <span>🔥 3 Style Ngẫu Nhiên Xu Hướng Trên Mạng & TMĐT</span>
-                                </div>
-                                <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                                  Hot trend Shopee, TikTok Shop, Taobao ({user?.age ? `${user.age} tuổi` : 'Gen Z'})
+                          {/* Danh sách hiển thị chính xác 2 mẫu */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            {visibleOutfits.map((set, sIdx) => renderOutfitCard(set, currentOffset + sIdx, set.sourceType === 'TrendingOnline'))}
+                          </div>
+
+                          {/* Nút "Mẫu khác" bên dưới 2 mẫu */}
+                          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
+                            <button
+                              onClick={hasMoreThanTwo ? handleNextOutfits : () => handleSendMessage(text("Gợi ý thêm cho tôi 2 mẫu phối phong cách khác nhé!", "Recommend 2 other styles for me!"))}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '10px 24px',
+                                borderRadius: '24px',
+                                background: 'linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(212, 175, 55, 0.12))',
+                                border: '1.5px solid #D4AF37',
+                                color: '#D4AF37',
+                                fontSize: '0.84rem',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, var(--primary), #D4AF37)';
+                                e.currentTarget.style.color = '#FFF';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(225, 29, 72, 0.12), rgba(212, 175, 55, 0.12))';
+                                e.currentTarget.style.color = '#D4AF37';
+                              }}
+                              title={text("Xem 2 mẫu khác nếu bạn chưa ưng ý 2 mẫu này", "Show 2 other styles if you want alternatives")}
+                            >
+                              <RefreshCw size={15} />
+                              <span>{text('🔄 Mẫu khác', '🔄 Other styles')}</span>
+                              {hasMoreThanTwo && (
+                                <span style={{ fontSize: '0.74rem', opacity: 0.85, fontWeight: 600 }}>
+                                  ({currentOffset + 1}-{Math.min(currentOffset + 2, totalSets)}/{totalSets})
                                 </span>
-                              </div>
-
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                {displayTrending.map((set, sIdx) => renderOutfitCard(set, sIdx + 10, true))}
-                              </div>
-                            </div>
-                          )}
+                              )}
+                            </button>
+                          </div>
                         </div>
                       );
                     })()}
