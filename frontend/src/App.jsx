@@ -28,6 +28,8 @@ import {
 import { INITIAL_CHAT_SESSIONS } from './data/initialChatSessions';
 import { useLanguage } from './context/LanguageContext';
 import { getSubscriptionType, sanitizeUser, isPremiumUser, isPremiumPlusUser } from './utils/subscriptionUtils';
+import { supabase } from './api/supabaseClient';
+import { syncSocialUserWithBackend, signOutFromSupabase } from './services/supabaseAuthService';
 
 export default function App() {
   const { text } = useLanguage();
@@ -63,6 +65,9 @@ export default function App() {
   // User State
   const [user, setUser] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+  const [pendingVerification, setPendingVerification] = useState(null);
+  const [pendingOnboardingUser, setPendingOnboardingUser] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
@@ -92,6 +97,95 @@ export default function App() {
         console.error("Failed to parse user session", e);
       }
     }
+  }, []);
+
+  // Listen to Supabase OAuth Redirect Callback & Session synchronization
+  useEffect(() => {
+    let isMounted = true;
+
+    const handleSocialSync = async (sessionUser, provider) => {
+      try {
+        console.log("[MyFitDaily OAuth] Syncing user with backend:", sessionUser?.email);
+        const synced = await syncSocialUserWithBackend(sessionUser, provider);
+        if (!isMounted) return;
+
+        if (synced?.requiresVerification) {
+          // Người dùng mới: Mở modal xác thực mã OTP 5 phút
+          setPendingVerification(synced);
+          setPendingOnboardingUser(null);
+          setAuthModalMode('verify-otp');
+          setIsAuthModalOpen(true);
+        } else if (synced?.isNewUser || synced?.needsProfileSetup) {
+          // Người dùng mới (đã xác thực qua link hoặc OAuth): Bắt buộc mở modal onboarding để nhập tên, giới tính, độ tuổi
+          setUser(synced);
+          setPendingVerification(null);
+          setPendingOnboardingUser(synced);
+          setAuthModalMode('onboarding');
+          setIsAuthModalOpen(true);
+        } else if (synced?.id) {
+          // Người dùng đã có tài khoản: Vào luôn!
+          setUser(synced);
+          setIsAuthModalOpen(false);
+          setPendingVerification(null);
+          setPendingOnboardingUser(null);
+          setAuthModalMode('login');
+          if (synced.role === 'Admin') setCurrentTab('admin');
+          else setCurrentTab('dashboard');
+        }
+        if (window.location.hash || window.location.search.includes('code=')) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (e) {
+        console.warn("[MyFitDaily OAuth] Could not sync OAuth session:", e);
+      }
+    };
+
+    // 1. Initial check for existing Supabase session (e.g. immediately after Google/Facebook redirect)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user && isMounted) {
+        const provider = session.user.app_metadata?.provider === 'facebook' ? 'Facebook' : 'Google';
+        handleSocialSync(session.user, provider);
+      }
+    });
+
+    // 2. Fallback parser for URL hash if access_token was returned directly in URL
+    if (window.location.hash && window.location.hash.includes('access_token=')) {
+      try {
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          const payloadBase64 = accessToken.split('.')[1];
+          if (payloadBase64) {
+            const tokenPayload = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
+            if (tokenPayload?.email) {
+              const syntheticUser = {
+                id: tokenPayload.sub || String(Date.now()),
+                email: tokenPayload.email,
+                user_metadata: tokenPayload.user_metadata || {},
+                app_metadata: tokenPayload.app_metadata || {}
+              };
+              handleSocialSync(syntheticUser, 'Google');
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not parse hash token:", err);
+      }
+    }
+
+    // 3. Auth listener for Supabase OAuth login events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[MyFitDaily Supabase Auth Event]:", event, session?.user?.email);
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user && isMounted) {
+        const provider = session.user.app_metadata?.provider === 'facebook' ? 'Facebook' : 'Google';
+        await handleSocialSync(session.user, provider);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // Admin route restriction: Admin role is strictly for managing the platform, affiliate links & catalog
@@ -160,8 +254,18 @@ export default function App() {
   }, [chatSessions]);
 
   // Handlers
+  const handleOpenAuth = (mode = 'login') => {
+    setPendingOnboardingUser(null);
+    setPendingVerification(null);
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
   const handleAuthSuccess = (userData) => {
     setUser(userData);
+    setPendingVerification(null);
+    setPendingOnboardingUser(null);
+    setAuthModalMode('login');
     if (userData?.role === 'Admin') {
       setCurrentTab('admin');
     } else {
@@ -169,11 +273,18 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await signOutFromSupabase();
+    } catch { }
     localStorage.removeItem('myfitdaily_token');
     localStorage.removeItem('myfitdaily_user');
     setUser(null);
     setClothes([]);
+    setPendingVerification(null);
+    setPendingOnboardingUser(null);
+    setAuthModalMode('login');
+    setIsAuthModalOpen(false);
     setCurrentTab('landing');
   };
 
@@ -425,7 +536,7 @@ export default function App() {
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
         user={user}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() => handleOpenAuth('login')}
         onLogout={handleLogout}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -453,6 +564,7 @@ export default function App() {
           currentTab={currentTab}
           setCurrentTab={setCurrentTab}
           user={user}
+          onOpenAuth={() => handleOpenAuth('login')}
         />
 
         {/* Page Content Body */}
@@ -469,9 +581,10 @@ export default function App() {
             <LandingPage
               onGetStarted={() => {
                 if (user) setCurrentTab('dashboard');
-                else setIsAuthModalOpen(true);
+                else handleOpenAuth('register');
               }}
               onExploreWardrobe={() => setCurrentTab('wardrobe')}
+              onOpenAuth={(mode) => handleOpenAuth(mode || 'login')}
             />
           )}
 
@@ -703,8 +816,16 @@ export default function App() {
       {/* Modals */}
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingVerification(null);
+          setPendingOnboardingUser(null);
+          setAuthModalMode('login');
+        }}
         onAuthSuccess={handleAuthSuccess}
+        pendingVerification={pendingVerification}
+        pendingOnboardingUser={pendingOnboardingUser}
       />
 
       <AddClothingModal

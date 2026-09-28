@@ -10,10 +10,12 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
     public class UserService : IUserService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public UserService(ApplicationDbContext context)
+        public UserService(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         public async Task<ApiResponse<UserDto>> GetProfileAsync(int userId)
@@ -64,6 +66,9 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 return ApiResponse<UserDto>.Fail("Không tìm thấy người dùng");
             }
 
+            // Kiểm tra xem đây có phải là lần đầu người dùng hoàn tất onboarding hay không
+            bool isFirstTimeOnboarding = !user.Age.HasValue && request.Age.HasValue;
+
             user.FullName = request.FullName.Trim();
             if (request.AvatarUrl != null)
             {
@@ -106,6 +111,26 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             }
 
             await _context.SaveChangesAsync();
+
+            // KHI NHẤN HOÀN TẤT THIẾT LẬP HỒ SƠ: GỬI THÔNG BÁO EMAIL CHÀO MỪNG (WELCOME EMAIL)
+            if (isFirstTimeOnboarding)
+            {
+                var targetEmail = user.Email;
+                var targetName = user.FullName;
+                var targetGender = user.Gender;
+                var targetAge = user.Age;
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _emailService.SendWelcomeEmailAsync(targetEmail, targetName, targetGender, targetAge);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Welcome Email Error]: {ex.Message}");
+                    }
+                });
+            }
 
             return ApiResponse<UserDto>.Ok(MapToUserDto(user), "Cập nhật thông tin tài khoản và thông số vóc dáng thành công");
         }

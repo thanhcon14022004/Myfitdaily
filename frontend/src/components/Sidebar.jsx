@@ -18,7 +18,8 @@ import {
   Settings,
   Shield,
   Link2,
-  BrainCircuit
+  BrainCircuit,
+  LogIn
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -52,10 +53,12 @@ export default function Sidebar({
   const isAdmin = user?.role === 'Admin';
 
   // User display info
-  const displayName = user?.fullName || (isAdmin ? 'Ban Quản Trị MyFitDaily' : 'Hà Trung Thành');
+  const displayName = user
+    ? user.fullName
+    : text('Khách trải nghiệm', 'Guest Explorer');
   const displayInitials = user?.fullName
     ? user.fullName.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase()
-    : (isAdmin ? 'AD' : 'HT');
+    : (isAdmin ? 'AD' : '👤');
   const isPlus = isPremiumPlusUser(user);
   const isPrem = isPremiumUser(user);
   const displayPlan = isAdmin
@@ -64,7 +67,7 @@ export default function Sidebar({
       ? '💎 Premium Plus'
       : isPrem
         ? '👑 VIP Premium'
-        : 'Gói Free Cơ Bản';
+        : (user ? text('Gói Free Cơ Bản', 'Free Plan') : text('Chưa đăng nhập', 'Not signed in'));
 
   return (
     <aside
@@ -794,71 +797,101 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* BOTTOM SECTION: User Profile Card */}
+        {/* BOTTOM SECTION: User Profile Card or Direct Login CTA */}
         <div style={{ position: 'relative', marginTop: 'auto', paddingTop: '8px', borderTop: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <button
-            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="sidebar-profile-card"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '6px 8px',
-              borderRadius: '8px',
-              background: profileMenuOpen ? (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)') : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            {/* Orange Circle Avatar */}
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: '#D95B00',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 600,
-              fontSize: '0.78rem',
-              color: '#FFFFFF',
-              flexShrink: 0,
-            }}>
-              {displayInitials}
-            </div>
-
-            {/* Name + Subtitle */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+          {!user ? (
+            <button
+              onClick={onOpenAuth}
+              id="btn-sidebar-login-cta"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '11px 14px',
+                borderRadius: '12px',
+                background: isLight 
+                  ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(194, 125, 94, 0.15))' 
+                  : 'linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(194, 125, 94, 0.22))',
+                border: isLight ? '1.5px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(212, 175, 55, 0.45)',
+                color: isLight ? '#996515' : '#F3D98A',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                boxShadow: isLight ? '0 2px 8px rgba(212, 175, 55, 0.15)' : '0 4px 14px rgba(212, 175, 55, 0.15)',
+                transition: 'all 0.2s ease',
+              }}
+              title={text("Bấm để đăng nhập hoặc đăng ký tài khoản", "Click to sign in or register")}
+            >
+              <LogIn size={16} color={isLight ? '#996515' : '#D4AF37'} />
+              <span>{text('Đăng Nhập / Đăng Ký', 'Sign In / Register')}</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="sidebar-profile-card"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '6px 8px',
+                borderRadius: '8px',
+                background: profileMenuOpen ? (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)') : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              {/* Circle Avatar */}
               <div style={{
-                fontSize: '0.84rem',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#D95B00',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontWeight: 600,
-                color: isLight ? '#0F172A' : '#ECECEC',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                fontSize: '0.78rem',
+                color: '#FFFFFF',
+                flexShrink: 0,
               }}>
-                {displayName}
+                {displayInitials}
               </div>
-              <div style={{
-                fontSize: '0.7rem',
-                color: isLight ? '#475569' : '#8E8E8E',
-                marginTop: '1px'
-              }}>
-                {displayPlan}
-              </div>
-              {user?.subscriptionExpiresAt && (isPrem || isPlus) && (
-                <div style={{ marginTop: '3px' }}>
-                  <SubscriptionCountdown
-                    expiresAt={user.subscriptionExpiresAt}
-                    planType={user.subscriptionType}
-                    variant="pill"
-                  />
+
+              {/* Name + Subtitle */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: '0.84rem',
+                  fontWeight: 600,
+                  color: isLight ? '#0F172A' : '#ECECEC',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {displayName}
                 </div>
-              )}
-            </div>
-          </button>
+                <div style={{
+                  fontSize: '0.7rem',
+                  color: isLight ? '#475569' : '#8E8E8E',
+                  marginTop: '1px'
+                }}>
+                  {displayPlan}
+                </div>
+                {user?.subscriptionExpiresAt && (isPrem || isPlus) && (
+                  <div style={{ marginTop: '3px' }}>
+                    <SubscriptionCountdown
+                      expiresAt={user.subscriptionExpiresAt}
+                      planType={user.subscriptionType}
+                      variant="pill"
+                    />
+                  </div>
+                )}
+              </div>
+            </button>
+          )}
 
           {/* Profile Popover Menu */}
           {profileMenuOpen && (

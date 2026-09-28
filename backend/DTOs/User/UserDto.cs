@@ -30,5 +30,9 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.User
 
         // Kiểm tra xem người dùng đã điền đầy đủ thông số cơ thể bắt buộc hay chưa
         public bool HasBodyMetrics => Height.HasValue && Height > 0 && Weight.HasValue && Weight > 0;
+
+        // Trạng thái người dùng mới / cần hoàn thiện hồ sơ ban đầu
+        public bool IsNewUser { get; set; } = false;
+        public bool NeedsProfileSetup => !Age.HasValue || string.IsNullOrWhiteSpace(Gender) || string.IsNullOrWhiteSpace(FullName);
     }
 }
