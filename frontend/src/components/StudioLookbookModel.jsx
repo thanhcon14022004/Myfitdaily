@@ -431,7 +431,16 @@ export default function StudioLookbookModel({
 
       // 3. Áo sơ mi kẻ sọc / sọc xanh (Set 4)
       if (topName.includes('sọc') || topName.includes('kẻ') || topName.includes('stripe')) {
-        return STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
+        const isLoosePants = botName.includes('suông') || botName.includes('cream') || botName.includes('beige') || bottomType === 'pants_wide';
+        const set4 = STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
+        if (isLoosePants) {
+          return {
+            ...set4,
+            modelImage: '/assets/templates/model_shirt_stripe_cream_trousers.jpg',
+            shortName: 'Sơ mi sọc + Quần suông cream'
+          };
+        }
+        return set4;
       }
 
       // 4. Áo sơ mi đen (Set 3)
@@ -549,7 +558,7 @@ export default function StudioLookbookModel({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#FFFFFF',
+      background: '#F8FAFC',
       borderRadius: '20px',
       boxShadow: '0 18px 45px rgba(0,0,0,0.65)'
     }}>
@@ -560,7 +569,8 @@ export default function StudioLookbookModel({
           width: '100%',
           height: '100%',
           objectFit: 'contain',
-          objectPosition: 'center center'
+          objectPosition: 'center center',
+          display: 'block'
         }}
       />
     </div>
