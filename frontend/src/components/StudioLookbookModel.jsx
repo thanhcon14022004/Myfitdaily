@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 /**
- * BỘ SƯU TẬP 12 SET TEMPLATE NGƯỜI MẪU STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
+ * BỘ SƯU TẬP 13 SET TEMPLATE NGƯỜI MẪU STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
  * Được trích xuất trực tiếp từ catalog ảnh studio người mẫu chuẩn lookbook:
  * - SET 1:  Áo sơ mi trắng + Quần tây (đen) + Giày sneaker (trắng)
  * - SET 2:  Áo sơ mi xanh nhạt + Quần vải suông (beige) + Giày sneaker (trắng/xám)
@@ -15,6 +15,7 @@ import React, { useMemo } from 'react';
  * - SET 13: Áo thun tay dài (sọc ngang) + Quần ống suông (xanh navy) + Giày sneaker (trắng/xám)
  * - SET 14: Áo hoodie (xám) + Quần jogger (đen) + Giày sneaker (trắng)
  * - SET 15: Áo sơ mi (trắng) + Quần tây (be) + Giày da (đen)
+ * - SET 19: Áo polo (navy/trắng) + Quần vải suông/Quần âu + Giày sneaker / Derby
  */
 export const STUDIO_TEMPLATES = [
   {
@@ -256,6 +257,26 @@ export const STUDIO_TEMPLATES = [
     bottomName: 'Quần tây (be)',
     shoesName: 'Giày da (đen)',
     itemIds: [284, 285, 286]
+  },
+  {
+    id: 19,
+    key: 'set_19',
+    setNumber: 'SET 19',
+    name: 'Áo polo + Quần vải suông / Quần âu + Giày sneaker',
+    shortName: 'Áo polo cộc tay + Quần âu',
+    category: 'Smart Casual',
+    topType: 'polo',
+    bottomType: 'trousers',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/model_polo_navy.jpg',
+    cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
+    topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
+    botBoxImage: '/assets/templates/set_1_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_1_shoes_box.jpg',
+    topName: 'Áo polo cộc tay (navy/trắng)',
+    bottomName: 'Quần vải suông (kem/đen)',
+    shoesName: 'Giày sneaker / Derby da',
+    itemIds: [211, 205, 251, 252]
   }
 ];
 
@@ -285,8 +306,96 @@ export default function StudioLookbookModel({
       if (match) return match;
     }
 
-    // 2. Tìm theo itemIds cụ thể của các set
-    const currentItemIds = [topItem?.id, bottomItem?.id, shoesItem?.id].filter(Boolean);
+    // 2. Nếu có item Áo (topItem) khớp trực tiếp ID trong template
+    if (topItem?.id) {
+      const matchTop = STUDIO_TEMPLATES.find(t => t.itemIds && t.itemIds.includes(topItem.id));
+      if (matchTop) return matchTop;
+    }
+
+    // 3. ƯU TIÊN SỐ 1 TUYỆT ĐỐI: DỰA TRÊN LOẠI ÁO (TOP)
+    // Áo là thành phần quyết định cốt lõi form người mẫu, không bao giờ để giày hay quần ép đổi loại áo!
+    const topName = (topItem?.name || '').toLowerCase();
+    const botName = (bottomItem?.name || '').toLowerCase();
+    const shoesName = (shoesItem?.name || '').toLowerCase();
+
+    // A. ÁO POLO (Nhận diện chính xác cả topType === 'polo' lẫn từ khóa polo, pique, dệt kim cable knit, cổ bẻ)
+    if (topType === 'polo' || topName.includes('polo') || topName.includes('pique') || topName.includes('cổ bẻ') || (topName.includes('cable knit') && topName.includes('dệt kim'))) {
+      return STUDIO_TEMPLATES.find(t => t.id === 19) || STUDIO_TEMPLATES[0];
+    }
+
+    // B. HOODIE & SWEATSHIRT FORM DÀY
+    if (topType === 'hoodie' || topName.includes('hoodie')) {
+      if (topName.includes('đen') || botName.includes('xám')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 8) || STUDIO_TEMPLATES[7]; // Set 8: Hoodie đen + Jogger xám
+      }
+      return STUDIO_TEMPLATES.find(t => t.id === 14) || STUDIO_TEMPLATES[10]; // Set 14: Hoodie xám + Jogger đen
+    }
+
+    // C. ÁO KHOÁC GIÓ / JACKET / BOMBER / BLAZER
+    if (topType === 'blazer' || topName.includes('khoác gió') || topName.includes('jacket') || topName.includes('bomber') || botName.includes('cargo') || botName.includes('túi hộp')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 9) || STUDIO_TEMPLATES[8];
+    }
+
+    // D. ÁO THUN DÀI TAY SỌC / RETRO STREET (Set 13)
+    if (topName.includes('sọc ngang') || topName.includes('thủy thủ') || (topName.includes('dài tay') && topName.includes('sọc'))) {
+      return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[9];
+    }
+
+    // E. ÁO THUN OVERSIZE / T-SHIRT / TEE (Set 7)
+    if (topType === 'tshirt_short' || topName.includes('oversize') || topName.includes('thun') || topName.includes('t-shirt') || topName.includes('tee') || botName.includes('ống rộng xanh nhạt')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[6];
+    }
+
+    // F. ÁO SƠ MI (Chỉ khớp các Set Sơ Mi khi người dùng thực sự chọn áo sơ mi)
+    const isShirt = topType === 'shirt_long' || topType === 'shirt_short' || topName.includes('sơ mi') || topName.includes('oxford') || topName.includes('linen') || topName.includes('denim');
+
+    if (isShirt || topItem) {
+      // Áo sơ mi denim (Set 6)
+      if (topName.includes('denim') || topName.includes('jean')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 6) || STUDIO_TEMPLATES[5];
+      }
+
+      // Áo sơ mi linen (Set 5)
+      if (topName.includes('linen')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 5) || STUDIO_TEMPLATES[4];
+      }
+
+      // Áo sơ mi sọc xanh (Set 4)
+      if (topName.includes('sọc')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
+      }
+
+      // Áo sơ mi đen (Set 3)
+      if (topName.includes('đen')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 3) || STUDIO_TEMPLATES[2];
+      }
+
+      // Áo sơ mi xanh nhạt (Set 2)
+      if (topName.includes('xanh nhạt') || topName.includes('oxford')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
+      }
+
+      // Quần tây be + Giày da / Sơ mi trắng (Set 15)
+      if (botName.includes('be') && (shoesName.includes('da') || shoesName.includes('loafer') || shoesName.includes('derby') || shoesName.includes('tây'))) {
+        return STUDIO_TEMPLATES.find(t => t.id === 15) || STUDIO_TEMPLATES[11];
+      }
+
+      // Giày tây / Derby kết hợp với sơ mi (Set 4)
+      if (shoesName.includes('derby') || shoesName.includes('tây')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
+      }
+
+      // Quần vải suông be (Set 2)
+      if (botName.includes('suông') && botName.includes('beige')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
+      }
+
+      // Mặc định cho Áo sơ mi: SET 1
+      return STUDIO_TEMPLATES[0];
+    }
+
+    // 4. Nếu chưa chọn Áo, phân loại theo Quần / Giày đã chọn
+    const currentItemIds = [bottomItem?.id, shoesItem?.id].filter(Boolean);
     if (currentItemIds.length > 0) {
       for (const tpl of STUDIO_TEMPLATES) {
         if (tpl.itemIds && tpl.itemIds.some(id => currentItemIds.includes(id))) {
@@ -295,65 +404,9 @@ export default function StudioLookbookModel({
       }
     }
 
-    // 3. Phân loại theo tên & thuộc tính món đồ
-    const topName = (topItem?.name || '').toLowerCase();
-    const botName = (bottomItem?.name || '').toLowerCase();
-    const shoesName = (shoesItem?.name || '').toLowerCase();
-
-    // Hoodie & Jogger
-    if (topType === 'hoodie' || topName.includes('hoodie')) {
-      if (topName.includes('đen') || botName.includes('xám')) {
-        return STUDIO_TEMPLATES.find(t => t.id === 8) || STUDIO_TEMPLATES[7]; // Set 8: Hoodie đen + Jogger xám
-      }
-      return STUDIO_TEMPLATES.find(t => t.id === 14) || STUDIO_TEMPLATES[10]; // Set 14: Hoodie xám + Jogger đen
-    }
-
-    // Áo khoác gió + Quần cargo (Set 9)
-    if (topName.includes('khoác gió') || botName.includes('cargo') || botName.includes('túi hộp')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 9) || STUDIO_TEMPLATES[8];
-    }
-
-    // Áo thun oversize + Jeans ống rộng (Set 7)
-    if (topName.includes('oversize') || botName.includes('ống rộng xanh nhạt')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[6];
-    }
-
-    // Áo thun tay dài sọc / Retro Street (Set 13)
-    if (topName.includes('sọc ngang') || topName.includes('thủy thủ') || (topName.includes('dài tay') && topName.includes('sọc'))) {
-      return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[9];
-    }
-
-    // Áo sơ mi denim (Set 6)
-    if (topName.includes('denim') || topName.includes('jean')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 6) || STUDIO_TEMPLATES[5];
-    }
-
-    // Áo sơ mi linen (Set 5)
-    if (topName.includes('linen')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 5) || STUDIO_TEMPLATES[4];
-    }
-
-    // Áo sơ mi sọc xanh (Set 4)
-    if (topName.includes('sọc') || shoesName.includes('derby') || shoesName.includes('tây')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
-    }
-
-    // Áo sơ mi đen (Set 3)
-    if (topName.includes('đen') && (topName.includes('sơ mi') || topType === 'shirt_long')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 3) || STUDIO_TEMPLATES[2];
-    }
-
-    // Áo sơ mi xanh nhạt (Set 2)
-    if (topName.includes('xanh nhạt') || topName.includes('oxford')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
-    }
-
-    // Quần tây be + Giày da (Set 15)
     if (botName.includes('be') && (shoesName.includes('da') || shoesName.includes('loafer'))) {
       return STUDIO_TEMPLATES.find(t => t.id === 15) || STUDIO_TEMPLATES[11];
     }
-
-    // Quần vải suông be (Set 2 hoặc Set 5)
     if (botName.includes('suông') && botName.includes('beige')) {
       return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
     }
