@@ -326,20 +326,40 @@ export const STUDIO_TEMPLATES = [
     key: 'set_19',
     setNumber: 'SET 19',
     name: 'Áo polo + Quần vải suông / Quần âu + Giày sneaker',
-    shortName: 'Áo polo cộc tay + Quần âu',
+    shortName: 'Áo polo cộc tay + Quần suông dài',
     category: 'Smart Casual',
     topType: 'polo',
-    bottomType: 'trousers',
+    bottomType: 'pants_wide',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/model_polo_cream_trousers.jpg',
+    cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
+    topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
+    botBoxImage: '/assets/templates/set_2_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_2_shoes_box.jpg',
+    topName: 'Áo polo cộc tay (navy/trắng/be)',
+    bottomName: 'Quần vải suông dài (cream/beige/đen)',
+    shoesName: 'Giày sneaker / Derby da',
+    itemIds: [211, 205, 251, 252, 203, 264]
+  },
+  {
+    id: 20,
+    key: 'set_20',
+    setNumber: 'SET 20',
+    name: 'Áo polo + Quần short + Giày sneaker',
+    shortName: 'Áo polo cộc tay + Quần short',
+    category: 'Summer Casual',
+    topType: 'polo',
+    bottomType: 'shorts',
     shoesType: 'sneaker',
     modelImage: '/assets/templates/model_polo_navy.jpg',
-    cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
+    cardImage: '/assets/templates/card_4_polo_shorts.jpg',
     topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
     botBoxImage: '/assets/templates/set_1_bot_box.jpg',
     shoesBoxImage: '/assets/templates/set_1_shoes_box.jpg',
-    topName: 'Áo polo cộc tay (navy/trắng)',
-    bottomName: 'Quần vải suông (kem/đen)',
-    shoesName: 'Giày sneaker / Derby da',
-    itemIds: [211, 205, 251, 252]
+    topName: 'Áo polo cộc tay (navy)',
+    bottomName: 'Quần short (beige/đen)',
+    shoesName: 'Giày sneaker (trắng)',
+    itemIds: [220, 221]
   }
 ];
 
@@ -383,7 +403,16 @@ export default function StudioLookbookModel({
 
     // A. ÁO POLO (Nhận diện chính xác cả topType === 'polo' lẫn từ khóa polo, pique, dệt kim cable knit, cổ bẻ)
     if (topType === 'polo' || topName.includes('polo') || topName.includes('pique') || topName.includes('cổ bẻ') || (topName.includes('cable knit') && topName.includes('dệt kim'))) {
-      return STUDIO_TEMPLATES.find(t => t.id === 19) || STUDIO_TEMPLATES[0];
+      const isShorts = bottomType === 'shorts' || botName.includes('short') || botName.includes('đùi') || botName.includes('ngắn');
+      if (isShorts) {
+        return STUDIO_TEMPLATES.find(t => t.id === 20) || STUDIO_TEMPLATES.find(t => t.id === 19);
+      }
+      
+      const poloTemplate = STUDIO_TEMPLATES.find(t => t.id === 19) || STUDIO_TEMPLATES[0];
+      if (botName.includes('đen') || botName.includes('tối')) {
+        return { ...poloTemplate, modelImage: '/assets/templates/model_polo_black_trousers.jpg' };
+      }
+      return { ...poloTemplate, modelImage: '/assets/templates/model_polo_cream_trousers.jpg' };
     }
 
     // B. HOODIE & SWEATSHIRT FORM DÀY
