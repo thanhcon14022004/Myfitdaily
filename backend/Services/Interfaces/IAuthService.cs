@@ -7,5 +7,9 @@ namespace MYFITDAILY_EXE201_Group6.Services.Interfaces
     {
         Task<ApiResponse<AuthResponseDto>> RegisterAsync(RegisterDto request);
         Task<ApiResponse<AuthResponseDto>> LoginAsync(LoginDto request);
+        Task<ApiResponse<bool>> ForgotPasswordAsync(string email);
+        Task<ApiResponse<AuthResponseDto>> SocialLoginAsync(SocialLoginDto request);
+        Task<ApiResponse<AuthResponseDto>> VerifyOtpAndRegisterAsync(VerifyOtpDto request);
+        Task<ApiResponse<AuthResponseDto>> ResendVerificationOtpAsync(ResendOtpDto request);
     }
 }

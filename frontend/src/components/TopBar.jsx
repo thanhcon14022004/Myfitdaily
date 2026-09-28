@@ -1,5 +1,5 @@
 import React from 'react';
-import { PanelLeftOpen, Sun, Moon } from 'lucide-react';
+import { PanelLeftOpen, Sun, Moon, LogIn } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { isPremiumUser, isPremiumPlusUser } from '../utils/subscriptionUtils';
@@ -10,7 +10,8 @@ export default function TopBar({
   onToggleSidebar,
   currentTab,
   setCurrentTab,
-  user
+  user,
+  onOpenAuth
 }) {
   const { t, text } = useLanguage();
   const { theme, isLight, toggleTheme } = useTheme();
@@ -165,39 +166,67 @@ export default function TopBar({
           </div>
         )}
 
-        {/* User Workspace Profile Pill */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '4px 10px 4px 6px',
-            borderRadius: '9999px',
-            background: 'var(--hover-bg-subtle)',
-            border: '1px solid var(--border-subtle)',
-            cursor: 'pointer',
-          }}
-          onClick={() => setCurrentTab('profile')}
-          title={text("Không gian làm việc: Cá nhân", "Workspace: Personal")}
-        >
-          <div style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            background: '#D95B00',
-            color: '#FFF',
-            fontSize: '0.68rem',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {user?.fullName ? user.fullName[0].toUpperCase() : 'H'}
+        {/* User Workspace Profile Pill or TopBar Login Button */}
+        {user ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px 4px 6px',
+              borderRadius: '9999px',
+              background: 'var(--hover-bg-subtle)',
+              border: '1px solid var(--border-subtle)',
+              cursor: 'pointer',
+            }}
+            onClick={() => setCurrentTab('profile')}
+            title={text("Không gian làm việc: Cá nhân", "Workspace: Personal")}
+          >
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              background: '#D95B00',
+              color: '#FFF',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {user.fullName ? user.fullName[0].toUpperCase() : 'U'}
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }} className="hide-mobile">
+              {user.fullName || text('Cá nhân', 'Personal')}
+            </span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }} className="hide-mobile">
-            {text('Cá nhân', 'Personal')}
-          </span>
-        </div>
+        ) : (
+          <button
+            id="btn-topbar-login"
+            onClick={onOpenAuth}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '5px 14px',
+              borderRadius: '9999px',
+              background: isLight 
+                ? 'linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(212, 175, 55, 0.32))'
+                : 'linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(212, 175, 55, 0.38))',
+              border: isLight ? '1.2px solid rgba(212, 175, 55, 0.55)' : '1px solid rgba(212, 175, 55, 0.5)',
+              color: isLight ? '#996515' : '#F3D98A',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: isLight ? '0 2px 8px rgba(212, 175, 55, 0.15)' : '0 2px 10px rgba(212, 175, 55, 0.2)',
+              transition: 'all 0.2s ease',
+            }}
+            title={text("Đăng nhập hoặc đăng ký tài khoản", "Sign in or register")}
+          >
+            <LogIn size={13} color={isLight ? '#996515' : '#F3D98A'} />
+            <span>{text('Đăng Nhập', 'Sign In')}</span>
+          </button>
+        )}
 
         {/* Quick Theme Toggle Button */}
         <button

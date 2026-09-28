@@ -13,12 +13,13 @@ import {
   TrendingUp,
   Clock,
   HeartHandshake,
-  UserCheck
+  UserCheck,
+  LogIn
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
-export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
+export default function LandingPage({ onGetStarted, onExploreWardrobe, onOpenAuth }) {
   const { text, isEnglish } = useLanguage();
   const { theme } = useTheme();
   const isLight = theme === 'light';
@@ -144,23 +145,52 @@ export default function LandingPage({ onGetStarted, onExploreWardrobe }) {
             marginBottom: '56px',
           }}>
             <button
+              onClick={onOpenAuth || onGetStarted}
+              id="btn-hero-login"
+              className="btn-primary"
+              style={{
+                padding: '16px 36px',
+                fontSize: '1.05rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <LogIn size={19} />
+              <span>{text('Đăng Nhập / Tạo Tài Khoản', 'Sign In / Register')}</span>
+              <ArrowRight size={18} />
+            </button>
+
+            <button
               onClick={onGetStarted}
               id="btn-hero-start"
-              className="btn-primary"
-              style={{ padding: '16px 36px', fontSize: '1.05rem' }}
+              className="btn-secondary"
+              style={{
+                padding: '16px 32px',
+                fontSize: '1.05rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
-              <span>{text('Trải Nghiệm Chế Độ Demo Ngay', 'Try Demo Mode Now')}</span>
-              <ArrowRight size={18} />
+              <Sparkles size={18} color={isLight ? '#996515' : '#F3D98A'} />
+              <span>{text('Trải Nghiệm Nhanh Demo', 'Try Quick Demo')}</span>
             </button>
 
             <button
               onClick={onExploreWardrobe}
               id="btn-hero-explore"
               className="btn-secondary"
-              style={{ padding: '16px 32px', fontSize: '1.05rem' }}
+              style={{
+                padding: '16px 30px',
+                fontSize: '1.05rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
               <Shirt size={18} color={isLight ? '#996515' : '#F3D98A'} />
-              <span>{text('Khám Phá Tủ Đồ Mẫu', 'Explore Sample Wardrobe')}</span>
+              <span>{text('Khám Phá Tủ Đồ Mẫu', 'Explore Wardrobe')}</span>
             </button>
           </div>
 

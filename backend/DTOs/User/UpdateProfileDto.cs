@@ -14,12 +14,10 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.User
         [MaxLength(20)]
         public string? Gender { get; set; }
 
-        // Bắt buộc điền thông số chiều cao và trọng lượng
-        [Required(ErrorMessage = "Chiều cao là thông tin bắt buộc")]
+        // Thông số chiều cao và trọng lượng (tùy chọn trong onboarding cơ bản, bắt buộc khi cần đo chuẩn 3D)
         [Range(50, 250, ErrorMessage = "Chiều cao phải trong khoảng từ 50cm đến 250cm")]
         public double? Height { get; set; }
 
-        [Required(ErrorMessage = "Trọng lượng/Cân nặng là thông tin bắt buộc")]
         [Range(20, 300, ErrorMessage = "Cân nặng phải trong khoảng từ 20kg đến 300kg")]
         public double? Weight { get; set; }
 
