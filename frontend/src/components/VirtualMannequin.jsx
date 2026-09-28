@@ -35,10 +35,7 @@ export default function VirtualMannequin({
   bottom = null,
   shoes = null,
   gender: propGender,
-  compact = false,
-  templateId = null,
-  viewMode = 'model',
-  onToggleViewMode = null
+  compact = false
 }) {
   const { text } = useLanguage();
 
@@ -49,15 +46,10 @@ export default function VirtualMannequin({
                       propGender?.toLowerCase() === 'male');
 
   const [selectedGender, setSelectedGender] = useState(isUserMale ? 'Nam' : 'Nữ');
-  const [internalViewMode, setInternalViewMode] = useState(viewMode || 'model');
 
   useEffect(() => {
     setSelectedGender(isUserMale ? 'Nam' : 'Nữ');
   }, [isUserMale]);
-
-  useEffect(() => {
-    if (viewMode) setInternalViewMode(viewMode);
-  }, [viewMode]);
 
   // Nhận diện loại đồ và màu sắc
   const detectedTopType = detectGarmentType(top, 'Tops');
@@ -72,12 +64,6 @@ export default function VirtualMannequin({
   const detectedShoesColorObj = detectGarmentColor(shoes);
 
   const activeModel = REAL_MODELS.find(m => m.gender === selectedGender) || REAL_MODELS[0];
-  const isMale = selectedGender === 'Nam';
-
-  const handleToggleMode = (mode) => {
-    setInternalViewMode(mode);
-    if (onToggleViewMode) onToggleViewMode(mode);
-  };
 
   return (
     <div style={{
@@ -89,17 +75,15 @@ export default function VirtualMannequin({
       margin: '0 auto',
       userSelect: 'none'
     }}>
-      {/* THANH ĐIỀU KHIỂN: CHỌN GIỚI TÍNH & CHẾ ĐỘ HIỂN THỊ */}
+      {/* THANH CHỌN GIỚI TÍNH */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         width: '100%',
         maxWidth: compact ? '290px' : '340px',
-        marginBottom: '10px',
-        gap: 8
+        marginBottom: '10px'
       }}>
-        {/* Nút Giới tính */}
         <div style={{
           display: 'inline-flex',
           background: 'rgba(255, 255, 255, 0.05)',
@@ -119,7 +103,7 @@ export default function VirtualMannequin({
                   border: isSelected ? '1px solid #D4AF37' : '1px solid transparent',
                   color: isSelected ? '#FDE68A' : 'var(--text-muted)',
                   borderRadius: 9,
-                  padding: '4px 12px',
+                  padding: '4px 14px',
                   fontSize: '0.72rem',
                   fontWeight: isSelected ? 800 : 600,
                   cursor: 'pointer',
@@ -134,54 +118,6 @@ export default function VirtualMannequin({
             );
           })}
         </div>
-
-        {/* Nút Chế độ: Người mẫu vs Thẻ Lookbook (chỉ khả dụng cho nam có catalog 9 set) */}
-        {isMale && (
-          <div style={{
-            display: 'inline-flex',
-            background: 'rgba(255, 255, 255, 0.05)',
-            padding: '3px',
-            borderRadius: 12,
-            border: '1px solid rgba(255, 255, 255, 0.08)'
-          }}>
-            <button
-              type="button"
-              onClick={() => handleToggleMode('model')}
-              title="Xem ảnh người mẫu toàn thân"
-              style={{
-                background: internalViewMode === 'model' ? 'rgba(246, 207, 112, 0.22)' : 'transparent',
-                border: internalViewMode === 'model' ? '1px solid #D4AF37' : '1px solid transparent',
-                color: internalViewMode === 'model' ? '#FDE68A' : 'var(--text-muted)',
-                borderRadius: 9,
-                padding: '4px 10px',
-                fontSize: '0.72rem',
-                fontWeight: internalViewMode === 'model' ? 800 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              👤 Người mẫu
-            </button>
-            <button
-              type="button"
-              onClick={() => handleToggleMode('card')}
-              title="Xem đầy đủ thẻ set và 3 ô chi tiết đồ"
-              style={{
-                background: internalViewMode === 'card' ? 'rgba(246, 207, 112, 0.22)' : 'transparent',
-                border: internalViewMode === 'card' ? '1px solid #D4AF37' : '1px solid transparent',
-                color: internalViewMode === 'card' ? '#FDE68A' : 'var(--text-muted)',
-                borderRadius: 9,
-                padding: '4px 10px',
-                fontSize: '0.72rem',
-                fontWeight: internalViewMode === 'card' ? 800 : 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              📋 Thẻ Set
-            </button>
-          </div>
-        )}
       </div>
 
       {/* SÂN KHẤU CANVAS NGƯỜI MẪU */}
@@ -204,8 +140,6 @@ export default function VirtualMannequin({
         <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
           <StudioLookbookModel
             gender={selectedGender}
-            templateId={templateId}
-            viewMode={internalViewMode}
             modelBaseImage={activeModel.baseImage}
             topItem={top}
             bottomItem={bottom}

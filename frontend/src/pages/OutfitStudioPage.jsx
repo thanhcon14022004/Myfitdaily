@@ -38,7 +38,6 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   }), [inventory]);
 
   const [selection, setSelection] = useState(defaults);
-  const [studioViewMode, setStudioViewMode] = useState('model');
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'bottom', 'shoes'
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
@@ -149,8 +148,6 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
               bottom={selection.bottom}
               shoes={selection.shoes}
               selectionKey={selectedIds.join('|')}
-              viewMode={studioViewMode}
-              onToggleViewMode={setStudioViewMode}
             />
           </div>
 
