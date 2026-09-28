@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 /**
- * BỘ SƯU TẬP 13 SET TEMPLATE NGƯỜI MẪU STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
+ * BỘ SƯU TẬP 16 SET TEMPLATE NGƯỜI MẪU STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
  * Được trích xuất trực tiếp từ catalog ảnh studio người mẫu chuẩn lookbook:
  * - SET 1:  Áo sơ mi trắng + Quần tây (đen) + Giày sneaker (trắng)
  * - SET 2:  Áo sơ mi xanh nhạt + Quần vải suông (beige) + Giày sneaker (trắng/xám)
@@ -12,6 +12,9 @@ import React, { useMemo } from 'react';
  * - SET 7:  Áo thun oversize (trắng/họa tiết) + Quần jeans ống rộng (xanh nhạt) + Giày sneaker (trắng/xám)
  * - SET 8:  Áo hoodie (đen) + Quần jogger (xám đậm) + Giày sneaker (trắng/xám)
  * - SET 9:  Áo khoác gió (kem) + Quần cargo (xanh rêu) + Giày sneaker (trắng)
+ * - SET 10: Áo thun họa tiết (xám đậm) + Quần cargo (xanh rêu) + Giày sneaker (trắng/xám)
+ * - SET 11: Áo khoác bomber (đen) + Quần jean (xanh nhạt) + Giày sneaker (trắng)
+ * - SET 12: Áo len cổ tròn (be) + Quần tây (xám đậm) + Giày sneaker (trắng)
  * - SET 13: Áo thun tay dài (sọc ngang) + Quần ống suông (xanh navy) + Giày sneaker (trắng/xám)
  * - SET 14: Áo hoodie (xám) + Quần jogger (đen) + Giày sneaker (trắng)
  * - SET 15: Áo sơ mi (trắng) + Quần tây (be) + Giày da (đen)
@@ -199,6 +202,66 @@ export const STUDIO_TEMPLATES = [
     itemIds: [291, 292, 262]
   },
   {
+    id: 10,
+    key: 'set_10',
+    setNumber: 'SET 10',
+    name: 'Áo thun họa tiết + Quần cargo + Giày sneaker',
+    shortName: 'Thun họa tiết xám + Cargo xanh rêu',
+    category: 'Urban Street',
+    topType: 'tshirt_short',
+    bottomType: 'cargo',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/set_10_model.jpg',
+    cardImage: '/assets/templates/set_10_card.jpg',
+    topBoxImage: '/assets/templates/set_10_top_box.jpg',
+    botBoxImage: '/assets/templates/set_10_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_10_shoes_box.jpg',
+    topName: 'Áo thun họa tiết (xám đậm)',
+    bottomName: 'Quần cargo (xanh rêu)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [295, 292, 265]
+  },
+  {
+    id: 11,
+    key: 'set_11',
+    setNumber: 'SET 11',
+    name: 'Áo khoác bomber + Quần jeans + Giày sneaker',
+    shortName: 'Bomber đen + Jeans xanh nhạt',
+    category: 'City Casual',
+    topType: 'blazer',
+    bottomType: 'jeans_straight',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/set_11_model.jpg',
+    cardImage: '/assets/templates/set_11_card.jpg',
+    topBoxImage: '/assets/templates/set_11_top_box.jpg',
+    botBoxImage: '/assets/templates/set_11_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_11_shoes_box.jpg',
+    topName: 'Áo khoác bomber (đen)',
+    bottomName: 'Quần jean (xanh nhạt)',
+    shoesName: 'Giày sneaker (trắng)',
+    itemIds: [293, 288, 262]
+  },
+  {
+    id: 12,
+    key: 'set_12',
+    setNumber: 'SET 12',
+    name: 'Áo len cổ tròn + Quần tây + Giày sneaker',
+    shortName: 'Len cổ tròn be + Quần tây xám',
+    category: 'Soft Minimal',
+    topType: 'sweater',
+    bottomType: 'trousers',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/set_12_model.jpg',
+    cardImage: '/assets/templates/set_12_card.jpg',
+    topBoxImage: '/assets/templates/set_12_top_box.jpg',
+    botBoxImage: '/assets/templates/set_12_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_12_shoes_box.jpg',
+    topName: 'Áo len cổ tròn (be)',
+    bottomName: 'Quần tây (xám đậm)',
+    shoesName: 'Giày sneaker (trắng)',
+    itemIds: [294, 267, 262]
+  },
+  {
     id: 13,
     key: 'set_13',
     setNumber: 'SET 13',
@@ -331,19 +394,33 @@ export default function StudioLookbookModel({
       return STUDIO_TEMPLATES.find(t => t.id === 14) || STUDIO_TEMPLATES[10]; // Set 14: Hoodie xám + Jogger đen
     }
 
-    // C. ÁO KHOÁC GIÓ / JACKET / BOMBER / BLAZER
-    if (topType === 'blazer' || topName.includes('khoác gió') || topName.includes('jacket') || topName.includes('bomber') || botName.includes('cargo') || botName.includes('túi hộp')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 9) || STUDIO_TEMPLATES[8];
+    // C. ÁO KHOÁC / BOMBER / JACKET / BLAZER
+    if (topType === 'blazer' || topName.includes('khoác') || topName.includes('jacket') || topName.includes('bomber') || topName.includes('vest')) {
+      if (topName.includes('bomber') || topName.includes('đen')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 11) || STUDIO_TEMPLATES.find(t => t.id === 9); // Set 11: Bomber đen + Quần jean
+      }
+      return STUDIO_TEMPLATES.find(t => t.id === 9) || STUDIO_TEMPLATES[8]; // Set 9: Áo khoác gió kem + Quần cargo
     }
 
-    // D. ÁO THUN DÀI TAY SỌC / RETRO STREET (Set 13)
+    // D. ÁO LEN / SWEATER / KNITWEAR (Set 12)
+    if (topType === 'sweater' || topName.includes('len') || topName.includes('sweater') || (topName.includes('knit') && !topName.includes('polo'))) {
+      return STUDIO_TEMPLATES.find(t => t.id === 12) || STUDIO_TEMPLATES[0]; // Set 12: Len cổ tròn be + Quần tây xám
+    }
+
+    // E. ÁO THUN DÀI TAY SỌC / RETRO STREET (Set 13)
     if (topName.includes('sọc ngang') || topName.includes('thủy thủ') || (topName.includes('dài tay') && topName.includes('sọc'))) {
       return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[9];
     }
 
-    // E. ÁO THUN OVERSIZE / T-SHIRT / TEE (Set 7)
-    if (topType === 'tshirt_short' || topName.includes('oversize') || topName.includes('thun') || topName.includes('t-shirt') || topName.includes('tee') || botName.includes('ống rộng xanh nhạt')) {
-      return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[6];
+    // F. ÁO THUN / OVERSIZE / T-SHIRT (Set 7 hoặc Set 10)
+    if (topType === 'tshirt_short' || topType === 'tshirt_long' || topName.includes('thun') || topName.includes('t-shirt') || topName.includes('tee') || topName.includes('oversize')) {
+      if (topName.includes('oversize') || botName.includes('jeans') || botName.includes('bò') || topName.includes('trắng')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[6]; // Set 7: Thun oversize trắng + Jeans ống rộng
+      }
+      if (topName.includes('xám') || botName.includes('cargo') || botName.includes('túi hộp') || botName.includes('rêu')) {
+        return STUDIO_TEMPLATES.find(t => t.id === 10) || STUDIO_TEMPLATES.find(t => t.id === 7); // Set 10: Thun họa tiết xám + Cargo
+      }
+      return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[6]; // Mặc định áo thun: Set 7
     }
 
     // F. ÁO SƠ MI (Chỉ khớp các Set Sơ Mi khi người dùng thực sự chọn áo sơ mi)
