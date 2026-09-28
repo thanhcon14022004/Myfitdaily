@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Check, RotateCcw, Save, Sparkles, UserRound } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
+import { STUDIO_TEMPLATES } from '../components/StudioLookbookModel';
 import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -32,15 +33,31 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const inventory = clothes?.length ? clothes : getInitialClothesForGender(user?.gender);
 
   const defaults = useMemo(() => ({
-    top: inventory.find(item => item.id === 210) || inventory.find(item => item.name?.includes('Áo Thun')) || inventory.find(item => item.categoryId === 1),
-    bottom: inventory.find(item => item.id === 220) || inventory.find(item => item.name?.includes('Đùi')) || inventory.find(item => item.categoryId === 2),
-    shoes: inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5)
+    top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1),
+    bottom: inventory.find(item => item.id === 261) || inventory.find(item => item.id === 220) || inventory.find(item => item.categoryId === 2),
+    shoes: inventory.find(item => item.id === 262) || inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5)
   }), [inventory]);
 
   const [selection, setSelection] = useState(defaults);
+  const [selectedLookbookId, setSelectedLookbookId] = useState(1);
+  const [studioViewMode, setStudioViewMode] = useState('model');
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'bottom', 'shoes'
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [aiGeneratedImage, setAiGeneratedImage] = useState(null);
+
+  // Chọn nhanh theo Set Mẫu Thực Tế Lookbook
+  const handleSelectLookbook = (tpl) => {
+    setSelectedLookbookId(tpl.id);
+    const [topId, botId, shoeId] = tpl.itemIds || [];
+    const matchedTop = inventory.find(i => i.id === topId) || inventory.find(i => i.categoryId === 1);
+    const matchedBot = inventory.find(i => i.id === botId) || inventory.find(i => i.categoryId === 2);
+    const matchedShoes = inventory.find(i => i.id === shoeId) || inventory.find(i => i.categoryId === 5);
+    setSelection({
+      top: matchedTop || null,
+      bottom: matchedBot || null,
+      shoes: matchedShoes || null
+    });
+  };
 
   // Chọn hoặc gỡ món đồ
   const toggleItem = (item) => {
@@ -50,7 +67,8 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     }
     if (!slot) return;
 
-    setAiGeneratedImage(null); // Đặt lại để hiển thị Dynamic 2D Fitting trực tiếp
+    setAiGeneratedImage(null);
+    setSelectedLookbookId(null); // Chuyển sang chế độ phối tự do theo món đồ
     setSelection(prev => ({
       ...prev,
       [slot]: prev[slot]?.id === item.id ? null : item
@@ -140,14 +158,99 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             </button>
           </div>
 
+          {/* BỘ SƯU TẬP 9 SET MẪU THỰC TẾ LOOKBOOK */}
+          <div style={{ marginTop: 12, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: isLight ? '#475569' : 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                📸 Set Mẫu Thực Tế ({STUDIO_TEMPLATES.length} Lookbook):
+              </span>
+              {selectedLookbookId ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedLookbookId(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: isLight ? '#B8860B' : '#f6cf70',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                >
+                  Tự do phối đồ ✕
+                </button>
+              ) : (
+                <span style={{ fontSize: 11, color: isLight ? '#16A34A' : '#4ADE80', fontWeight: 700 }}>
+                  ● Đang tự phối
+                </span>
+              )}
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: 6,
+              overflowX: 'auto',
+              paddingBottom: 6,
+              scrollbarWidth: 'thin'
+            }}>
+              {STUDIO_TEMPLATES.map(tpl => {
+                const isSelected = selectedLookbookId === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => handleSelectLookbook(tpl)}
+                    style={{
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '5px 11px',
+                      borderRadius: 9,
+                      fontSize: 11,
+                      fontWeight: isSelected ? 800 : 600,
+                      cursor: 'pointer',
+                      border: isSelected 
+                        ? (isLight ? '1.5px solid #B8860B' : '1.5px solid #f6cf70')
+                        : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.12)'),
+                      background: isSelected
+                        ? (isLight ? '#FEF3C7' : 'rgba(246, 207, 112, 0.18)')
+                        : (isLight ? '#FFFFFF' : 'rgba(255,255,255,0.05)'),
+                      color: isSelected
+                        ? (isLight ? '#92400E' : '#FDE68A')
+                        : (isLight ? '#334155' : 'var(--text-secondary)'),
+                      boxShadow: isSelected ? '0 2px 8px rgba(246, 207, 112, 0.25)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span style={{
+                      background: isSelected ? (isLight ? '#B8860B' : '#f6cf70') : 'rgba(0,0,0,0.18)',
+                      color: isSelected ? '#17130a' : (isLight ? '#475569' : '#fff'),
+                      fontSize: 9,
+                      fontWeight: 800,
+                      padding: '2px 5px',
+                      borderRadius: 4
+                    }}>
+                      {tpl.setNumber}
+                    </span>
+                    <span>{tpl.shortName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Người mẫu hiển thị với trang phục thực tế */}
-          <div style={{ margin: '8px 0', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ margin: '6px 0', display: 'flex', justifyContent: 'center' }}>
             <VirtualMannequin
               user={user}
               top={selection.top}
               bottom={selection.bottom}
               shoes={selection.shoes}
               selectionKey={selectedIds.join('|')}
+              templateId={selectedLookbookId}
+              viewMode={studioViewMode}
+              onToggleViewMode={setStudioViewMode}
             />
           </div>
 

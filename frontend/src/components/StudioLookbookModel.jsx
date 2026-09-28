@@ -1,348 +1,296 @@
 import React, { useMemo } from 'react';
 
 /**
- * 12 SET TEMPLATE MODEL STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
- * (Cắt từ các ảnh chất lượng cao người dùng cung cấp có sẵn các viền kẻ nhận diện vùng thay đổi màu sắc)
- *
- * Vùng nhận diện để thay đổi màu sắc:
- * - [Xanh dương] Áo / Áo khoác (Top)
- * - [Xanh lá] Quần / Short (Bottom)
- * - [Cam] Giày (Shoes)
+ * BỘ SƯU TẬP 9 SET TEMPLATE NGƯỜI MẪU STUDIO THỜI TRANG ĐỘ NÉT CAO (HD)
+ * Được trích xuất trực tiếp từ catalog ảnh studio người mẫu chuẩn lookbook:
+ * - SET 1:  Áo sơ mi trắng + Quần tây (đen) + Giày sneaker (trắng)
+ * - SET 2:  Áo sơ mi xanh nhạt + Quần vải suông (beige) + Giày sneaker (trắng/xám)
+ * - SET 3:  Áo sơ mi đen + Quần tây (xám) + Giày sneaker (đen/trắng)
+ * - SET 4:  Áo sơ mi sọc (xanh dương) + Quần tây (xanh navy) + Giày tây (đen)
+ * - SET 5:  Áo sơ mi linen (trắng) + Quần vải suông (be) + Giày sneaker (trắng/be)
+ * - SET 6:  Áo sơ mi denim (xanh jean) + Quần vải suông (đen) + Giày sneaker (trắng/xám)
+ * - SET 13: Áo thun tay dài (sọc ngang) + Quần ống suông (xanh navy) + Giày sneaker (trắng/xám)
+ * - SET 14: Áo hoodie (xám) + Quần jogger (đen) + Giày sneaker (trắng)
+ * - SET 15: Áo sơ mi (trắng) + Quần tây (be) + Giày da (đen)
  */
 export const STUDIO_TEMPLATES = [
   {
     id: 1,
-    key: 'tshirt_shorts',
+    key: 'set_1',
     setNumber: 'SET 1',
-    name: 'Áo thun + Quần short + Giày sneaker',
-    shortName: 'Áo thun + Short',
-    category: 'Casual Active',
-    topType: 'tshirt_short',
-    bottomType: 'shorts',
-    shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_1_model.jpg',
-    cardImage: '/assets/templates/set_1_card.jpg',
-    topName: 'Áo thun cổ tròn (xám đậm)',
-    bottomName: 'Quần short (đen)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#475569',
-    baseBottomColor: '#1E2024',
-    baseShoesColor: '#FFFFFF'
-  },
-  {
-    id: 2,
-    key: 'shirt_trousers',
-    setNumber: 'SET 2',
-    name: 'Áo sơ mi + Quần dài + Giày sneaker',
-    shortName: 'Sơ mi + Quần dài',
+    name: 'Áo sơ mi trắng + Quần tây + Giày sneaker',
+    shortName: 'Sơ mi trắng + Quần tây',
     category: 'Smart Casual',
     topType: 'shirt_long',
     bottomType: 'trousers',
     shoesType: 'sneaker',
+    modelImage: '/assets/templates/set_1_model.jpg',
+    cardImage: '/assets/templates/set_1_card.jpg',
+    topBoxImage: '/assets/templates/set_1_top_box.jpg',
+    botBoxImage: '/assets/templates/set_1_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_1_shoes_box.jpg',
+    topName: 'Áo sơ mi trắng (trắng)',
+    bottomName: 'Quần tây (đen)',
+    shoesName: 'Giày sneaker (trắng)',
+    itemIds: [260, 261, 262]
+  },
+  {
+    id: 2,
+    key: 'set_2',
+    setNumber: 'SET 2',
+    name: 'Áo sơ mi xanh nhạt + Quần vải suông + Giày sneaker',
+    shortName: 'Sơ mi xanh nhạt + Quần suông beige',
+    category: 'Korean Minimal',
+    topType: 'shirt_long',
+    bottomType: 'pants_wide',
+    shoesType: 'sneaker',
     modelImage: '/assets/templates/set_2_model.jpg',
     cardImage: '/assets/templates/set_2_card.jpg',
-    topName: 'Sơ mi dài tay (trắng)',
-    bottomName: 'Quần dài (đen)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#FFFFFF',
-    baseBottomColor: '#1E2024',
-    baseShoesColor: '#FFFFFF'
+    topBoxImage: '/assets/templates/set_2_top_box.jpg',
+    botBoxImage: '/assets/templates/set_2_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_2_shoes_box.jpg',
+    topName: 'Áo sơ mi xanh nhạt (xanh nhạt)',
+    bottomName: 'Quần vải suông (beige)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [263, 264, 265]
   },
   {
     id: 3,
-    key: 'hoodie_jogger',
+    key: 'set_3',
     setNumber: 'SET 3',
-    name: 'Áo hoodie + Quần jogger + Giày sneaker',
-    shortName: 'Hoodie đen + Jogger',
-    category: 'Streetwear Warm',
-    topType: 'hoodie',
-    bottomType: 'jogger',
+    name: 'Áo sơ mi đen + Quần tây + Giày sneaker',
+    shortName: 'Sơ mi đen + Quần tây xám',
+    category: 'Dark Chic',
+    topType: 'shirt_long',
+    bottomType: 'trousers',
     shoesType: 'sneaker',
     modelImage: '/assets/templates/set_3_model.jpg',
     cardImage: '/assets/templates/set_3_card.jpg',
-    topName: 'Hoodie (đen)',
-    bottomName: 'Quần jogger (xám)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#1E2024',
-    baseBottomColor: '#94A3B8',
-    baseShoesColor: '#FFFFFF'
+    topBoxImage: '/assets/templates/set_3_top_box.jpg',
+    botBoxImage: '/assets/templates/set_3_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_3_shoes_box.jpg',
+    topName: 'Áo sơ mi đen (đen)',
+    bottomName: 'Quần tây (xám)',
+    shoesName: 'Giày sneaker (đen/trắng)',
+    itemIds: [266, 267, 268]
   },
   {
     id: 4,
-    key: 'polo_shorts',
+    key: 'set_4',
     setNumber: 'SET 4',
-    name: 'Áo polo + Quần short + Giày sneaker',
-    shortName: 'Polo + Short',
-    category: 'Smart Summer',
-    topType: 'polo',
-    bottomType: 'shorts',
-    shoesType: 'sneaker',
+    name: 'Áo sơ mi sọc + Quần tây + Giày tây',
+    shortName: 'Sơ mi sọc xanh + Quần navy',
+    category: 'Sartorial Modern',
+    topType: 'shirt_long',
+    bottomType: 'trousers',
+    shoesType: 'derby',
     modelImage: '/assets/templates/set_4_model.jpg',
     cardImage: '/assets/templates/set_4_card.jpg',
-    topName: 'Polo (xanh navy)',
-    bottomName: 'Short (beige)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#1E293B',
-    baseBottomColor: '#D8C3A5',
-    baseShoesColor: '#FFFFFF'
+    topBoxImage: '/assets/templates/set_4_top_box.jpg',
+    botBoxImage: '/assets/templates/set_4_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_4_shoes_box.jpg',
+    topName: 'Áo sơ mi sọc (xanh dương)',
+    bottomName: 'Quần tây (xanh navy)',
+    shoesName: 'Giày tây (đen)',
+    itemIds: [269, 270, 271]
   },
   {
     id: 5,
-    key: 'jacket_trousers',
+    key: 'set_5',
     setNumber: 'SET 5',
-    name: 'Áo khoác + Quần dài + Giày sneaker',
-    shortName: 'Áo khoác gió + Quần dài',
-    category: 'Sport Clean',
-    topType: 'blazer',
-    bottomType: 'trousers',
+    name: 'Áo sơ mi linen + Quần vải suông + Giày sneaker',
+    shortName: 'Sơ mi linen trắng + Quần suông be',
+    category: 'Summer Resort',
+    topType: 'shirt_long',
+    bottomType: 'pants_wide',
     shoesType: 'sneaker',
     modelImage: '/assets/templates/set_5_model.jpg',
     cardImage: '/assets/templates/set_5_card.jpg',
-    topName: 'Áo khoác gió (trắng kem)',
-    bottomName: 'Quần dài (đen)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#FEF3C7',
-    baseBottomColor: '#1E2024',
-    baseShoesColor: '#FFFFFF'
+    topBoxImage: '/assets/templates/set_5_top_box.jpg',
+    botBoxImage: '/assets/templates/set_5_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_5_shoes_box.jpg',
+    topName: 'Áo sơ mi linen (trắng)',
+    bottomName: 'Quần vải suông (be)',
+    shoesName: 'Giày sneaker (trắng/be)',
+    itemIds: [272, 273, 274]
   },
   {
     id: 6,
-    key: 'longsleeve_cargo',
+    key: 'set_6',
     setNumber: 'SET 6',
-    name: 'Áo thun tay dài + Quần cargo + Giày sneaker',
-    shortName: 'Tay dài + Cargo',
-    category: 'Tactical Casual',
+    name: 'Áo sơ mi denim + Quần vải suông + Giày sneaker',
+    shortName: 'Sơ mi denim xanh + Quần suông đen',
+    category: 'Denim Casual',
     topType: 'shirt_long',
-    bottomType: 'cargo',
+    bottomType: 'pants_wide',
     shoesType: 'sneaker',
     modelImage: '/assets/templates/set_6_model.jpg',
     cardImage: '/assets/templates/set_6_card.jpg',
-    topName: 'Tay dài (xám đậm)',
-    bottomName: 'Cargo (xanh rêu)',
-    shoesName: 'Sneaker (trắng/xám)',
-    baseTopColor: '#475569',
-    baseBottomColor: '#3F4E22',
-    baseShoesColor: '#E2E8F0'
+    topBoxImage: '/assets/templates/set_6_top_box.jpg',
+    botBoxImage: '/assets/templates/set_6_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_6_shoes_box.jpg',
+    topName: 'Áo sơ mi denim (xanh jean)',
+    bottomName: 'Quần vải suông (đen)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [275, 276, 277]
   },
   {
-    id: 7,
-    key: 'denim_wide',
-    setNumber: 'SET 7',
-    name: 'Áo denim + Quần ống rộng + Giày sneaker',
-    shortName: 'Denim + Ống rộng',
-    category: 'Vintage Street',
-    topType: 'jacket_bomber',
+    id: 13,
+    key: 'set_13',
+    setNumber: 'SET 13',
+    name: 'Áo thun tay dài + Quần ống suông + Giày',
+    shortName: 'Thun dài sọc + Quần suông navy',
+    category: 'Retro Street',
+    topType: 'shirt_long',
     bottomType: 'pants_wide',
     shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_7_model.jpg',
-    cardImage: '/assets/templates/set_7_card.jpg',
-    topName: 'Áo khoác denim (xanh nhạt)',
-    bottomName: 'Quần ống rộng (đen)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#60A5FA',
-    baseBottomColor: '#1E2024',
-    baseShoesColor: '#FFFFFF'
+    modelImage: '/assets/templates/set_13_model.jpg',
+    cardImage: '/assets/templates/set_13_card.jpg',
+    topBoxImage: '/assets/templates/set_13_top_box.jpg',
+    botBoxImage: '/assets/templates/set_13_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_13_shoes_box.jpg',
+    topName: 'Áo thun tay dài (sọc ngang)',
+    bottomName: 'Quần ống suông (xanh navy)',
+    shoesName: 'Sneaker (trắng/xám)',
+    itemIds: [278, 279, 280]
   },
   {
-    id: 8,
-    key: 'hoodie_jogger_grey',
-    setNumber: 'SET 8',
+    id: 14,
+    key: 'set_14',
+    setNumber: 'SET 14',
     name: 'Áo hoodie + Quần jogger + Giày sneaker',
-    shortName: 'Hoodie xám + Jogger',
-    category: 'Minimal Street',
+    shortName: 'Hoodie xám + Quần jogger đen',
+    category: 'Athleisure Comfort',
     topType: 'hoodie',
     bottomType: 'jogger',
     shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_8_model.jpg',
-    cardImage: '/assets/templates/set_8_card.jpg',
+    modelImage: '/assets/templates/set_14_model.jpg',
+    cardImage: '/assets/templates/set_14_card.jpg',
+    topBoxImage: '/assets/templates/set_14_top_box.jpg',
+    botBoxImage: '/assets/templates/set_14_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_14_shoes_box.jpg',
     topName: 'Hoodie (xám)',
     bottomName: 'Quần jogger (đen)',
-    shoesName: 'Sneaker (trắng/xám)',
-    baseTopColor: '#94A3B8',
-    baseBottomColor: '#1E2024',
-    baseShoesColor: '#E2E8F0'
+    shoesName: 'Sneaker (trắng)',
+    itemIds: [281, 282, 283]
   },
   {
-    id: 9,
-    key: 'sweater_khaki',
-    setNumber: 'SET 9',
-    name: 'Áo len cổ tròn + Quần kaki + Giày sneaker',
-    shortName: 'Len navy + Kaki',
-    category: 'Autumn Classic',
-    topType: 'sweater',
+    id: 15,
+    key: 'set_15',
+    setNumber: 'SET 15',
+    name: 'Áo sơ mi + Quần tây + Giày da',
+    shortName: 'Sơ mi trắng + Quần tây be + Giày da',
+    category: 'Classic Formal',
+    topType: 'shirt_long',
     bottomType: 'trousers',
-    shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_9_model.jpg',
-    cardImage: '/assets/templates/set_9_card.jpg',
-    topName: 'Áo len cổ tròn (xanh navy)',
-    bottomName: 'Quần kaki (be)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#1E293B',
-    baseBottomColor: '#D8C3A5',
-    baseShoesColor: '#FFFFFF'
-  },
-  {
-    id: 10,
-    key: 'graphic_cargo',
-    setNumber: 'SET 10',
-    name: 'Áo thun họa tiết + Quần cargo + Giày sneaker',
-    shortName: 'Áo họa tiết + Cargo',
-    category: 'Street Graphic',
-    topType: 'tshirt_short',
-    bottomType: 'cargo',
-    shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_10_model.jpg',
-    cardImage: '/assets/templates/set_10_card.jpg',
-    topName: 'Áo thun họa tiết (xám đậm)',
-    bottomName: 'Quần cargo (xanh rêu)',
-    shoesName: 'Sneaker (trắng/xám)',
-    baseTopColor: '#334155',
-    baseBottomColor: '#3F4E22',
-    baseShoesColor: '#E2E8F0'
-  },
-  {
-    id: 11,
-    key: 'bomber_jeans',
-    setNumber: 'SET 11',
-    name: 'Áo khoác bomber + Quần jean + Giày sneaker',
-    shortName: 'Bomber + Jean xanh',
-    category: 'Modern Bomber',
-    topType: 'jacket_bomber',
-    bottomType: 'jeans_straight',
-    shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_11_model.jpg',
-    cardImage: '/assets/templates/set_11_card.jpg',
-    topName: 'Áo khoác bomber (đen)',
-    bottomName: 'Quần jean (xanh nhạt)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#1E2024',
-    baseBottomColor: '#93C5FD',
-    baseShoesColor: '#FFFFFF'
-  },
-  {
-    id: 12,
-    key: 'sweater_trousers',
-    setNumber: 'SET 12',
-    name: 'Áo len cổ tròn + Quần tây + Giày sneaker',
-    shortName: 'Len be + Quần tây',
-    category: 'Quiet Luxury',
-    topType: 'sweater',
-    bottomType: 'trousers',
-    shoesType: 'sneaker',
-    modelImage: '/assets/templates/set_12_model.jpg',
-    cardImage: '/assets/templates/set_12_card.jpg',
-    topName: 'Áo len cổ tròn (be)',
-    bottomName: 'Quần tây (xám đậm)',
-    shoesName: 'Sneaker (trắng)',
-    baseTopColor: '#E6D7C3',
-    baseBottomColor: '#334155',
-    baseShoesColor: '#FFFFFF'
+    shoesType: 'derby',
+    modelImage: '/assets/templates/set_15_model.jpg',
+    cardImage: '/assets/templates/set_15_card.jpg',
+    topBoxImage: '/assets/templates/set_15_top_box.jpg',
+    botBoxImage: '/assets/templates/set_15_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_15_shoes_box.jpg',
+    topName: 'Áo sơ mi (trắng)',
+    bottomName: 'Quần tây (be)',
+    shoesName: 'Giày da (đen)',
+    itemIds: [284, 285, 286]
   }
 ];
 
 export default function StudioLookbookModel({
   gender = 'Nam',
   templateId = null,
-  showRecognitionBorders = false,
-
+  viewMode = 'model', // 'model' hoặc 'card'
   topItem = null,
   bottomItem = null,
   shoesItem = null,
-
-  topType = 'tshirt_short',
-  topColor = '#F8FAFC',
-  topAccent = '#CBD5E1',
-  topPattern = 'solid',
-
-  bottomType = 'shorts',
+  topType = 'shirt_long',
+  topColor = '#FFFFFF',
+  bottomType = 'trousers',
   bottomColor = '#1E293B',
-  bottomAccent = '#0F172A',
-  bottomPattern = 'solid',
-
   shoesType = 'sneaker',
-  shoesColor = '#F8FAFC',
-  shoesAccent = '#CBD5E1',
-
   compact = false
 }) {
   const isMale = (gender || '').toLowerCase().includes('nam') || (gender || '').toLowerCase().includes('male');
 
-  // 1. TỰ ĐỘNG CHỌN SET TEMPLATE PHÙ HỢP NHẤT DỰA VÀO ĐỒ TRONG TỦ
+  // TỰ ĐỘNG CHỌN SET TEMPLATE PHÙ HỢP NHẤT DỰA VÀO ĐỒ ĐANG CHỌN
   const selectedTemplate = useMemo(() => {
     if (!isMale) return null;
+
+    // 1. Nếu có templateId chỉ định rõ
     if (templateId) {
       const match = STUDIO_TEMPLATES.find(t => t.id === Number(templateId));
       if (match) return match;
     }
 
-    const isShort = bottomType === 'shorts' || bottomType === 'shorts_denim' || bottomItem?.id === 220 || bottomItem?.id === 221;
-    const isCargo = bottomType === 'cargo';
-    const isJogger = bottomType === 'jogger';
-    const isJeans = bottomType === 'jeans_straight' || bottomType === 'jeans' || bottomItem?.id === 222;
-    const isWide = bottomType === 'pants_wide' || bottomItem?.id === 203;
-
-    // A. Sơ mi
-    if (topType === 'shirt_long' || topType === 'shirt_short' || topItem?.id === 205 || topItem?.id === 212) {
-      if (isShort) return STUDIO_TEMPLATES[5]; // SET 6: Dài tay / sơ mi + Quần short
-      return STUDIO_TEMPLATES[1]; // SET 2: Áo sơ mi trắng + Quần tây
+    // 2. Tìm theo itemIds cụ thể của các set
+    const currentItemIds = [topItem?.id, bottomItem?.id, shoesItem?.id].filter(Boolean);
+    if (currentItemIds.length > 0) {
+      for (const tpl of STUDIO_TEMPLATES) {
+        if (tpl.itemIds && tpl.itemIds.some(id => currentItemIds.includes(id))) {
+          return tpl;
+        }
+      }
     }
 
-    // B. Áo len / Sweater / Sweatshirt
-    if (topType === 'sweater' || topItem?.id === 202) {
-      return STUDIO_TEMPLATES[8]; // SET 9: Áo len cổ tròn / sweatshirt
+    // 3. Phân loại theo tên & thuộc tính món đồ
+    const topName = (topItem?.name || '').toLowerCase();
+    const botName = (bottomItem?.name || '').toLowerCase();
+    const shoesName = (shoesItem?.name || '').toLowerCase();
+
+    // Hoodie & Jogger (Set 14)
+    if (topType === 'hoodie' || topName.includes('hoodie') || botName.includes('jogger')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 14) || STUDIO_TEMPLATES[7];
     }
 
-    // C. Hoodie
-    if (topType === 'hoodie') {
-      return isJogger ? STUDIO_TEMPLATES[2] : STUDIO_TEMPLATES[7]; // SET 3 (đen) hoặc SET 8 (xám)
+    // Áo thun tay dài sọc / Retro Street (Set 13)
+    if (topName.includes('sọc ngang') || topName.includes('thủy thủ') || (topName.includes('dài tay') && topName.includes('sọc'))) {
+      return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[6];
     }
 
-    // D. Polo
-    if (topType === 'polo' || topItem?.id === 211) {
-      return STUDIO_TEMPLATES[3]; // SET 4: Polo + Short
+    // Áo sơ mi denim (Set 6)
+    if (topName.includes('denim') || topName.includes('jean')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 6) || STUDIO_TEMPLATES[5];
     }
 
-    // E. Áo khoác / Bomber / Blazer
-    if (topType === 'jacket_bomber' || topType === 'blazer') {
-      if (isJeans) return STUDIO_TEMPLATES[10]; // SET 11: Bomber + Jeans
-      if (isWide) return STUDIO_TEMPLATES[6];   // SET 7: Denim + Quần ống rộng
-      return STUDIO_TEMPLATES[4];              // SET 5: Áo khoác + Quần dài
+    // Áo sơ mi linen (Set 5)
+    if (topName.includes('linen')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 5) || STUDIO_TEMPLATES[4];
     }
 
-    // F. Quần Cargo / Túi hộp
-    if (isCargo) {
-      return STUDIO_TEMPLATES[9]; // SET 10: Áo thun họa tiết + Quần cargo
+    // Áo sơ mi sọc xanh (Set 4)
+    if (topName.includes('sọc') || shoesName.includes('derby') || shoesName.includes('tây')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 4) || STUDIO_TEMPLATES[3];
     }
 
-    // G. Quần Jeans
-    if (isJeans) {
-      return STUDIO_TEMPLATES[10]; // SET 11: Quần jean
+    // Áo sơ mi đen (Set 3)
+    if (topName.includes('đen') && (topName.includes('sơ mi') || topType === 'shirt_long')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 3) || STUDIO_TEMPLATES[2];
     }
 
-    // H. Quần Ống Rộng / Quần Suông Dây Rút
-    if (isWide) {
-      return STUDIO_TEMPLATES[6]; // SET 7: Quần ống rộng
+    // Áo sơ mi xanh nhạt (Set 2)
+    if (topName.includes('xanh nhạt') || topName.includes('oxford')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
     }
 
-    // I. Quần Jogger
-    if (isJogger) {
-      return STUDIO_TEMPLATES[2]; // SET 3: Quần jogger
+    // Quần tây be + Giày da (Set 15)
+    if (botName.includes('be') && (shoesName.includes('da') || shoesName.includes('loafer'))) {
+      return STUDIO_TEMPLATES.find(t => t.id === 15) || STUDIO_TEMPLATES[8];
     }
 
-    // J. Quần Đùi / Short
-    if (isShort) {
-      return STUDIO_TEMPLATES[0]; // SET 1: Áo thun + Quần đùi
+    // Quần vải suông be (Set 2 hoặc Set 5)
+    if (botName.includes('suông') && botName.includes('beige')) {
+      return STUDIO_TEMPLATES.find(t => t.id === 2) || STUDIO_TEMPLATES[1];
     }
 
-    // K. Mặc định: SET 1
+    // Mặc định: SET 1
     return STUDIO_TEMPLATES[0];
-  }, [isMale, templateId, topType, bottomType, topItem, bottomItem]);
+  }, [isMale, templateId, topItem, bottomItem, shoesItem, topType, bottomType]);
 
-  // Nguồn ảnh nền sắc nét
-  const resolvedBaseImage = useMemo(() => {
+  // Nguồn ảnh render
+  const resolvedImage = useMemo(() => {
     if (isMale) {
       if (!selectedTemplate) return '/assets/templates/set_1_model.jpg';
-      return selectedTemplate.modelImage;
+      return viewMode === 'card' ? selectedTemplate.cardImage : selectedTemplate.modelImage;
     } else {
       // Phom nữ
       if (bottomType === 'dress' || topType === 'dress') return '/assets/fits/model_female_dress.jpg';
@@ -352,7 +300,7 @@ export default function StudioLookbookModel({
       if (topType === 'sweater') return '/assets/fits/model_female_sweat_dark.jpg';
       return '/assets/fits/model_female_croptop_jeans.jpg';
     }
-  }, [isMale, selectedTemplate, topType, bottomType]);
+  }, [isMale, selectedTemplate, viewMode, topType, bottomType]);
 
   return (
     <div style={{
@@ -370,9 +318,8 @@ export default function StudioLookbookModel({
       borderRadius: '20px',
       boxShadow: '0 18px 45px rgba(0,0,0,0.65)'
     }}>
-      {/* ẢNH NÉT GỐC LOOKBOOK CHUẨN HD ĐÃ ĐƯỢC THIẾT KẾ VIỀN NHẬN DIỆN */}
       <img
-        src={resolvedBaseImage}
+        src={resolvedImage}
         alt={selectedTemplate ? selectedTemplate.name : 'Model Studio'}
         style={{
           width: '100%',
