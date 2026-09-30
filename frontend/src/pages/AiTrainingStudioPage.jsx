@@ -22,6 +22,7 @@ import {
   Info
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { API_BASE_URL } from '../api/apiClient';
 
 export default function AiTrainingStudioPage({ user, clothes = [], onNavigate }) {
   const { text } = useLanguage();
@@ -76,8 +77,8 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
     setLoading(true);
     try {
       const [rulesRes, samplesRes] = await Promise.all([
-        fetch('/api/ai-training/rules'),
-        fetch('/api/ai-training/samples')
+        fetch(`${API_BASE_URL}/ai-training/rules`),
+        fetch(`${API_BASE_URL}/ai-training/samples`)
       ]);
 
       if (rulesRes.ok) {
@@ -103,7 +104,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
   const handleToggleRule = async (rule) => {
     try {
       const updated = { ...rule, isActive: !rule.isActive };
-      const res = await fetch(`/api/ai-training/rules/${rule.id}`, {
+      const res = await fetch(`${API_BASE_URL}/ai-training/rules/${rule.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !rule.isActive })
@@ -120,7 +121,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
   const handleDeleteRule = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa quy tắc thời trang này?')) return;
     try {
-      const res = await fetch(`/api/ai-training/rules/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/ai-training/rules/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setRules(prev => prev.filter(r => r.id !== id));
       }
@@ -137,7 +138,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
       return;
     }
     try {
-      const res = await fetch('/api/ai-training/rules', {
+      const res = await fetch(`${API_BASE_URL}/ai-training/rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRule)
@@ -207,7 +208,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
         stylistRationale: newSample.stylistRationale,
         items
       };
-      const res = await fetch('/api/ai-training/samples', {
+      const res = await fetch(`${API_BASE_URL}/ai-training/samples`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -238,7 +239,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
   const handleDeleteSample = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa set đồ mẫu này khỏi tập huấn luyện?')) return;
     try {
-      const res = await fetch(`/api/ai-training/samples/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE_URL}/ai-training/samples/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setSamples(prev => prev.filter(s => s.id !== id));
       }
@@ -253,7 +254,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
     setPlaygroundLoading(true);
     setPlaygroundResult(null);
     try {
-      const res = await fetch('/api/ai-training/test-recommendation', {
+      const res = await fetch(`${API_BASE_URL}/ai-training/test-recommendation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(playgroundInput)
@@ -273,7 +274,7 @@ export default function AiTrainingStudioPage({ user, clothes = [], onNavigate })
 
   // Export JSONL
   const handleExportJsonl = () => {
-    window.location.href = '/api/ai-training/export-dataset';
+    window.location.href = `${API_BASE_URL}/ai-training/export-dataset`;
   };
 
   // Filter rules

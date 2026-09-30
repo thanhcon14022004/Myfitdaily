@@ -1,6 +1,18 @@
 // API Client kết nối trực tiếp với ASP.NET Core Web API (hỗ trợ JWT Bearer Token)
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+function getApiBaseUrl() {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.startsWith('http')) {
+    return envUrl.replace(/\/+$/, '');
+  }
+  // Nếu đang mở trên Render static site (ví dụ myfitdaily-2.onrender.com), tự động gọi backend API trên myfitdaily.onrender.com
+  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') && !window.location.hostname.startsWith('myfitdaily.')) {
+    return 'https://myfitdaily.onrender.com/api';
+  }
+  return import.meta.env.VITE_API_URL || '/api';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("myfitdaily_token");
