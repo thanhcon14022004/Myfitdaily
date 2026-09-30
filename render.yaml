@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: myfitdaily-app
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: EnableSwagger
+        value: "true"
+      # Các biến sau đây cấu hình trực tiếp trên giao diện Render Dashboard:
+      # - key: ConnectionStrings__DefaultConnection
+      # - key: Jwt__Key
+      # - key: Ai__GeminiApiKey
+      # - key: Fashn__ApiKey
+      # - key: SePay__ApiToken

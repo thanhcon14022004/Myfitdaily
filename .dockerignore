@@ -1,0 +1,27 @@
+# Git
+**/.git
+**/.gitignore
+**/.gitattributes
+
+# Build and runtime outputs
+**/bin
+**/obj
+**/dist
+**/dist-ssr
+**/node_modules
+**/build
+
+# IDE & Editor caches
+**/.vs
+**/.vscode
+**/.idea
+**/*.user
+**/*.suo
+**/*.userprefs
+
+# Logs and scratch files
+**/logs
+**/*.log
+**/scratch
+**/.DS_Store
+Thumbs.db

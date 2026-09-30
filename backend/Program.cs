@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -8,6 +9,21 @@ using MYFITDAILY_EXE201_Group6.Services.Implementations;
 using MYFITDAILY_EXE201_Group6.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Hỗ trợ cấu hình PORT động từ Render (Render gán biến PORT môi trường)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://*:{port}");
+}
+
+// Cấu hình ForwardedHeaders cho Render reverse proxy (hỗ trợ HTTPS edge)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // 1. Cấu hình Database Context (PostgreSQL Supabase)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -107,8 +123,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("EnableSwagger", true))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -117,10 +135,14 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("EnableHttpsRedirection", false))
 {
     app.UseHttpsRedirection();
 }
+
+// Phục vụ file tĩnh của React Frontend (nếu được build vào thư mục wwwroot)
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseCors("AllowAll");
 
@@ -128,6 +150,45 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health check endpoint cho Render
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
+
+// Fallback: Xử lý routing cho React SPA hoặc API 404
+var wwwrootFolder = app.Environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+app.MapFallback(async context =>
+{
+    var path = context.Request.Path.Value ?? "";
+    if (path.StartsWith("/api", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        await context.Response.WriteAsJsonAsync(new { message = $"API endpoint '{path}' not found." });
+        return;
+    }
+
+    var indexPath = Path.Combine(wwwrootFolder, "index.html");
+    if (File.Exists(indexPath))
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.SendFileAsync(indexPath);
+        return;
+    }
+
+    if (path == "/" || string.IsNullOrEmpty(path))
+    {
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = "Healthy",
+            service = "MYFITDAILY Web API",
+            swagger = "/swagger",
+            message = "React frontend static files not found in wwwroot. API & Swagger are active."
+        });
+        return;
+    }
+
+    context.Response.StatusCode = StatusCodes.Status404NotFound;
+    await context.Response.WriteAsJsonAsync(new { message = "Resource not found." });
+});
 
 // Đảm bảo các cột thông số cơ thể và trang phục tồn tại trong PostgreSQL Supabase (chạy ngầm để không block khởi động server)
 _ = Task.Run(async () =>

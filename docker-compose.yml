@@ -1,0 +1,14 @@
+services:
+  myfitdaily-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: myfitdaily:latest
+    container_name: myfitdaily-fullstack
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - EnableSwagger=true
+    restart: unless-stopped
