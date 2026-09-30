@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import StudioLookbookModel, { STUDIO_TEMPLATES } from './StudioLookbookModel';
+import StudioLookbookModel, { STUDIO_TEMPLATES, FEMALE_STUDIO_TEMPLATES } from './StudioLookbookModel';
 import { 
   detectGarmentType, 
   detectGarmentColor, 
@@ -27,7 +27,7 @@ const REAL_MODELS = [
   }
 ];
 
-export { STUDIO_TEMPLATES };
+export { STUDIO_TEMPLATES, FEMALE_STUDIO_TEMPLATES };
 
 export default function VirtualMannequin({
   user = {},

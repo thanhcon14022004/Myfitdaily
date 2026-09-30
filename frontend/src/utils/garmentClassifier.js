@@ -412,13 +412,26 @@ export function detectGarmentType(item, fallbackCategory = 'Tops') {
       return 'jeans_straight';
     }
 
-    // 1.6 Quần Suông Ống Rộng / Dây Rút Relaxed (Wide Leg)
-    if (text.includes('ong rong') || text.includes('wide leg') || text.includes('suong rong') || text.includes('day rut') || text.includes('suong')) {
+    // 1.6 Quần Tây / Quần Âu / Chinos / Quần Xếp Ly (Ưu tiên nhận diện Quần Tây trước dáng cắt suông)
+    const isTailoredTrousers = (
+      text.includes('quan tay') || 
+      text.includes('quan au') || 
+      text.includes('xep ly') || 
+      text.includes('trouser') || 
+      text.includes('chino') || 
+      (text.includes('tay') && !text.includes('ngan tay') && !text.includes('dai tay') && !text.includes('nau tay'))
+    );
+
+    if (isTailoredTrousers) {
+      return 'trousers';
+    }
+
+    // 1.7 Quần Suông Ống Rộng / Dây Rút Relaxed (Wide Leg)
+    if (text.includes('ong rong') || text.includes('wide leg') || text.includes('suong rong') || text.includes('day rut') || text.includes('suong') || text.includes('vai suong')) {
       return 'pants_wide';
     }
 
-    // 1.7 Quần Tây / Quần Âu / Chinos / Quần Xếp Ly
-    if (text.includes('tay') || text.includes('au') || text.includes('xep ly') || text.includes('trouser') || text.includes('chino') || text.includes('kaki') || text.includes('dai')) {
+    if (text.includes('au') || text.includes('kaki') || text.includes('dai')) {
       return 'trousers';
     }
 

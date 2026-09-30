@@ -317,13 +317,27 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                     {/* Ảnh sản phẩm */}
                     <div style={{ width: '100%', height: 105, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, background: 'linear-gradient(145deg, #F4F2ED, #E7E4DC)', borderRadius: 10, overflow: 'hidden' }}>
                       <img
-                        src={item.imageUrl}
+                        src={item.imageUrl || (Number(item.categoryId) === 2 || Number(item.categoryId) === 3 ? '/assets/clothes/pants_wide_beige.jpg' : Number(item.categoryId) === 5 ? '/assets/clothes/shoes_sneaker_white_real.jpg' : '/assets/clothes/shirt_white_formal.jpg')}
                         alt={item.name}
                         style={{
                           maxWidth: '100%',
                           maxHeight: '100%',
                           objectFit: 'contain',
                           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
+                        }}
+                        onError={(e) => {
+                          const image = e.currentTarget;
+                          if (image.dataset.fallbackApplied) {
+                            image.src = '/assets/stylist/navy-shirt-essential.png';
+                            return;
+                          }
+                          image.dataset.fallbackApplied = 'true';
+                          const categoryId = Number(item.categoryId);
+                          image.src = (categoryId === 2 || categoryId === 3)
+                            ? '/assets/clothes/pants_wide_beige.jpg'
+                            : categoryId === 5
+                              ? '/assets/clothes/shoes_sneaker_white_real.jpg'
+                              : '/assets/clothes/shirt_white_formal.jpg';
                         }}
                       />
                     </div>
