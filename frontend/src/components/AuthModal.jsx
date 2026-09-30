@@ -20,7 +20,7 @@ import {
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { getInitialClothesForGender, getInitialOutfitsForGender } from '../data/initialWardrobe';
+import { getInitialClothesForGender, getInitialOutfitsForGender, isDemoUser } from '../data/initialWardrobe';
 import { 
   signInWithGoogle, 
   signInWithFacebook, 
@@ -283,11 +283,16 @@ export default function AuthModal({
         "🎉 Account activated! Welcome email has been sent to your inbox!"
       ));
 
-      // Khởi tạo tủ đồ mặc định
-      const initialClothes = getInitialClothesForGender(result.user.gender || 'Nam');
-      localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(initialClothes));
-      const initialOutfits = getInitialOutfitsForGender(result.user.gender || 'Nam');
-      localStorage.setItem('myfitdaily_outfits', JSON.stringify(initialOutfits));
+      // Khởi tạo tủ đồ: Chỉ nạp đồ mẫu cho tài khoản Demo, người dùng thực bắt đầu với tủ đồ trống []
+      if (isDemoUser(result.user)) {
+        const initialClothes = getInitialClothesForGender(result.user.gender || 'Nam');
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(initialClothes));
+        const initialOutfits = getInitialOutfitsForGender(result.user.gender || 'Nam');
+        localStorage.setItem('myfitdaily_outfits', JSON.stringify(initialOutfits));
+      } else {
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify([]));
+        localStorage.setItem('myfitdaily_outfits', JSON.stringify([]));
+      }
 
       // Tự động đóng modal và đăng nhập sau 1.8 giây
       setTimeout(() => {
@@ -340,11 +345,16 @@ export default function AuthModal({
         ageGroup: ageNum <= 24 ? 'Gen Z (16 - 24 tuổi)' : (ageNum <= 34 ? 'Millennials (25 - 34 tuổi)' : 'Trưởng thành (35+ tuổi)')
       };
 
-      // Khởi tạo tủ đồ và outfits theo giới tính người dùng chọn
-      const initialClothes = getInitialClothesForGender(onboardingData.gender);
-      localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(initialClothes));
-      const initialOutfits = getInitialOutfitsForGender(onboardingData.gender);
-      localStorage.setItem('myfitdaily_outfits', JSON.stringify(initialOutfits));
+      // Khởi tạo tủ đồ: Chỉ nạp đồ mẫu cho tài khoản Demo, người dùng thực bắt đầu với tủ đồ trống []
+      if (isDemoUser(updatedUser)) {
+        const initialClothes = getInitialClothesForGender(onboardingData.gender);
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(initialClothes));
+        const initialOutfits = getInitialOutfitsForGender(onboardingData.gender);
+        localStorage.setItem('myfitdaily_outfits', JSON.stringify(initialOutfits));
+      } else {
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify([]));
+        localStorage.setItem('myfitdaily_outfits', JSON.stringify([]));
+      }
 
       localStorage.setItem('myfitdaily_user', JSON.stringify(updatedUser));
 

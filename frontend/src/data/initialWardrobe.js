@@ -145,3 +145,15 @@ export function sanitizeClothesForGender(items, gender) {
     );
   });
 }
+
+export function isDemoUser(user) {
+  if (!user) return false;
+  const email = (user.email || '').trim().toLowerCase();
+  return email === 'demo@myfitdaily.com' 
+      || email === 'demo'
+      || email === 'testnam' 
+      || email === 'testnam@myfitdaily.com' 
+      || email === 'testnu' 
+      || email === 'testnu@myfitdaily.com';
+}
+

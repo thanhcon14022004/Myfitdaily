@@ -42,7 +42,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo
                 if (!userId.HasValue)
                 {
-                    var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower() == "demo@myfitdaily.com")
+                    var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnam" || u.Email.ToLower() == "demo@myfitdaily.com")
                                    ?? await _context.Users.FirstOrDefaultAsync();
                     if (demoUser != null)
                     {
@@ -51,14 +51,16 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 }
 
                 var user = userId.HasValue ? await _context.Users.FindAsync(userId.Value) : null;
+                bool isDemo = DbSeeder.IsDemoUser(user);
                 bool isMale = user != null && (
                     string.Equals(user.Gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(user.Gender, "Male", StringComparison.OrdinalIgnoreCase) ||
                     (user.Gender != null && user.Gender.ToLower().Contains("nam"))
                 );
 
-                // Nếu tài khoản chưa có món đồ nào, tự động nạp bộ sưu tập đồ mẫu theo giới tính vào database
-                if (userId.HasValue && !await _context.ClothingItems.AnyAsync(c => c.UserId == userId.Value))
+                // CHỈ tự động nạp bộ sưu tập đồ mẫu cho tài khoản DEMO nếu chưa có món đồ nào.
+                // Tài khoản người dùng thật thì để tủ đồ trống ([]), người dùng tự thêm đồ của họ.
+                if (isDemo && userId.HasValue && !await _context.ClothingItems.AnyAsync(c => c.UserId == userId.Value))
                 {
                     var seedList = isMale ? DbSeeder.GetMaleSeedClothes(userId.Value) : DbSeeder.GetFemaleSeedClothes(userId.Value);
                     _context.ClothingItems.AddRange(seedList);
@@ -116,11 +118,18 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ClothesController DB Warning]: {ex.Message}. Trả về tủ đồ mẫu in-memory.");
-                var userClaimId = GetCurrentUserId() ?? 2;
-                var emailClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "";
-                bool isMale = !emailClaim.ToLower().Contains("demo");
-                var fallbackSeed = isMale ? DbSeeder.GetMaleSeedClothes(userClaimId) : DbSeeder.GetFemaleSeedClothes(userClaimId);
+                Console.WriteLine($"[ClothesController DB Warning]: {ex.Message}");
+                var userClaimId = GetCurrentUserId();
+                var emailClaim = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value?.ToLower() ?? "";
+                bool isDemo = !userClaimId.HasValue || emailClaim.Contains("demo") || emailClaim.Contains("test");
+
+                if (!isDemo)
+                {
+                    // Người dùng thật: Trả về danh sách rỗng, không tự ý nạp đồ mẫu
+                    return Ok(ApiResponse<List<ClothingItemDto>>.Ok(new List<ClothingItemDto>(), "Tủ đồ hiện tại chưa có trang phục"));
+                }
+
+                var fallbackSeed = emailClaim.Contains("nu") ? DbSeeder.GetFemaleSeedClothes(userClaimId ?? 2) : DbSeeder.GetMaleSeedClothes(userClaimId ?? 1);
                 var dtoList = fallbackSeed.Select(c => new ClothingItemDto
                 {
                     Id = c.Id,
@@ -138,7 +147,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     CreatedAt = c.CreatedAt
                 }).ToList();
 
-                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(dtoList, "Lấy danh sách tủ đồ thành công (Chế độ tương thích offline)"));
+                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(dtoList, "Lấy danh sách tủ đồ demo thành công"));
             }
         }
 

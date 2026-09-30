@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Check, RotateCcw, Save, Sparkles, UserRound } from 'lucide-react';
 import VirtualMannequin from '../components/VirtualMannequin';
-import { getInitialClothesForGender } from '../data/initialWardrobe';
+import { getInitialClothesForGender, isDemoUser } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -29,12 +29,13 @@ function getItemSlot(item) {
 export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, onToggleFavorite, onDeleteOutfit, user }) {
   const { text } = useLanguage();
   const { isLight } = useTheme();
-  const inventory = clothes?.length ? clothes : getInitialClothesForGender(user?.gender);
+  const isDemo = isDemoUser(user) || !user;
+  const inventory = clothes?.length ? clothes : (isDemo ? getInitialClothesForGender(user?.gender) : []);
 
   const defaults = useMemo(() => ({
-    top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1),
-    bottom: inventory.find(item => item.id === 261) || inventory.find(item => item.id === 220) || inventory.find(item => item.categoryId === 2),
-    shoes: inventory.find(item => item.id === 262) || inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5)
+    top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1) || null,
+    bottom: inventory.find(item => item.id === 261) || inventory.find(item => item.id === 220) || inventory.find(item => item.categoryId === 2) || null,
+    shoes: inventory.find(item => item.id === 262) || inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5) || null
   }), [inventory]);
 
   const [selection, setSelection] = useState(defaults);
@@ -262,106 +263,125 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
             </div>
 
             {/* LƯỚI CÁC Ô ĐỒ (WARDROBE TILES GRID) */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-              gap: 12,
-              maxHeight: '440px',
-              overflowY: 'auto',
-              paddingRight: 4
-            }}>
-              {filteredItems.map(item => {
-                const isSelected = selectedIds.includes(item.id);
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleItem(item)}
-                    style={{
-                      position: 'relative',
-                      background: isSelected 
-                        ? (isLight ? '#FEF9C3' : 'rgba(246,207,112,.12)') 
-                        : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.035)'),
-                      border: isSelected 
-                        ? '2px solid #D4AF37' 
-                        : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
-                      borderRadius: 14,
-                      padding: 10,
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                      transition: 'all 0.2s ease',
-                      boxShadow: isSelected 
-                        ? '0 4px 16px rgba(212,175,55,.25)' 
-                        : (isLight ? '0 1px 3px rgba(0,0,0,0.06)' : 'none')
-                    }}
-                  >
-                    {/* Badge đã chọn */}
-                    {isSelected && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 6,
-                        right: 6,
-                        background: '#f6cf70',
-                        color: '#000',
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 2
-                      }}>
-                        <Check size={13} strokeWidth={3} />
+            {filteredItems.length === 0 ? (
+              <div style={{
+                padding: '40px 16px',
+                textAlign: 'center',
+                background: isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.03)',
+                borderRadius: 14,
+                border: isLight ? '1px dashed #CBD5E1' : '1px dashed rgba(255, 255, 255, 0.15)',
+                margin: '12px 0'
+              }}>
+                <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>🚪</div>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, color: isLight ? '#0F172A' : '#FFF' }}>
+                  {text('Tủ đồ chưa có trang phục này', 'No clothes in this category')}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                  {text('Hãy thêm áo, quần hoặc giày của bạn vào Tủ Đồ để thử trực tiếp lên người mẫu Studio!', 'Add your shirts, pants or shoes to your Wardrobe to try them on the Studio model!')}
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: 12,
+                maxHeight: '440px',
+                overflowY: 'auto',
+                paddingRight: 4
+              }}>
+                {filteredItems.map(item => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => toggleItem(item)}
+                      style={{
+                        position: 'relative',
+                        background: isSelected 
+                          ? (isLight ? '#FEF9C3' : 'rgba(246,207,112,.12)') 
+                          : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.035)'),
+                        border: isSelected 
+                          ? '2px solid #D4AF37' 
+                          : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
+                        borderRadius: 14,
+                        padding: 10,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected 
+                          ? '0 4px 16px rgba(212,175,55,.25)' 
+                          : (isLight ? '0 1px 3px rgba(0,0,0,0.06)' : 'none')
+                      }}
+                    >
+                      {/* Badge đã chọn */}
+                      {isSelected && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          background: '#f6cf70',
+                          color: '#000',
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 2
+                        }}>
+                          <Check size={13} strokeWidth={3} />
+                        </div>
+                      )}
+
+                      {/* Ảnh sản phẩm */}
+                      <div style={{ width: '100%', height: 105, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, background: 'linear-gradient(145deg, #F4F2ED, #E7E4DC)', borderRadius: 10, overflow: 'hidden' }}>
+                        <img
+                          src={item.imageUrl || (Number(item.categoryId) === 2 || Number(item.categoryId) === 3 ? '/assets/clothes/pants_wide_beige.jpg' : Number(item.categoryId) === 5 ? '/assets/clothes/shoes_sneaker_white_real.jpg' : '/assets/clothes/shirt_white_formal.jpg')}
+                          alt={item.name}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
+                          }}
+                          onError={(e) => {
+                            const image = e.currentTarget;
+                            if (image.dataset.fallbackApplied) {
+                              image.src = '/assets/stylist/navy-shirt-essential.png';
+                              return;
+                            }
+                            image.dataset.fallbackApplied = 'true';
+                            const categoryId = Number(item.categoryId);
+                            image.src = (categoryId === 2 || categoryId === 3)
+                              ? '/assets/clothes/pants_wide_beige.jpg'
+                              : categoryId === 5
+                                ? '/assets/clothes/shoes_sneaker_white_real.jpg'
+                                : '/assets/clothes/shirt_white_formal.jpg';
+                          }}
+                        />
                       </div>
-                    )}
 
-                    {/* Ảnh sản phẩm */}
-                    <div style={{ width: '100%', height: 105, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, background: 'linear-gradient(145deg, #F4F2ED, #E7E4DC)', borderRadius: 10, overflow: 'hidden' }}>
-                      <img
-                        src={item.imageUrl || (Number(item.categoryId) === 2 || Number(item.categoryId) === 3 ? '/assets/clothes/pants_wide_beige.jpg' : Number(item.categoryId) === 5 ? '/assets/clothes/shoes_sneaker_white_real.jpg' : '/assets/clothes/shirt_white_formal.jpg')}
-                        alt={item.name}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
-                        }}
-                        onError={(e) => {
-                          const image = e.currentTarget;
-                          if (image.dataset.fallbackApplied) {
-                            image.src = '/assets/stylist/navy-shirt-essential.png';
-                            return;
-                          }
-                          image.dataset.fallbackApplied = 'true';
-                          const categoryId = Number(item.categoryId);
-                          image.src = (categoryId === 2 || categoryId === 3)
-                            ? '/assets/clothes/pants_wide_beige.jpg'
-                            : categoryId === 5
-                              ? '/assets/clothes/shoes_sneaker_white_real.jpg'
-                              : '/assets/clothes/shirt_white_formal.jpg';
-                        }}
-                      />
+                      {/* Tên món đồ */}
+                      <div style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: isSelected 
+                          ? (isLight ? '#92400E' : '#f6cf70') 
+                          : (isLight ? '#0F172A' : '#fff'),
+                        lineHeight: 1.3,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: 31
+                      }}>
+                        {item.name}
+                      </div>
                     </div>
-
-                    {/* Tên món đồ */}
-                    <div style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: isSelected 
-                        ? (isLight ? '#92400E' : '#f6cf70') 
-                        : (isLight ? '#0F172A' : '#fff'),
-                      lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      minHeight: 31
-                    }}>
-                      {item.name}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* NÚT LƯU OUTFIT ĐƠN GIẢN */}

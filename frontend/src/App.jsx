@@ -23,7 +23,8 @@ import {
   getCategoriesForGender,
   getInitialClothesForGender,
   getInitialOutfitsForGender,
-  sanitizeClothesForGender
+  sanitizeClothesForGender,
+  isDemoUser
 } from './data/initialWardrobe';
 import { INITIAL_CHAT_SESSIONS } from './data/initialChatSessions';
 import { useLanguage } from './context/LanguageContext';
@@ -75,9 +76,49 @@ export default function App() {
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
   const categories = getCategoriesForGender(user?.gender);
 
-  const [clothes, setClothes] = useState(() => getInitialClothesForGender('Nam'));
+  const [clothes, setClothes] = useState(() => {
+    const savedUser = localStorage.getItem('myfitdaily_user');
+    if (!savedUser) return getInitialClothesForGender('Nam');
+    try {
+      const u = JSON.parse(savedUser);
+      if (isDemoUser(u)) return getInitialClothesForGender(u.gender || 'Nam');
+      const cached = localStorage.getItem('myfitdaily_user_clothes');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          const hasDemoSeed = parsed.some(item => [260, 261, 262, 263, 201, 202, 203].includes(item.id));
+          if (hasDemoSeed) {
+            localStorage.removeItem('myfitdaily_user_clothes');
+            return [];
+          }
+          return parsed;
+        }
+      }
+    } catch {}
+    return [];
+  });
 
-  const [outfits, setOutfits] = useState(() => getInitialOutfitsForGender('Nam'));
+  const [outfits, setOutfits] = useState(() => {
+    const savedUser = localStorage.getItem('myfitdaily_user');
+    if (!savedUser) return getInitialOutfitsForGender('Nam');
+    try {
+      const u = JSON.parse(savedUser);
+      if (isDemoUser(u)) return getInitialOutfitsForGender(u.gender || 'Nam');
+      const cached = localStorage.getItem('myfitdaily_outfits');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          const hasDemoSeed = parsed.some(o => [311, 312, 313, 301, 302, 401, 402].includes(o.id));
+          if (hasDemoSeed) {
+            localStorage.removeItem('myfitdaily_outfits');
+            return [];
+          }
+          return parsed;
+        }
+      }
+    } catch {}
+    return [];
+  });
 
   // Load user on mount
   useEffect(() => {
@@ -198,36 +239,91 @@ export default function App() {
   // Fetch user's real wardrobe from database & sanitize by gender
   useEffect(() => {
     async function loadUserClothes() {
+      // 1. Khách vãng lai (chưa đăng nhập): Nạp đồ mẫu để xem trước phong cách
+      if (!user) {
+        setClothes(getInitialClothesForGender('Nam'));
+        return;
+      }
+
+      // 2. Tài khoản Demo: Luôn nạp bộ sưu tập đồ mẫu Studio
+      if (isDemoUser(user)) {
+        try {
+          const res = await apiRequest('/clothes');
+          if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+            const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
+            setClothes(items);
+            localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(items));
+          } else {
+            setClothes(getInitialClothesForGender(user?.gender));
+          }
+        } catch {
+          setClothes(getInitialClothesForGender(user?.gender));
+        }
+        return;
+      }
+
+      // 3. TÀI KHOẢN NGƯỜI DÙNG THỰC: Bắt đầu từ tủ đồ riêng của họ, rỗng [] nếu chưa tải đồ
       try {
         const res = await apiRequest('/clothes');
-        if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
-          const enriched = items.map(item => {
-            if (!item.priceFormatted && !item.price) {
-              const defaultP = item.categoryName === 'Tops' ? 263000 : (item.categoryName === 'Bottoms' ? 220000 : (item.categoryName === 'Shoes' ? 450000 : 350000));
-              return {
-                ...item,
-                price: defaultP,
-                priceFormatted: `${Math.round(defaultP / 1000)}K`,
-                platform: item.platform || 'Shopee',
-                isAffiliate: true,
-                affiliateUrl: item.affiliateUrl || 'https://shopee.vn'
-              };
-            }
-            return item;
-          });
-          setClothes(enriched);
-          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(enriched));
+        if (res.ok && res.data?.data && Array.isArray(res.data.data)) {
+          // Lọc triệt để đồ mẫu stylist cũ nếu còn dính
+          const realItems = res.data.data.filter(item => 
+            !item.brand?.includes('STYLIST EDIT') && 
+            !item.brand?.includes('FROZEN.HN') &&
+            !(item.imageUrl && item.imageUrl.includes('/assets/stylist/'))
+          );
+          setClothes(realItems);
+          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(realItems));
         } else {
-          setClothes(prev => (prev && prev.length > 0) ? prev : getInitialClothesForGender(user?.gender));
+          setClothes([]);
+          localStorage.setItem('myfitdaily_user_clothes', JSON.stringify([]));
         }
       } catch (err) {
-        console.warn("Could not sync clothes from backend, using local state", err);
-        setClothes(prev => (prev && prev.length > 0) ? prev : getInitialClothesForGender(user?.gender));
+        console.warn("Could not sync clothes from backend for real user", err);
+        setClothes([]);
+        localStorage.setItem('myfitdaily_user_clothes', JSON.stringify([]));
       }
     }
     loadUserClothes();
   }, [user, isMale]);
+
+  // Fetch user's outfits from database / initial demo
+  useEffect(() => {
+    async function loadUserOutfits() {
+      if (!user) {
+        setOutfits(getInitialOutfitsForGender('Nam'));
+        return;
+      }
+      if (isDemoUser(user)) {
+        try {
+          const res = await apiRequest('/outfits');
+          if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+            setOutfits(res.data.data);
+          } else {
+            setOutfits(getInitialOutfitsForGender(user?.gender));
+          }
+        } catch {
+          setOutfits(getInitialOutfitsForGender(user?.gender));
+        }
+        return;
+      }
+      // Người dùng thực: Bắt đầu bằng danh sách rỗng [], lấy từ API nếu có
+      try {
+        const res = await apiRequest('/outfits');
+        if (res.ok && res.data?.data && Array.isArray(res.data.data)) {
+          setOutfits(res.data.data);
+          localStorage.setItem('myfitdaily_outfits', JSON.stringify(res.data.data));
+        } else {
+          setOutfits([]);
+          localStorage.setItem('myfitdaily_outfits', JSON.stringify([]));
+        }
+      } catch {
+        setOutfits([]);
+        localStorage.setItem('myfitdaily_outfits', JSON.stringify([]));
+      }
+    }
+    loadUserOutfits();
+  }, [user]);
 
   // Purge legacy female clothes from local state when male account is active
   useEffect(() => {
@@ -266,6 +362,24 @@ export default function App() {
     setPendingVerification(null);
     setPendingOnboardingUser(null);
     setAuthModalMode('login');
+
+    if (isDemoUser(userData)) {
+      setClothes(getInitialClothesForGender(userData?.gender));
+      setOutfits(getInitialOutfitsForGender(userData?.gender));
+    } else {
+      // Người dùng thật: Dọn dẹp cache mẫu cũ và bắt đầu với tủ đồ trống
+      const cachedClothes = localStorage.getItem('myfitdaily_user_clothes');
+      if (cachedClothes && (cachedClothes.includes('260') || cachedClothes.includes('Coolmate') || cachedClothes.includes('Frozen.HN'))) {
+        localStorage.removeItem('myfitdaily_user_clothes');
+      }
+      const cachedOutfits = localStorage.getItem('myfitdaily_outfits');
+      if (cachedOutfits && (cachedOutfits.includes('311') || cachedOutfits.includes('Cream & Black'))) {
+        localStorage.removeItem('myfitdaily_outfits');
+      }
+      setClothes([]);
+      setOutfits([]);
+    }
+
     if (userData?.role === 'Admin') {
       setCurrentTab('admin');
     } else {
@@ -279,8 +393,11 @@ export default function App() {
     } catch { }
     localStorage.removeItem('myfitdaily_token');
     localStorage.removeItem('myfitdaily_user');
+    localStorage.removeItem('myfitdaily_user_clothes');
+    localStorage.removeItem('myfitdaily_outfits');
     setUser(null);
-    setClothes([]);
+    setClothes(getInitialClothesForGender('Nam'));
+    setOutfits(getInitialOutfitsForGender('Nam'));
     setPendingVerification(null);
     setPendingOnboardingUser(null);
     setAuthModalMode('login');
