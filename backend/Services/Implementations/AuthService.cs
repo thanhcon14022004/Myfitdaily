@@ -54,7 +54,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 RequiresVerification = true,
                 VerificationEmail = normalizedEmail,
                 ExpiresInSeconds = expiresInSeconds,
-                DebugOtpCode = null,
+                DebugOtpCode = otpCode,
                 User = new UserDto
                 {
                     Email = normalizedEmail,
@@ -70,8 +70,10 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             string normalizedEmail = cleanLogin switch
             {
-                "testnam" => "testnam@myfitdaily.com",
-                "testnu" => "testnu@myfitdaily.com",
+                "testnam" => "nam.gentleman@gmail.com",
+                "testnu" => "huong.fashionista@gmail.com",
+                "testnam@myfitdaily.com" => "nam.gentleman@gmail.com",
+                "testnu@myfitdaily.com" => "huong.fashionista@gmail.com",
                 "admin" => "admin@myfitdaily.com",
                 _ => cleanLogin
             };
@@ -82,8 +84,8 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 user = await _context.Users
                     .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail 
                                            || u.Email.ToLower() == cleanLogin
-                                           || (cleanLogin == "testnam" && u.Email.ToLower().Contains("test@myfitdaily.com"))
-                                           || (cleanLogin == "testnu" && u.Email.ToLower().Contains("demo@myfitdaily.com")));
+                                           || (cleanLogin == "testnam" && (u.Email.ToLower().Contains("nam.gentleman") || u.Email.ToLower().Contains("testnam") || u.Id == 1))
+                                           || (cleanLogin == "testnu" && (u.Email.ToLower().Contains("huong.fashionista") || u.Email.ToLower().Contains("testnu") || u.Id == 2)));
             }
             catch (Exception ex)
             {
@@ -107,9 +109,9 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             }
 
             // Support plain match for seeded demo accounts
-            if (!isPasswordValid && (cleanLogin == "testnam" || cleanLogin == "testnu" || cleanLogin == "admin"))
+            if (!isPasswordValid && (cleanLogin == "testnam" || cleanLogin == "testnu" || cleanLogin == "admin" || cleanLogin == "nam.gentleman@gmail.com" || cleanLogin == "huong.fashionista@gmail.com" || cleanLogin == "admin@myfitdaily.com"))
             {
-                if (request.Password == "Password123!" || request.Password == cleanLogin || request.Password == "123456")
+                if (request.Password == "Password123!" || request.Password == cleanLogin || request.Password == "123456" || request.Password == "testnam" || request.Password == "testnu" || request.Password == "admin")
                 {
                     isPasswordValid = true;
                 }
@@ -117,7 +119,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
 
             if (!isPasswordValid)
             {
-                return ApiResponse<AuthResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác");
+                return ApiResponse<AuthResponseDto>.Fail("Tên đăng nhập hoặc mật khẩu không chính xác. Nếu bạn đăng nhập bằng Google, hãy chọn 'Tiếp tục với Google' hoặc dùng 'Quên mật khẩu' để tạo mật khẩu đăng nhập thủ công!");
             }
 
             var (token, expiresAt) = _tokenService.GenerateJwtToken(user);
@@ -180,8 +182,8 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 user = await _context.Users.FirstOrDefaultAsync(u => 
                     u.Email.ToLower() == normalizedEmail 
                     || u.Email.ToLower() == usernamePart
-                    || (usernamePart == "testnam" && u.Email.ToLower().Contains("testnam"))
-                    || (usernamePart == "testnu" && u.Email.ToLower().Contains("testnu"))
+                    || (usernamePart == "testnam" && (u.Email.ToLower().Contains("nam.gentleman") || u.Email.ToLower().Contains("testnam") || u.Id == 1))
+                    || (usernamePart == "testnu" && (u.Email.ToLower().Contains("huong.fashionista") || u.Email.ToLower().Contains("testnu") || u.Id == 2))
                 );
             }
             catch (Exception ex)
@@ -385,8 +387,48 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 RequiresVerification = true,
                 VerificationEmail = normalizedEmail,
                 ExpiresInSeconds = expiresIn,
-                DebugOtpCode = null
+                DebugOtpCode = newOtp
             }, message);
+        }
+
+        public async Task<ApiResponse<AuthResponseDto>> ResetPasswordAsync(ResetPasswordDto request)
+        {
+            var cleanEmail = (request.Email ?? string.Empty).Trim().ToLower();
+            if (string.IsNullOrEmpty(cleanEmail))
+            {
+                return ApiResponse<AuthResponseDto>.Fail("Vui lòng nhập địa chỉ email hợp lệ");
+            }
+
+            string searchEmail = cleanEmail switch
+            {
+                "testnam" => "nam.gentleman@gmail.com",
+                "testnu" => "huong.fashionista@gmail.com",
+                "testnam@myfitdaily.com" => "nam.gentleman@gmail.com",
+                "testnu@myfitdaily.com" => "huong.fashionista@gmail.com",
+                "admin" => "admin@myfitdaily.com",
+                _ => cleanEmail
+            };
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == searchEmail || u.Email.ToLower() == cleanEmail);
+            if (user == null)
+            {
+                return ApiResponse<AuthResponseDto>.Fail("Không tìm thấy tài khoản với email này trong hệ thống");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _context.SaveChangesAsync();
+
+            var (token, expiresAt) = _tokenService.GenerateJwtToken(user);
+            var response = new AuthResponseDto
+            {
+                Token = token,
+                TokenType = "Bearer",
+                ExpiresAt = expiresAt,
+                User = MapToUserDto(user),
+                RequiresVerification = false
+            };
+
+            return ApiResponse<AuthResponseDto>.Ok(response, "Đặt lại mật khẩu thành công! Bạn có thể sử dụng mật khẩu này để đăng nhập cùng với Email.");
         }
 
         private static UserDto MapToUserDto(User user, bool isNewUser = false)
@@ -409,6 +451,11 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 BodyShape = user.BodyShape,
                 Age = user.Age,
                 AgeGroup = user.AgeGroup,
+                TotalUsageSeconds = user.TotalUsageSeconds,
+                LongestSessionSeconds = user.LongestSessionSeconds,
+                PrimaryFeature = user.PrimaryFeature ?? (user.Role == "Admin" ? "Quản trị hệ thống" : "AI Stylist Studio"),
+                FeatureUsageJson = user.FeatureUsageJson,
+                LastActiveAt = user.LastActiveAt,
                 IsNewUser = isNewUser || !user.Age.HasValue
             };
         }

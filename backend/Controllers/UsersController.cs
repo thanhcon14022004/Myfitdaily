@@ -65,6 +65,47 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Thiết lập hoặc đổi mật khẩu đăng nhập thủ công cho tài khoản hiện tại
+        /// </summary>
+        [HttpPost("set-password")]
+        public async Task<IActionResult> SetPassword([FromBody] SetPasswordDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var result = await _userService.SetPasswordAsync(userId.Value, request.NewPassword);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Ghi nhận thời gian hoạt động / sử dụng trang web theo chu kỳ nhịp tim (Heartbeat)
+        /// </summary>
+        [HttpPost("heartbeat")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Heartbeat([FromBody] HeartbeatDto request)
+        {
+            var userId = GetCurrentUserId() ?? request.UserId;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value ?? request.Email;
+
+            var seconds = request.Seconds > 0 && request.Seconds <= 300 ? request.Seconds : 10;
+            var result = await _userService.TrackHeartbeatAsync(userId, email, seconds, request.SessionSeconds, request.Feature);
+            return Ok(result);
+        }
+
         private int? GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

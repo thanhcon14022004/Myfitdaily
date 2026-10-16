@@ -19,7 +19,9 @@ import {
   Shield,
   Link2,
   BrainCircuit,
-  LogIn
+  LogIn,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -638,6 +640,29 @@ export default function Sidebar({
                 >
                   <Link2 size={14} color="#38BDF8" />
                   <span>{text('Dán Link Shopee / TikTok', 'Import Shopee / TikTok Link')}</span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentTab('admin')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    padding: '8px 10px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: '7px',
+                    color: '#E2E8F0',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+                >
+                  <TrendingUp size={14} color="#10B981" />
+                  <span>{text('Thống Kê Hệ Thống', 'System Statistics')}</span>
                 </button>
 
                 <button

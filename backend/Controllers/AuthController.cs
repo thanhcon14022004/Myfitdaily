@@ -78,6 +78,26 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         }
 
         /// <summary>
+        /// Đặt lại hoặc tạo mật khẩu đăng nhập thủ công cho Email (hỗ trợ cả tài khoản Google chuyển sang đăng nhập thủ công)
+        /// </summary>
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _authService.ResetPasswordAsync(request);
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Đăng nhập mạng xã hội: Nếu có tài khoản thì vào luôn, nếu chưa có thì gửi mã OTP xác nhận về email trong 5 phút
         /// </summary>
         [HttpPost("social-login")]

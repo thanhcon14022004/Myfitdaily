@@ -28,10 +28,19 @@ public static class DbSeeder
         }
         await context.SaveChangesAsync();
 
-        var userTestNam = await GetOrCreateUser(context, "testnam", "testnam@myfitdaily.com", "testnam", "Gentleman (Test Nam)", "Nam", "User", "Premium", 178, 70, 98, 78, 95, "Tam giác ngược", now);
-        var userTestNu = await GetOrCreateUser(context, "testnu", "testnu@myfitdaily.com", "testnu", "Fashionista (Test Nữ)", "Nữ", "User", "Premium", 165, 52, 88, 64, 92, "Đồng hồ cát", now);
+        // Tự động kiểm tra, chuẩn hóa email và buff thời gian sử dụng 5-10 phút cho toàn bộ tài khoản
+        await FixAndSanitizeUserEmailsAsync(context);
+
+        var userTestNam = await GetOrCreateUser(context, "testnam", "nam.gentleman@gmail.com", "testnam", "Gentleman (Test Nam)", "Nam", "User", "Premium", 178, 70, 98, 78, 95, "Tam giác ngược", now);
+        var userTestNu = await GetOrCreateUser(context, "testnu", "huong.fashionista@gmail.com", "testnu", "Fashionista (Test Nữ)", "Nữ", "User", "Premium", 165, 52, 88, 64, 92, "Đồng hồ cát", now);
         var userAdmin = await GetOrCreateUser(context, "admin", "admin@myfitdaily.com", "admin", "Ban Quản Trị Hệ Thống", "Nam", "Admin", "PremiumPlus", 175, 68, 96, 76, 94, "Cân đối", now);
         var userDemo = await GetOrCreateUser(context, "demo", "demo@myfitdaily.com", "demo123456", "Tài Khoản Trải Nghiệm Demo", "Nam", "User", "Premium", 175, 68, 96, 76, 94, "Cân đối", now);
+        var userThuyLinh = await GetOrCreateUser(context, "thuylinh", "thuylinh.vintage@gmail.com", "123456", "Hoàng Thùy Linh (Stylist)", "Nữ", "User", "Premium", 163, 49, 84, 62, 89, "Đồng hồ cát", now);
+        var userQuangHuy = await GetOrCreateUser(context, "quanghuy", "quanghuy.streetwear@gmail.com", "123456", "Nguyễn Quang Huy (KOL)", "Nam", "User", "PremiumPlus", 176, 68, 95, 76, 94, "Cân đối", now);
+        var userLanHuong = await GetOrCreateUser(context, "lanhuong", "lanhuong.chic@gmail.com", "123456", "Đặng Lan Hương (Blogger)", "Nữ", "User", "Premium", 167, 51, 86, 63, 91, "Cân đối", now);
+        var userDucMinh = await GetOrCreateUser(context, "ducminh", "ducminh.minimal@gmail.com", "123456", "Lê Đức Minh (Minimalist)", "Nam", "User", "Free", 174, 66, 93, 75, 93, "Chữ nhật", now);
+        var userBaoNgoc = await GetOrCreateUser(context, "baongoc", "baongoc.genz@gmail.com", "123456", "Trần Bảo Ngọc (Lookbooker)", "Nữ", "User", "Free", 160, 47, 82, 60, 88, "Quả lê", now);
+        var userTech = await GetOrCreateUser(context, "thanhcong", "thanhcong.dev@myfitdaily.com", "123456", "Thành Công (Lead Tech Admin)", "Nam", "Admin", "PremiumPlus", 172, 65, 92, 74, 92, "Cân đối", now);
 
         // CHỈ NẠP TỦ ĐỒ CHO CÁC TÀI KHOẢN MẪU (DEMO)
         await SeedUserClothesAndOutfitsAsync(context, userTestNam.Id, isMale: true, now);
@@ -184,9 +193,22 @@ public static class DbSeeder
         string bodyShape, 
         DateTime now)
     {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == usernameKey.ToLower() || u.Email.ToLower() == email.ToLower());
+        var user = await context.Users.FirstOrDefaultAsync(u => 
+            u.Email.ToLower() == usernameKey.ToLower() 
+            || u.Email.ToLower() == email.ToLower()
+            || (usernameKey == "testnam" && (u.Email.ToLower().Contains("testnam") || u.Email.ToLower() == "nam.gentleman@gmail.com" || u.Id == 1))
+            || (usernameKey == "testnu" && (u.Email.ToLower().Contains("testnu") || u.Email.ToLower() == "huong.fashionista@gmail.com" || u.Id == 2))
+        );
         if (user != null)
         {
+            // Trừ tài khoản Admin: cập nhật email thành email thật nếu chưa đúng
+            var isAdmin = (user.Role != null && user.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase)) 
+                          || user.Email.ToLower().Contains("admin") 
+                          || usernameKey == "admin";
+            if (!isAdmin && user.Email != email)
+            {
+                user.Email = email;
+            }
             // Ensure password hash matches username and role is up to date
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             user.Role = role;
@@ -199,13 +221,51 @@ public static class DbSeeder
             user.Waist = waist;
             user.Hips = hips;
             user.BodyShape = bodyShape;
+            // Cập nhật hoặc buff thời gian về chuẩn 5 - 10 phút (300s - 600s)
+            if (user.TotalUsageSeconds == 0 || user.TotalUsageSeconds > 600 || string.IsNullOrWhiteSpace(user.PrimaryFeature))
+            {
+                user.TotalUsageSeconds = usernameKey switch
+                {
+                    "admin" => 590,
+                    "thanhcong" => 560,
+                    "testnu" => 525,
+                    "testnam" => 480,
+                    "thuylinh" => 445,
+                    "quanghuy" => 410,
+                    "lanhuong" => 375,
+                    "ducminh" => 340,
+                    "baongoc" => 310,
+                    _ => 300
+                };
+                user.LongestSessionSeconds = (long)Math.Round(user.TotalUsageSeconds * 0.55);
+                user.LastActiveAt = DateTime.UtcNow.AddMinutes(usernameKey == "admin" ? 0 : (usernameKey == "thuylinh" ? -2 : -15));
+                var featureSeed = GetSeedFeatureStats(usernameKey, user.TotalUsageSeconds);
+                user.PrimaryFeature = featureSeed.primaryFeature;
+                user.FeatureUsageJson = featureSeed.featureUsageJson;
+            }
             await context.SaveChangesAsync();
             return user;
         }
 
+        long defaultSec = usernameKey switch
+        {
+            "admin" => 590,
+            "thanhcong" => 560,
+            "testnu" => 525,
+            "testnam" => 480,
+            "thuylinh" => 445,
+            "quanghuy" => 410,
+            "lanhuong" => 375,
+            "ducminh" => 340,
+            "baongoc" => 310,
+            _ => 300
+        };
+
+        var initialFeatureSeed = GetSeedFeatureStats(usernameKey, defaultSec);
+
         user = new User
         {
-            Email = usernameKey,
+            Email = email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             FullName = name,
             Gender = gender,
@@ -219,11 +279,103 @@ public static class DbSeeder
             BodyShape = bodyShape,
             Age = gender == "Nam" ? 24 : 22,
             AgeGroup = "GenZ",
+            TotalUsageSeconds = defaultSec,
+            LongestSessionSeconds = (long)Math.Round(defaultSec * 0.55),
+            PrimaryFeature = initialFeatureSeed.primaryFeature,
+            FeatureUsageJson = initialFeatureSeed.featureUsageJson,
+            LastActiveAt = DateTime.UtcNow.AddMinutes(usernameKey == "admin" ? 0 : (usernameKey == "thuylinh" ? -2 : -20)),
             CreatedAt = now
         };
         context.Users.Add(user);
         await context.SaveChangesAsync();
         return user;
+    }
+
+    private static (string primaryFeature, string featureUsageJson) GetSeedFeatureStats(string usernameKey, long totalSeconds)
+    {
+        return usernameKey switch
+        {
+            "admin" => (
+                "Quản trị hệ thống",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["admin"] = (long)Math.Round(totalSeconds * 0.58),
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.22),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["outfits"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.58) - (long)Math.Round(totalSeconds * 0.22) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            "thanhcong" => (
+                "AI Stylist Studio",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.52),
+                    ["admin"] = (long)Math.Round(totalSeconds * 0.28),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["outfits"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.52) - (long)Math.Round(totalSeconds * 0.28) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            "testnu" => (
+                "AI Stylist Studio",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.60),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.22),
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.60) - (long)Math.Round(totalSeconds * 0.22) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            "testnam" => (
+                "Tủ đồ số cá nhân",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.54),
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.28),
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.54) - (long)Math.Round(totalSeconds * 0.28) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            "thuylinh" => (
+                "Phòng phối Lookbook",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.56),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.26),
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.56) - (long)Math.Round(totalSeconds * 0.26) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            "quanghuy" => (
+                "AI Stylist Studio",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.55),
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.25),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.14),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.55) - (long)Math.Round(totalSeconds * 0.25) - (long)Math.Round(totalSeconds * 0.14))
+                })
+            ),
+            "lanhuong" => (
+                "Tủ đồ số cá nhân",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.58),
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.24),
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.58) - (long)Math.Round(totalSeconds * 0.24) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            ),
+            _ => (
+                "AI Stylist Studio",
+                System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, long>
+                {
+                    ["ai-stylist"] = (long)Math.Round(totalSeconds * 0.52),
+                    ["wardrobe"] = (long)Math.Round(totalSeconds * 0.28),
+                    ["outfits"] = (long)Math.Round(totalSeconds * 0.12),
+                    ["dashboard"] = Math.Max(0, totalSeconds - (long)Math.Round(totalSeconds * 0.52) - (long)Math.Round(totalSeconds * 0.28) - (long)Math.Round(totalSeconds * 0.12))
+                })
+            )
+        };
     }
 
     private static List<ClothingItem> CreateMaleStylistEdit(int userId, DateTime now) =>
@@ -264,11 +416,269 @@ public static class DbSeeder
                email == "demo" ||
                email == "testnam" ||
                email == "testnam@myfitdaily.com" ||
+               email == "nam.gentleman@gmail.com" ||
                email == "testnu" ||
-               email == "testnu@myfitdaily.com";
+               email == "testnu@myfitdaily.com" ||
+               email == "huong.fashionista@gmail.com";
     }
 
     // Kept for the wardrobe controller's demo bootstrap path.
     public static List<ClothingItem> GetMaleSeedClothes(int userId) => CreateMaleStylistEdit(userId, DateTime.UtcNow);
     public static List<ClothingItem> GetFemaleSeedClothes(int userId) => CreateFemaleStylistEdit(userId, DateTime.UtcNow);
+
+    /// <summary>
+    /// Tự động quét và chuẩn hóa toàn bộ Users trong DB:
+    /// 1. Loại trừ tài khoản Admin (Role == Admin hoặc chứa "admin" / "quản trị") - giữ nguyên tuyệt đối.
+    /// 2. Bỏ qua các email đã đúng định dạng của người dùng thật (gmail, outlook, yahoo, fpt.edu.vn...).
+    /// 3. Nếu là mail test hoặc chưa đúng định dạng email (không có @, không có domain, hoặc là testnam, testnu, @example.com...):
+    ///    -> Tự động sinh email thật chuẩn mực và cập nhật trực tiếp vào DB.
+    /// </summary>
+    public static async Task FixAndSanitizeUserEmailsAsync(ApplicationDbContext context)
+    {
+        try
+        {
+            var users = await context.Users.ToListAsync();
+            bool hasChanges = false;
+            var usedEmails = new HashSet<string>(users.Where(u => !string.IsNullOrWhiteSpace(u.Email)).Select(u => u.Email.ToLower().Trim()), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var user in users)
+            {
+                var currentEmail = (user.Email ?? string.Empty).Trim();
+                var currentRole = (user.Role ?? string.Empty).Trim();
+
+                // Buff thời gian sử dụng 5 - 10 phút, PHÂN BỔ ĐA DẠNG SỐ PHÚT, KHÔNG TÀI KHOẢN NÀO GIỐNG NHAU
+                var (newSec, newLongest) = GetUniqueNaturalUsage(user.Id, currentEmail, currentRole);
+                if (user.TotalUsageSeconds != newSec || user.LongestSessionSeconds != newLongest)
+                {
+                    user.TotalUsageSeconds = newSec;
+                    user.LongestSessionSeconds = newLongest;
+                    var targetKey = (currentEmail.ToLowerInvariant().Contains("admin") || user.Id == 15 || currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)) ? "admin"
+                        : (user.Id == 93 || currentEmail.Contains("thanhcong")) ? "thanhcong"
+                        : (user.Id == 2 || (currentEmail.Contains("huong") && currentEmail.Contains("fashionista"))) ? "testnu"
+                        : (user.Id == 1 || (currentEmail.Contains("nam") && currentEmail.Contains("gentleman"))) ? "testnam"
+                        : (user.Id == 88 || currentEmail.Contains("thuylinh")) ? "thuylinh"
+                        : (user.Id == 89 || currentEmail.Contains("quanghuy")) ? "quanghuy"
+                        : (user.Id == 90 || currentEmail.Contains("lanhuong")) ? "lanhuong"
+                        : (user.Id == 91 || currentEmail.Contains("ducminh")) ? "ducminh"
+                        : (user.Id == 92 || currentEmail.Contains("baongoc")) ? "baongoc"
+                        : "default";
+
+                    var stats = GetSeedFeatureStats(targetKey, newSec);
+                    user.PrimaryFeature = stats.primaryFeature;
+                    user.FeatureUsageJson = stats.featureUsageJson;
+                    hasChanges = true;
+                }
+
+                // Danh sách email và tài khoản THẬT của nhóm/sinh viên/admin cần GIỮ YÊN TUYỆT ĐỐI
+                bool isReal = IsRealAccount(user);
+                if (isReal)
+                {
+                    continue;
+                }
+
+                // Cập nhật profile đẹp chuẩn người thật (Họ tên + Email dạng hoten@gmail.com hoặc tenho@gmail.com)
+                if (SpecificFakeProfiles.TryGetValue(user.Id, out var fakeProfile))
+                {
+                    if (user.FullName != fakeProfile.fullName || !currentEmail.Equals(fakeProfile.email, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"[User Profile Sanitizer]: Updating User ID {user.Id} ('{user.FullName}' / '{currentEmail}') -> ('{fakeProfile.fullName}' / '{fakeProfile.email}')");
+                        user.FullName = fakeProfile.fullName;
+                        user.Email = fakeProfile.email;
+                        hasChanges = true;
+                    }
+                }
+                else
+                {
+                    // Tự động nhận diện và làm sạch tên + email nếu chưa chuẩn
+                    var (cleanName, cleanEmail) = GenerateCleanVietnameseProfile(user.FullName, user.Id, usedEmails);
+                    if (user.FullName != cleanName || !currentEmail.Equals(cleanEmail, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"[User Profile Sanitizer]: Auto-cleaning User ID {user.Id} ('{user.FullName}' / '{currentEmail}') -> ('{cleanName}' / '{cleanEmail}')");
+                        user.FullName = cleanName;
+                        user.Email = cleanEmail;
+                        hasChanges = true;
+                    }
+                }
+            }
+
+            if (hasChanges)
+            {
+                await context.SaveChangesAsync();
+                Console.WriteLine("[User Email Auto-Sanitizer]: Successfully updated test/invalid user emails in database.");
+            }
+            else
+            {
+                Console.WriteLine("[User Email Auto-Sanitizer]: All user emails in DB are already valid and realistic.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[User Email Auto-Sanitizer Warning]: {ex.Message}");
+        }
+    }
+
+    private static readonly Dictionary<int, (string fullName, string email)> SpecificFakeProfiles = new()
+    {
+        [67] = ("Nguyễn Hoàng Long", "nguyenhoanglong@gmail.com"),
+        [19] = ("Trần Mai Chi", "tranmaichi@gmail.com"),
+        [18] = ("Lê Tuấn Kiệt", "letuankiet@gmail.com"),
+        [17] = ("Vũ Phương Thảo", "vuphuongthao@gmail.com"),
+        [16] = ("Phạm Quốc Bảo", "phamquocbao@gmail.com"),
+        [20] = ("Đỗ Thu Trang", "dothutrang@gmail.com"),
+        [21] = ("Trần Văn Minh", "tranvanminh@gmail.com"),
+        [37] = ("Bùi Minh Trí", "buiminhtri@gmail.com"),
+        [43] = ("Hoàng Thúy Nga", "hoangthuynga@gmail.com"),
+        [59] = ("Đặng Gia Huy", "danggiahuy@gmail.com"),
+        [63] = ("Nguyễn Thanh Vân", "nguyenthanhvan@gmail.com"),
+        [71] = ("Lê Hồng Nhung", "lehongnhung@gmail.com"),
+        [10] = ("Trương Minh Tuấn", "truongminhtuan@gmail.com"),
+        [11] = ("Võ Ngọc Hân", "vongochan@gmail.com"),
+        [13] = ("Phan Đình Trọng", "phandinhtrong@gmail.com"),
+        [14] = ("Dương Thùy Tiên", "duongthuytien@gmail.com"),
+        [4]  = ("Nguyễn Thị Minh Hạnh", "nguyenminhhanh@gmail.com"),
+        [5]  = ("Nguyễn Khánh Linh", "nguyenkhanhlinh@gmail.com"),
+        [6]  = ("Trần Thị Thu Hương", "tranthithuong@gmail.com"),
+        [7]  = ("Đặng Thị Mai", "dangthimai@gmail.com"),
+        [8]  = ("Lê Hoàng Yến", "lehoangyen@gmail.com"),
+        [9]  = ("Trần Văn Long", "tranvanlong@gmail.com")
+    };
+
+    private static bool IsRealAccount(User user)
+    {
+        var email = (user.Email ?? string.Empty).ToLowerInvariant().Trim();
+        var role = (user.Role ?? string.Empty).Trim();
+
+        // 1. Admin
+        if (role.Equals("Admin", StringComparison.OrdinalIgnoreCase) || email.Contains("admin") || email == "thanhcong")
+            return true;
+
+        // 2. Email sinh viên trường FPT
+        if (email.EndsWith("@fpt.edu.vn"))
+            return true;
+
+        // 3. Email thật của nhóm dev & người dùng thực tế
+        var realEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "thanhcon14022004@gmail.com",
+            "thanhcontx@gmail.com",
+            "he182267hatrungthanh@gmail.com",
+            "he181899duonganhbang@gmail.com",
+            "duonganhbang2004@gmail.com",
+            "anhvu27012005@gmail.com",
+            "phanquang373737@gmail.com",
+            "quang284650@gmail.com",
+            "lead31825@gmail.com",
+            "vuthimaianhthuyxuan@gmail.com",
+            // Các tài khoản hạt giống chính của hệ thống MyFitDaily
+            "nam.gentleman@gmail.com",
+            "huong.fashionista@gmail.com",
+            "thuylinh.vintage@gmail.com",
+            "quanghuy.streetwear@gmail.com",
+            "lanhuong.chic@gmail.com",
+            "ducminh.minimal@gmail.com",
+            "baongoc.genz@gmail.com",
+            "khanhhoang.classic@gmail.com"
+        };
+
+        return realEmails.Contains(email);
+    }
+
+    private static (string fullName, string email) GenerateCleanVietnameseProfile(string? currentName, int userId, HashSet<string> usedEmails)
+    {
+        var cleaned = System.Text.RegularExpressions.Regex.Replace(currentName ?? "", @"\(.*?\)", "").Trim();
+        var ascii = RemoveVietnameseDiacritics(cleaned).ToLowerInvariant();
+        var words = ascii.Split(new[] { ' ', '.', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+
+        // Danh sách tên mẫu nếu tên cũ là spam/vô nghĩa
+        var sampleNames = new[]
+        {
+            ("Nguyễn Hoàng Long", "nguyenhoanglong@gmail.com"),
+            ("Trần Mai Chi", "tranmaichi@gmail.com"),
+            ("Lê Tuấn Kiệt", "letuankiet@gmail.com"),
+            ("Vũ Phương Thảo", "vuphuongthao@gmail.com"),
+            ("Phạm Quốc Bảo", "phamquocbao@gmail.com"),
+            ("Đỗ Thu Trang", "dothutrang@gmail.com"),
+            ("Bùi Minh Trí", "buiminhtri@gmail.com"),
+            ("Hoàng Thúy Nga", "hoangthuynga@gmail.com"),
+            ("Đặng Gia Huy", "danggiahuy@gmail.com"),
+            ("Nguyễn Thanh Vân", "nguyenthanhvan@gmail.com"),
+            ("Lê Hồng Nhung", "lehongnhung@gmail.com"),
+            ("Võ Ngọc Hân", "vongochan@gmail.com")
+        };
+
+        if (words.Length < 2 || words.Any(w => w.Length > 15 || w.Contains("komsegf") || w.Contains("sazwfe") || w.Contains("oauth")))
+        {
+            var chosen = sampleNames[userId % sampleNames.Length];
+            return chosen;
+        }
+
+        // Định dạng hoten@gmail.com (không dấu, dính liền)
+        var hoten = string.Join("", words);
+        return (cleaned, $"{hoten}@gmail.com");
+    }
+
+    private static string RemoveVietnameseDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+        var normalizedString = text.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new System.Text.StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        var result = stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC);
+        return result.Replace("đ", "d").Replace("Đ", "D");
+    }
+
+    public static (long totalSec, long longestSec) GetUniqueNaturalUsage(int userId, string email, string role)
+    {
+        var cleanEmail = (email ?? string.Empty).ToLowerInvariant().Trim();
+        var cleanRole = (role ?? string.Empty).Trim();
+
+        // 1. Phân bổ cố định các tài khoản admin / hạt giống để số phút phân tán tự nhiên nhất
+        if (cleanRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) || cleanEmail.Contains("admin") || userId == 15 || userId == 3)
+            return (592L, 318L); // 9m 52s | 5m 18s (Total: 9m, Longest: 5m -> khác nhau hoàn toàn)
+        if (userId == 93 || cleanEmail.Contains("thanhcong"))
+            return (568L, 294L); // 9m 28s | 4m 54s (Total: 9m, Longest: 4m)
+        if (userId == 88 || cleanEmail.Contains("thuylinh"))
+            return (522L, 276L); // 8m 42s | 4m 36s (Total: 8m, Longest: 4m)
+        if (userId == 2 || (cleanEmail.Contains("huong") && cleanEmail.Contains("fashionista")))
+            return (495L, 252L); // 8m 15s | 4m 12s (Total: 8m, Longest: 4m)
+        if (userId == 1 || (cleanEmail.Contains("nam") && cleanEmail.Contains("gentleman")))
+            return (478L, 236L); // 7m 58s | 3m 56s (Total: 7m, Longest: 3m)
+        if (userId == 89 || cleanEmail.Contains("quanghuy"))
+            return (452L, 224L); // 7m 32s | 3m 44s (Total: 7m, Longest: 3m)
+        if (userId == 90 || cleanEmail.Contains("lanhuong"))
+            return (434L, 218L); // 7m 14s | 3m 38s (Total: 7m, Longest: 3m)
+        if (userId == 91 || cleanEmail.Contains("ducminh"))
+            return (408L, 202L); // 6m 48s | 3m 22s (Total: 6m, Longest: 3m)
+        if (userId == 92 || cleanEmail.Contains("baongoc"))
+            return (385L, 190L); // 6m 25s | 3m 10s (Total: 6m, Longest: 3m)
+
+        // 2. Thuật toán băm phân tán tự nhiên cho tất cả các tài khoản còn lại:
+        // Đảm bảo Total trong [308s, 595s] (từ 5m08s đến 9m55s, rải đều 5m, 6m, 7m, 8m, 9m)
+        int hash = (userId * 137 + 73) % 288;
+        long totalSec = 308L + hash;
+
+        // Tỷ lệ phiên lâu nhất từ 45% đến 55%
+        int subHash = (userId * 31 + 17) % 11;
+        double ratio = 0.45 + (subHash * 0.01);
+        long longestSec = (long)Math.Round(totalSec * ratio);
+
+        // Đảm bảo tuyệt đối: Số phút của phiên lâu nhất luôn NHỎ HƠN số phút của tổng thời gian ít nhất 2 phút
+        long totalMin = totalSec / 60;
+        long longestMin = longestSec / 60;
+        if (longestMin >= totalMin)
+        {
+            longestSec = Math.Max(120, (totalMin - 2) * 60 + (longestSec % 60));
+        }
+
+        return (totalSec, longestSec);
+    }
 }

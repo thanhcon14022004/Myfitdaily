@@ -209,6 +209,11 @@ _ = Task.Run(async () =>
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""AgeGroup"" character varying(50);
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionExpiresAt"" timestamp with time zone;
             ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""SubscriptionPeriod"" character varying(20);
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""TotalUsageSeconds"" bigint DEFAULT 0;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""LongestSessionSeconds"" bigint DEFAULT 0;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""PrimaryFeature"" character varying(100);
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""FeatureUsageJson"" text;
+            ALTER TABLE ""Users"" ADD COLUMN IF NOT EXISTS ""LastActiveAt"" timestamp with time zone;
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Brand"" character varying(100);
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Size"" character varying(20);
             ALTER TABLE ""ClothingItems"" ADD COLUMN IF NOT EXISTS ""Price"" numeric;

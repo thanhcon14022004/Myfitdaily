@@ -50,6 +50,14 @@ namespace MYFITDAILY_EXE201_Group6.Entities
         [MaxLength(50)]
         public string? AgeGroup { get; set; }   // Gen Z (16-24), Millennials (25-34), Mid-Career (35-49), Mature (50+)
 
+        // Theo dõi thời gian người dùng đang sử dụng và lướt web
+        public long TotalUsageSeconds { get; set; } = 0; // Tổng thời gian đã sử dụng website (giây)
+        public long LongestSessionSeconds { get; set; } = 0; // Thời gian sử dụng lâu nhất trong một phiên (giây)
+        public DateTime? LastActiveAt { get; set; }       // Thời điểm hoạt động / tương tác gần nhất
+        [MaxLength(100)]
+        public string? PrimaryFeature { get; set; }       // Chức năng người dùng dành chủ yếu thời gian vào
+        public string? FeatureUsageJson { get; set; }     // Dữ liệu chi tiết thời gian (giây) theo từng chức năng dạng JSON
+
         // Navigation properties
         public ICollection<ClothingItem> ClothingItems { get; set; } = new List<ClothingItem>();
         public ICollection<Outfit> Outfits { get; set; } = new List<Outfit>();

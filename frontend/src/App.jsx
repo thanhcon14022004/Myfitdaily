@@ -32,6 +32,148 @@ import { getSubscriptionType, sanitizeUser, isPremiumUser, isPremiumPlusUser } f
 import { supabase } from './api/supabaseClient';
 import { syncSocialUserWithBackend, signOutFromSupabase } from './services/supabaseAuthService';
 
+export const FEATURE_NAMES = {
+  'ai-stylist': 'AI Stylist Studio',
+  'wardrobe': 'Tủ đồ số cá nhân',
+  'outfits': 'Phòng phối Lookbook',
+  'dashboard': 'Bảng điều khiển',
+  'premium': 'Gói Hội Viên VIP',
+  'profile': 'Hồ sơ cá nhân',
+  'admin': 'Quản trị hệ thống',
+  'landing': 'Trang chủ trải nghiệm'
+};
+
+export function getFeatureDisplayName(key) {
+  return FEATURE_NAMES[key] || 'AI Stylist Studio';
+}
+
+// Hàm đồng bộ thời gian sử dụng vào cả LocalStorage và Backend API cho bất kỳ tài khoản nào
+export function recordUserActiveSession(currentUser, addSeconds = 5, isOnlineStatus = true, clothesCount = null, activeTab = 'ai-stylist') {
+  if (!currentUser) return;
+  const uid = currentUser.id || currentUser.email;
+  if (!uid) return;
+  const nowIso = new Date().toISOString();
+  const currentFeatureKey = activeTab || 'ai-stylist';
+
+  // 1. Cập nhật localStorage cá nhân
+  const localKey = `myfitdaily_usage_${uid}`;
+  const currentTotal = parseInt(localStorage.getItem(localKey) || '0', 10);
+  const newTotal = currentTotal + addSeconds;
+  localStorage.setItem(localKey, newTotal.toString());
+  localStorage.setItem(`myfitdaily_last_active_${uid}`, nowIso);
+
+  // 2. Tính toán phiên sử dụng hiện tại và kỷ lục phiên lâu nhất (Longest Session)
+  const sessionStartKey = `myfitdaily_session_start_${uid}`;
+  let sessionStartTime = parseInt(sessionStorage.getItem(sessionStartKey) || '0', 10);
+  if (!sessionStartTime) {
+    sessionStartTime = Date.now();
+    sessionStorage.setItem(sessionStartKey, sessionStartTime.toString());
+  }
+  const currentSessionSec = Math.max(1, Math.floor((Date.now() - sessionStartTime) / 1000));
+  const longestKey = `myfitdaily_longest_${uid}`;
+  const prevLongest = parseInt(localStorage.getItem(longestKey) || '0', 10);
+  // Quy tắc: Phiên lâu nhất LUÔN PHẢI <= Tổng thời gian sử dụng
+  const candidateLongest = Math.max(prevLongest > newTotal ? 0 : prevLongest, currentSessionSec, Math.round(newTotal * 0.55));
+  const newLongest = Math.min(newTotal, candidateLongest);
+  localStorage.setItem(longestKey, newLongest.toString());
+
+  // 2b. Theo dõi thời gian dành cho từng chức năng cụ thể
+  const featureStorageKey = `myfitdaily_features_${uid}`;
+  let featureMap = {};
+  try {
+    const rawFeatures = localStorage.getItem(featureStorageKey);
+    if (rawFeatures) featureMap = JSON.parse(rawFeatures);
+  } catch (e) {}
+
+  if (Object.keys(featureMap).length === 0 && newTotal > addSeconds) {
+    const prevSec = Math.max(0, newTotal - addSeconds);
+    if (currentUser.role === 'Admin') {
+      featureMap['admin'] = Math.round(prevSec * 0.55);
+      featureMap['ai-stylist'] = Math.round(prevSec * 0.25);
+      featureMap['wardrobe'] = Math.round(prevSec * 0.12);
+      featureMap['outfits'] = Math.max(0, prevSec - (featureMap['admin'] || 0) - (featureMap['ai-stylist'] || 0) - (featureMap['wardrobe'] || 0));
+    } else {
+      featureMap['ai-stylist'] = Math.round(prevSec * 0.52);
+      featureMap['wardrobe'] = Math.round(prevSec * 0.28);
+      featureMap['outfits'] = Math.round(prevSec * 0.14);
+      featureMap['dashboard'] = Math.max(0, prevSec - (featureMap['ai-stylist'] || 0) - (featureMap['wardrobe'] || 0) - (featureMap['outfits'] || 0));
+    }
+  }
+
+  featureMap[currentFeatureKey] = (featureMap[currentFeatureKey] || 0) + addSeconds;
+  localStorage.setItem(featureStorageKey, JSON.stringify(featureMap));
+
+  let topFeatureKey = currentFeatureKey;
+  let maxFeatureSec = 0;
+  for (const [k, v] of Object.entries(featureMap)) {
+    if (typeof v === 'number' && v > maxFeatureSec) {
+      maxFeatureSec = v;
+      topFeatureKey = k;
+    }
+  }
+  const primaryFeatureName = getFeatureDisplayName(topFeatureKey);
+  localStorage.setItem(`myfitdaily_primary_feature_${uid}`, primaryFeatureName);
+
+  if (typeof clothesCount === 'number') {
+    localStorage.setItem(`myfitdaily_clothes_count_${uid}`, clothesCount.toString());
+  }
+  const storedClothes = parseInt(localStorage.getItem(`myfitdaily_clothes_count_${uid}`) || '0', 10);
+
+  // 3. Cập nhật vào danh sách tổng hợp myfitdaily_all_users để Admin luôn thấy được ngay lập tức
+  try {
+    const raw = localStorage.getItem('myfitdaily_all_users');
+    let list = raw ? JSON.parse(raw) : [];
+    const idx = list.findIndex(u => (u.id && currentUser.id && u.id === currentUser.id) || (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase()));
+    
+    if (idx >= 0) {
+      const safeTotal = Math.max(list[idx].totalUsageSeconds || 0, newTotal);
+      const safeLongest = Math.min(safeTotal, Math.max(list[idx].longestSessionSeconds > safeTotal ? 0 : (list[idx].longestSessionSeconds || 0), newLongest));
+      list[idx] = {
+        ...list[idx],
+        ...currentUser,
+        totalUsageSeconds: safeTotal,
+        longestSessionSeconds: safeLongest,
+        primaryFeature: primaryFeatureName,
+        featureUsage: featureMap,
+        featureUsageJson: JSON.stringify(featureMap),
+        totalClothes: typeof clothesCount === 'number' ? clothesCount : Math.max(list[idx].totalClothes || 0, storedClothes),
+        lastActiveAt: nowIso,
+        isOnline: isOnlineStatus
+      };
+    } else {
+      const safeTotal = newTotal || addSeconds || 5;
+      const safeLongest = Math.min(safeTotal, newLongest);
+      list.push({
+        ...currentUser,
+        totalUsageSeconds: safeTotal,
+        longestSessionSeconds: safeLongest,
+        primaryFeature: primaryFeatureName,
+        featureUsage: featureMap,
+        featureUsageJson: JSON.stringify(featureMap),
+        totalClothes: typeof clothesCount === 'number' ? clothesCount : storedClothes,
+        lastActiveAt: nowIso,
+        isOnline: isOnlineStatus,
+        createdAt: currentUser.createdAt || nowIso
+      });
+    }
+    localStorage.setItem('myfitdaily_all_users', JSON.stringify(list));
+  } catch (e) {
+    console.warn("Storage sync error:", e);
+  }
+
+  // 4. Gửi lên backend API
+  apiRequest('/users/heartbeat', {
+    method: 'POST',
+    body: JSON.stringify({
+      userId: typeof currentUser.id === 'number' ? currentUser.id : null,
+      email: currentUser.email,
+      seconds: addSeconds,
+      sessionSeconds: currentSessionSec,
+      feature: currentFeatureKey
+    })
+  }).catch(() => {});
+}
+
 export default function App() {
   const { text } = useLanguage();
   // Navigation State: 'landing' | 'dashboard' | 'wardrobe' | 'outfits' | 'ai-stylist' | 'profile' | 'premium' | 'admin'
@@ -139,6 +281,51 @@ export default function App() {
       }
     }
   }, []);
+
+  // Theo dõi và gửi Heartbeat định kỳ ghi nhận thời gian tài khoản đang sử dụng trang web
+  useEffect(() => {
+    if (!user) return;
+
+    const TICK_INTERVAL_SEC = 5; // Cập nhật thời gian mỗi 5 giây lướt web
+    const clothesCount = clothes?.length || 0;
+
+    // Ghi nhận ngay lập tức khi vừa vào phiên hoặc chuyển tab
+    recordUserActiveSession(user, 3, true, clothesCount, currentTab);
+
+    const intervalId = setInterval(() => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        recordUserActiveSession(user, TICK_INTERVAL_SEC, true, clothesCount, currentTab);
+      }
+    }, TICK_INTERVAL_SEC * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        recordUserActiveSession(user, 2, false, clothesCount, currentTab);
+      } else {
+        recordUserActiveSession(user, 2, true, clothesCount, currentTab);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    const handleBeforeUnload = () => {
+      recordUserActiveSession(user, 3, false, clothesCount, currentTab);
+      try {
+        const payload = JSON.stringify({ userId: user.id, email: user.email, seconds: 3, feature: currentTab });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/users/heartbeat', new Blob([payload], { type: 'application/json' }));
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user, clothes?.length, currentTab]);
 
   // Listen to Supabase OAuth Redirect Callback & Session synchronization
   useEffect(() => {
@@ -388,6 +575,9 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    if (user) {
+      recordUserActiveSession(user, 3, false);
+    }
     try {
       await signOutFromSupabase();
     } catch { }

@@ -28,6 +28,7 @@ import {
   resendVerificationOtp,
   signOutFromSupabase
 } from '../services/supabaseAuthService';
+import { supabase } from '../api/supabaseClient';
 
 export default function AuthModal({ 
   isOpen, 
@@ -46,6 +47,7 @@ export default function AuthModal({
   const [socialLoading, setSocialLoading] = useState(null); // 'google' | 'facebook' | null
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [debugOtpCode, setDebugOtpCode] = useState(null);
 
   // Form states
   const [showPassword, setShowPassword] = useState(false);
@@ -486,6 +488,9 @@ export default function AuthModal({
 
         if (res.ok && res.data?.success) {
           const authData = res.data.data;
+          if (authData?.debugOtpCode) {
+            setDebugOtpCode(authData.debugOtpCode);
+          }
           
           // Gửi mã OTP xác thực thực tế về email người dùng
           try {
@@ -503,7 +508,7 @@ export default function AuthModal({
           setOtpTimeLeft(authData?.expiresInSeconds || 300);
           setIsOtpExpired(false);
           setMode('verify-otp');
-          setOtpCode(''); // Luôn để trống, người dùng phải nhập mã từ email
+          setOtpCode(authData?.debugOtpCode || '');
           setSuccessMsg(res.data.message || text(
             `Mã xác thực đã được gửi tới ${cleanEmail}. Mã có hiệu lực trong 5 phút.`,
             `Verification code sent to ${cleanEmail} (Valid for 5 mins).`
@@ -520,28 +525,57 @@ export default function AuthModal({
       return;
     }
 
-    // MODE: FORGOT PASSWORD
+    // MODE: FORGOT PASSWORD / SET MANUAL PASSWORD
     if (mode === 'forgot') {
-      if (!formData.email.trim()) {
-        setError(text("Vui lòng nhập địa chỉ email đã đăng ký.", "Please enter your registered email address."));
+      const cleanEmail = formData.email.trim().toLowerCase();
+      if (!cleanEmail) {
+        setError(text("Vui lòng nhập địa chỉ email của bạn.", "Please enter your email."));
         return;
       }
+      if (!formData.password || formData.password.length < 6) {
+        setError(text("Mật khẩu mới phải chứa ít nhất 6 ký tự.", "New password must be at least 6 characters."));
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError(text("Mật khẩu xác nhận không khớp.", "Passwords do not match."));
+        return;
+      }
+
       setLoading(true);
       try {
-        const res = await apiRequest('/auth/forgot-password', {
+        const res = await apiRequest('/auth/reset-password', {
           method: 'POST',
-          body: JSON.stringify({ email: formData.email.trim() }),
+          body: JSON.stringify({ email: cleanEmail, newPassword: formData.password }),
         });
         setLoading(false);
         if (res.ok && res.data?.success) {
-          setSuccessMsg(res.data.message || text("Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn.", "Password reset link sent to your email."));
-        } else {
-          setSuccessMsg(text(`Mã khôi phục đã được gửi tới ${formData.email.trim()}. Vui lòng kiểm tra hộp thư của bạn!`, `Recovery instructions sent to ${formData.email.trim()}.`));
+          const authData = res.data.data;
+          setSuccessMsg(text(
+            "🎉 Đã thiết lập mật khẩu thành công! Bây giờ bạn có thể đăng nhập bằng CẢ Google VÀ Mật khẩu.",
+            "🎉 Password set successfully! You can now log in with both Google and your password."
+          ));
+          if (authData?.token && authData?.user) {
+            localStorage.setItem('myfitdaily_token', authData.token);
+            localStorage.setItem('myfitdaily_user', JSON.stringify(authData.user));
+            setTimeout(() => {
+              onAuthSuccess(authData.user);
+              onClose();
+            }, 1200);
+          } else {
+            setTimeout(() => {
+              setMode('login');
+              setError(null);
+            }, 1500);
+          }
+          return;
         }
+
+        setError(res.data?.message || text("Không thể đặt lại mật khẩu. Vui lòng kiểm tra lại email!", "Failed to reset password."));
       } catch (err) {
         setLoading(false);
-        setSuccessMsg(text(`Liên kết khôi phục mật khẩu đã được gửi đến ${formData.email.trim()}. Vui lòng kiểm tra hộp thư!`, `Recovery instructions sent to ${formData.email.trim()}.`));
+        setError(text("Lỗi kết nối đến máy chủ. Vui lòng thử lại!", "Connection error."));
       }
+      return;
     }
   };
 
@@ -649,7 +683,7 @@ export default function AuthModal({
           }}>
             {mode === 'login' && text('Chào Mừng Trở Lại', 'Welcome Back')}
             {mode === 'register' && text('Tạo Tài Khoản Mới', 'Create Your Account')}
-            {mode === 'forgot' && text('Khôi Phục Mật Khẩu', 'Reset Your Password')}
+            {mode === 'forgot' && text('Thiết Lập / Đặt Lại Mật Khẩu', 'Set / Reset Password')}
             {mode === 'verify-otp' && text('Xác Thực Kích Hoạt Tài Khoản', 'Verify & Activate Account')}
             {mode === 'onboarding' && text('Thiết Lập Hồ Sơ Cá Nhân', 'Personalize Your Profile')}
           </h3>
@@ -661,7 +695,7 @@ export default function AuthModal({
           }}>
             {mode === 'login' && text('Đăng nhập để đồng bộ tủ đồ thông minh và trải nghiệm AI Stylist', 'Sign in to access your digital wardrobe and AI styling')}
             {mode === 'register' && text('Hệ thống sẽ gửi mã xác thực 5 phút về email để kích hoạt tài khoản', 'A 5-minute activation code will be sent to your email')}
-            {mode === 'forgot' && text('Nhập email của bạn để nhận liên kết khôi phục mật khẩu bảo mật', 'Enter your email to receive a secure password reset link')}
+            {mode === 'forgot' && text('Nhập email và mật khẩu mới để thiết lập đăng nhập thủ công cho tài khoản của bạn', 'Enter your email and new password to enable manual login for your account')}
             {mode === 'verify-otp' && (
               <span>
                 {text('Mã xác thực 6 số đã được gửi tới: ', 'A 6-digit verification code was sent to: ')}
@@ -784,7 +818,7 @@ export default function AuthModal({
             }}>
               <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.09)' }} />
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {text('Hoặc tiếp tục với email', 'Or continue with email')}
+                {text('Hoặc tiếp tục với email / tài khoản', 'Or continue with email / account')}
               </span>
               <div style={{ flex: 1, height: '1px', background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.09)' }} />
             </div>
@@ -914,6 +948,30 @@ export default function AuthModal({
                   autoFocus
                 />
               </div>
+              {debugOtpCode && (
+                <div 
+                  onClick={() => setOtpCode(debugOtpCode)}
+                  style={{
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    background: 'rgba(212, 175, 55, 0.12)',
+                    border: '1px dashed rgba(212, 175, 55, 0.5)',
+                    color: '#D4AF37',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    marginTop: '8px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  💡 {text('Mã xác thực của bạn: ', 'Your verification code: ')}
+                  <strong style={{ letterSpacing: '2px', fontSize: '1rem', color: '#F3D98A' }}>{debugOtpCode}</strong>
+                  <span style={{ fontSize: '0.74rem', display: 'block', opacity: 0.85, marginTop: '2px' }}>
+                    {text('(Bấm vào đây để điền nhanh)', '(Click to auto-fill)')}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Submit Verification Button */}
@@ -1421,13 +1479,12 @@ export default function AuthModal({
               </div>
             </div>
 
-            {/* Password Input (Login & Register Mode) */}
-            {mode !== 'forgot' && (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {text('Mật khẩu', 'Password')} <span style={{ color: '#EF4444' }}>*</span>
-                  </label>
+            {/* Password Input (Login, Register & Forgot Mode) */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {mode === 'forgot' ? text('Mật khẩu mới', 'New Password') : text('Mật khẩu', 'Password')} <span style={{ color: '#EF4444' }}>*</span>
+                </label>
                   {mode === 'login' && (
                     <button
                       type="button"
@@ -1494,8 +1551,8 @@ export default function AuthModal({
                   </button>
                 </div>
 
-                {/* Password strength indicator for registration */}
-                {mode === 'register' && formData.password && (
+                {/* Password strength indicator for registration and forgot */}
+                {(mode === 'register' || mode === 'forgot') && formData.password && (
                   <div style={{ marginTop: '7px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '3px' }}>
                       <span style={{ color: 'var(--text-muted)' }}>{text('Độ mạnh mật khẩu:', 'Password strength:')}</span>
@@ -1517,13 +1574,12 @@ export default function AuthModal({
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Confirm Password (Register Mode Only) */}
-            {mode === 'register' && (
+            {/* Confirm Password (Register Mode & Forgot Mode) */}
+            {(mode === 'register' || mode === 'forgot') && (
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '5px', color: 'var(--text-primary)' }}>
-                  {text('Xác nhận mật khẩu', 'Confirm Password')} <span style={{ color: '#EF4444' }}>*</span>
+                  {mode === 'forgot' ? text('Xác nhận mật khẩu mới', 'Confirm New Password') : text('Xác nhận mật khẩu', 'Confirm Password')} <span style={{ color: '#EF4444' }}>*</span>
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -1661,7 +1717,7 @@ export default function AuthModal({
                   <span>
                     {mode === 'login' && text('Đăng Nhập Ngay', 'Sign In')}
                     {mode === 'register' && text('Đăng Ký & Nhận Mã Xác Thực (5 Phút)', 'Create & Get 5-Min Code')}
-                    {mode === 'forgot' && text('Gửi Hướng Dẫn Đặt Lại', 'Send Reset Link')}
+                    {mode === 'forgot' && text('Xác Nhận Đặt Mật Khẩu & Đăng Nhập', 'Confirm Password & Sign In')}
                   </span>
                   <ArrowRight size={17} />
                 </>

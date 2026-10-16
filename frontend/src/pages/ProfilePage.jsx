@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   User, Mail, Shield, Crown, Check, Save, Activity, 
-  Ruler, Sparkles, AlertCircle, Info, Flame, ChevronRight 
+  Ruler, Sparkles, AlertCircle, Info, Flame, ChevronRight,
+  KeyRound, Lock
 } from 'lucide-react';
 import { apiRequest } from '../api/apiClient';
 import { useLanguage } from '../context/LanguageContext';
@@ -96,6 +97,14 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [autoDetectNotice, setAutoDetectNotice] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Mật khẩu đăng nhập thủ công
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
 
   // Tính toán Realtime BMI & Tỷ lệ WHR
   const numHeight = parseFloat(height) || 0;
@@ -290,6 +299,44 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
       setErrors({ general: text('Không thể kết nối máy chủ. Vui lòng kiểm tra lại.', 'Unable to connect to server. Please try again.') });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError(text('Mật khẩu mới phải từ 6 ký tự trở lên.', 'Password must be at least 6 characters.'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError(text('Mật khẩu xác nhận không khớp.', 'Passwords do not match.'));
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await apiRequest('/users/set-password', {
+        method: 'POST',
+        body: JSON.stringify({ newPassword }),
+      });
+      setPasswordLoading(false);
+      if (res.ok && res.data?.success) {
+        setPasswordSuccess(text(
+          '🎉 Thiết lập mật khẩu thành công! Bây giờ bạn có thể đăng nhập bằng CẢ Google VÀ Mật khẩu.',
+          '🎉 Password set successfully! You can now log in with both Google and Password.'
+        ));
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordInput(false);
+      } else {
+        setPasswordError(res.data?.message || text('Không thể lưu mật khẩu. Vui lòng thử lại!', 'Cannot save password.'));
+      }
+    } catch {
+      setPasswordLoading(false);
+      setPasswordError(text('Lỗi kết nối đến máy chủ. Vui lòng thử lại!', 'Connection error.'));
     }
   };
 
@@ -1001,6 +1048,206 @@ export default function ProfilePage({ user, onUpdateUser, onNavigate }) {
               <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                 {selectedShapeObj.tips}
               </p>
+            </div>
+          </div>
+
+          {/* Section 5: PHƯƠNG THỨC ĐĂNG NHẬP & MẬT KHẨU (ĐĂNG NHẬP CẢ 2 CÁCH) */}
+          <div style={{
+            marginTop: '28px',
+            padding: '24px 22px',
+            borderRadius: 'var(--radius-md, 16px)',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--border-subtle)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  color: '#D4AF37',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <KeyRound size={20} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {text('5. Phương Thức Đăng Nhập & Bảo Mật', '5. Sign-in Methods & Security')}
+                  </h4>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {text('Hỗ trợ đăng nhập linh hoạt bằng cả Google OAuth và Email + Mật khẩu thủ công', 'Support sign-in with both Google OAuth and Email + Manual Password')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Google Status Badge */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              background: 'rgba(66, 133, 244, 0.08)',
+              border: '1px solid rgba(66, 133, 244, 0.25)',
+              marginBottom: '14px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <div>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {text('Đăng nhập bằng Google', 'Sign in with Google')}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
+                    {user?.email || text('Liên kết tài khoản Google', 'Connected Google Account')}
+                  </div>
+                </div>
+              </div>
+              <span style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#34D399',
+                background: 'rgba(16, 185, 129, 0.15)',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}>
+                ✓ {text('Sẵn sàng', 'Ready')}
+              </span>
+            </div>
+
+            {/* Manual Password Setup Section */}
+            <div style={{
+              padding: '14px 16px',
+              borderRadius: '12px',
+              background: 'rgba(212, 175, 55, 0.05)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: showPasswordInput ? '12px' : '0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Lock size={16} color="#D4AF37" />
+                  <span style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {text('Mật khẩu đăng nhập thủ công', 'Manual Login Password')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  id="btn-toggle-profile-password-form"
+                  onClick={() => {
+                    setShowPasswordInput(!showPasswordInput);
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#D4AF37',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0,
+                  }}
+                >
+                  {showPasswordInput ? text('Đóng lại', 'Close') : text('Thiết lập / Đổi mật khẩu', 'Set / Change Password')}
+                </button>
+              </div>
+
+              {passwordSuccess && (
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#34D399',
+                  fontSize: '0.82rem',
+                  marginTop: '10px',
+                }}>
+                  {passwordSuccess}
+                </div>
+              )}
+
+              {passwordError && (
+                <div style={{
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#F87171',
+                  fontSize: '0.82rem',
+                  marginTop: '10px',
+                }}>
+                  {passwordError}
+                </div>
+              )}
+
+              {showPasswordInput && (
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
+                    {text(
+                      'Sau khi đặt mật khẩu, bạn có thể đăng nhập bằng CẢ 2 CÁCH: hoặc bấm nút Google, hoặc gõ Email và Mật khẩu này.',
+                      'After setting a password, you can sign in using BOTH Google OR your Email and this Password.'
+                    )}
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        {text('Mật khẩu mới (tối thiểu 6 ký tự)', 'New password (min 6 chars)')}
+                      </label>
+                      <input
+                        type="password"
+                        id="input-profile-new-password"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        style={{ width: '100%', padding: '9px 12px', borderRadius: '10px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        {text('Xác nhận mật khẩu mới', 'Confirm new password')}
+                      </label>
+                      <input
+                        type="password"
+                        id="input-profile-confirm-password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        style={{ width: '100%', padding: '9px 12px', borderRadius: '10px' }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                    <button
+                      type="button"
+                      id="btn-save-profile-password"
+                      onClick={handleSavePassword}
+                      disabled={passwordLoading || !newPassword}
+                      style={{
+                        padding: '9px 20px',
+                        borderRadius: '10px',
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #C27D5E 100%)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: passwordLoading || !newPassword ? 'not-allowed' : 'pointer',
+                        opacity: passwordLoading || !newPassword ? 0.6 : 1,
+                      }}
+                    >
+                      {passwordLoading ? text('Đang lưu...', 'Saving...') : text('Lưu Mật Khẩu Đăng Nhập', 'Save Sign-in Password')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

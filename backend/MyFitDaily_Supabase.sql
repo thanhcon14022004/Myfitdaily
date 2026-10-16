@@ -150,8 +150,8 @@ ON CONFLICT ("Id") DO NOTHING;
 -- Passwords: 'testnam', 'testnu', 'admin'
 INSERT INTO "Users" ("Id", "Email", "PasswordHash", "FullName", "Gender", "Role", "SubscriptionType", "Height", "Weight", "Chest", "Waist", "Hips", "BodyShape", "Age", "AgeGroup", "CreatedAt")
 VALUES 
-    (1, 'testnam', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Gentleman (Test Nam)', 'Nam', 'User', 'Premium', 178, 70, 98, 78, 95, 'Tam giác ngược', 24, 'GenZ', NOW()),
-    (2, 'testnu', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Fashionista (Test Nữ)', 'Nữ', 'User', 'Premium', 165, 52, 88, 64, 92, 'Đồng hồ cát', 22, 'GenZ', NOW()),
+    (1, 'nam.gentleman@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Gentleman (Test Nam)', 'Nam', 'User', 'Premium', 178, 70, 98, 78, 95, 'Tam giác ngược', 24, 'GenZ', NOW()),
+    (2, 'huong.fashionista@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Fashionista (Test Nữ)', 'Nữ', 'User', 'Premium', 165, 52, 88, 64, 92, 'Đồng hồ cát', 22, 'GenZ', NOW()),
     (3, 'admin', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Ban Quản Trị Hệ Thống', 'Nam', 'Admin', 'PremiumPlus', 175, 68, 96, 76, 94, 'Cân đối', 26, 'Millennial', NOW())
 ON CONFLICT ("Id") DO NOTHING;
 

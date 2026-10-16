@@ -23,6 +23,14 @@ namespace MYFITDAILY_EXE201_Group6.DTOs.User
         public int? Age { get; set; }
         public string? AgeGroup { get; set; }
 
+        // Thời gian hoạt động trên website
+        public long TotalUsageSeconds { get; set; } = 0;
+        public long LongestSessionSeconds { get; set; } = 0;
+        public string? PrimaryFeature { get; set; }
+        public string? FeatureUsageJson { get; set; }
+        public DateTime? LastActiveAt { get; set; }
+        public bool IsOnline => LastActiveAt.HasValue && (DateTime.UtcNow - LastActiveAt.Value).TotalMinutes <= 3;
+
         // Tính toán chỉ số BMI tự động
         public double? Bmi => (Height.HasValue && Height > 0 && Weight.HasValue && Weight > 0)
             ? Math.Round(Weight.Value / Math.Pow(Height.Value / 100.0, 2), 1)
