@@ -9,10 +9,7 @@ import {
   Filter, 
   Shirt, 
   Layers, 
-  RotateCcw,
-  Tag,
-  CheckSquare,
-  Square
+  Tag
 } from 'lucide-react';
 import { STYLIST_CLOTHES } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
@@ -42,7 +39,6 @@ export default function AddFromCatalogModal({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all'); // 'all', 1, 2, 3, 5
-  const [selectedColor, setSelectedColor] = useState('all');
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [addingIds, setAddingIds] = useState(new Set());
   const [justAddedIds, setJustAddedIds] = useState(new Set());
@@ -95,11 +91,6 @@ export default function AddFromCatalogModal({
         return false;
       }
 
-      // Lọc theo màu sắc
-      if (selectedColor !== 'all' && !item.color.toLowerCase().includes(selectedColor.toLowerCase())) {
-        return false;
-      }
-
       // Lọc theo từ khóa tìm kiếm (Tên áo, quần, giày, thương hiệu, màu sắc)
       if (searchQuery.trim()) {
         const queryNorm = removeVietnameseTones(searchQuery.trim());
@@ -119,7 +110,7 @@ export default function AddFromCatalogModal({
 
       return true;
     });
-  }, [catalogList, selectedCategory, selectedColor, searchQuery]);
+  }, [catalogList, selectedCategory, searchQuery]);
 
   if (!isOpen) return null;
 
@@ -232,20 +223,21 @@ export default function AddFromCatalogModal({
       alignItems: 'center',
       justifyContent: 'center',
       padding: '16px',
-      background: 'rgba(0, 0, 0, 0.85)',
-      backdropFilter: 'blur(10px)',
+      background: 'rgba(0, 0, 0, 0.88)',
+      backdropFilter: 'blur(12px)',
       animation: 'fadeIn 0.2s ease-out'
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '1040px',
-        maxHeight: '92vh',
+        maxWidth: '1120px',
+        height: '90vh',
+        maxHeight: '880px',
         background: isLight 
           ? '#FFFFFF' 
           : 'linear-gradient(165deg, #181C26 0%, #0F121A 100%)',
-        border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(212, 175, 55, 0.35)',
+        border: isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(212, 175, 55, 0.4)',
         borderRadius: '24px',
-        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(212, 175, 55, 0.1)',
+        boxShadow: '0 25px 70px rgba(0, 0, 0, 0.9), 0 0 35px rgba(212, 175, 55, 0.15)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -261,30 +253,31 @@ export default function AddFromCatalogModal({
             zIndex: 100,
             background: 'linear-gradient(135deg, #10B981, #059669)',
             color: '#FFFFFF',
-            padding: '10px 22px',
+            padding: '10px 24px',
             borderRadius: '999px',
-            fontSize: '0.88rem',
-            fontWeight: 700,
-            boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            boxShadow: '0 8px 25px rgba(16, 185, 129, 0.45)',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             animation: 'fadeIn 0.25s ease'
           }}>
-            <Check size={16} />
+            <Check size={18} strokeWidth={3} />
             <span>{toastMessage}</span>
           </div>
         )}
 
         {/* Modal Header */}
         <div style={{
-          padding: '24px 28px 18px',
+          padding: '24px 30px 18px',
           borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '16px',
+          background: isLight ? '#F8FAFC' : 'rgba(0, 0, 0, 0.25)'
         }}>
           <div>
             <div style={{
@@ -292,30 +285,30 @@ export default function AddFromCatalogModal({
               alignItems: 'center',
               gap: '6px',
               color: '#D4AF37',
-              fontSize: '0.78rem',
+              fontSize: '0.8rem',
               fontWeight: 800,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               marginBottom: '4px'
             }}>
-              <Sparkles size={14} /> {text('Kho Đồ Có Sẵn Trong Database', 'Built-in Catalog Database')}
+              <Sparkles size={15} /> {text('Kho Trang Phục Có Sẵn Trong Database', 'Built-in Catalog Database')}
             </div>
             <h3 style={{
               margin: 0,
-              fontSize: '1.45rem',
+              fontSize: '1.5rem',
               fontWeight: 800,
               color: isLight ? '#0F172A' : '#FFFFFF'
             }}>
-              {text('Thêm Món Đồ Chuẩn Vào Tủ Đồ', 'Add Ready-Made Items to Wardrobe')}
+              {text('Chọn Món Đồ Chuẩn Vào Tủ Đồ', 'Select Ready-Made Clothes for Wardrobe')}
             </h3>
             <p style={{
               margin: '4px 0 0',
-              fontSize: '0.85rem',
+              fontSize: '0.88rem',
               color: 'var(--text-secondary)'
             }}>
               {text(
-                'Duyệt hoặc tìm kiếm áo, quần, giày có sẵn trong hệ thống để thêm trực tiếp vào tủ đồ của bạn.',
-                'Browse or search ready-made tops, bottoms, and shoes to add straight to your wardrobe.'
+                'Thêm nhanh các mẫu áo sơ mi, áo thun, hoodie, quần tây, jeans, sneaker có sẵn mà không cần chụp ảnh.',
+                'Quickly add shirts, t-shirts, hoodies, trousers, jeans, and sneakers without taking photos.'
               )}
             </p>
           </div>
@@ -325,16 +318,16 @@ export default function AddFromCatalogModal({
             type="button"
             title={text('Đóng', 'Close')}
             style={{
-              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.08)',
+              background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.1)',
               border: 'none',
               borderRadius: '50%',
-              width: '38px',
-              height: '38px',
+              width: '40px',
+              height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: isLight ? '#475569' : '#9CA3AF',
+              color: isLight ? '#334155' : '#E5E7EB',
               transition: 'all 0.2s ease'
             }}
           >
@@ -344,23 +337,20 @@ export default function AddFromCatalogModal({
 
         {/* Search Bar & Filters Bar */}
         <div style={{
-          padding: '16px 28px',
-          background: isLight ? '#F8FAFC' : 'rgba(0, 0, 0, 0.2)',
-          borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.06)',
+          padding: '16px 30px',
+          background: isLight ? '#FFFFFF' : 'rgba(15, 18, 26, 0.95)',
+          borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px'
+          gap: '14px'
         }}>
-          {/* Search Box Input */}
-          <div style={{
-            position: 'relative',
-            width: '100%'
-          }}>
+          {/* Big Search Input */}
+          <div style={{ position: 'relative', width: '100%' }}>
             <Search 
-              size={18} 
+              size={20} 
               style={{
                 position: 'absolute',
-                left: '14px',
+                left: '16px',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 color: '#D4AF37'
@@ -371,17 +361,18 @@ export default function AddFromCatalogModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={text(
-                'Tìm kiếm tên áo, quần, giày (VD: Sơ mi trắng, Jeans, Hoodie, Polo, Sneaker, Quần tây...)...',
-                'Search item by name (e.g., White shirt, Jeans, Hoodie, Polo, Sneaker, Trousers...)...'
+                'Tìm kiếm theo tên áo, quần, giày (VD: Sơ mi trắng, Jeans ống rộng, Hoodie, Polo, Quần tây, Sneaker...)...',
+                'Search item by name (e.g. White shirt, Wide-leg jeans, Hoodie, Polo, Trousers, Sneaker...)...'
               )}
               style={{
                 width: '100%',
-                padding: '12px 42px 12px 42px',
+                padding: '14px 44px 14px 48px',
                 borderRadius: '14px',
-                border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(212, 175, 55, 0.4)',
-                background: isLight ? '#FFFFFF' : '#12151D',
+                border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(212, 175, 55, 0.45)',
+                background: isLight ? '#FFFFFF' : '#10131B',
                 color: isLight ? '#0F172A' : '#FFFFFF',
-                fontSize: '0.92rem',
+                fontSize: '0.96rem',
+                fontWeight: 500,
                 outline: 'none',
                 boxShadow: isLight ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
                 transition: 'border-color 0.2s ease'
@@ -393,7 +384,7 @@ export default function AddFromCatalogModal({
                 onClick={() => setSearchQuery('')}
                 style={{
                   position: 'absolute',
-                  right: '12px',
+                  right: '14px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'transparent',
@@ -403,7 +394,7 @@ export default function AddFromCatalogModal({
                   padding: '4px'
                 }}
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             )}
           </div>
@@ -414,7 +405,7 @@ export default function AddFromCatalogModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: '10px'
+            gap: '12px'
           }}>
             {/* Category Pills */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -426,30 +417,30 @@ export default function AddFromCatalogModal({
                     type="button"
                     onClick={() => setSelectedCategory(tab.id)}
                     style={{
-                      padding: '7px 15px',
+                      padding: '8px 18px',
                       borderRadius: '999px',
-                      fontSize: '0.82rem',
+                      fontSize: '0.86rem',
                       fontWeight: isActive ? 800 : 600,
                       border: isActive 
-                        ? '1px solid #D4AF37' 
-                        : (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)'),
+                        ? '1.5px solid #D4AF37' 
+                        : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
                       background: isActive 
-                        ? (isLight ? 'rgba(212, 175, 55, 0.15)' : 'rgba(212, 175, 55, 0.2)') 
-                        : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.04)'),
+                        ? (isLight ? 'rgba(212, 175, 55, 0.18)' : 'rgba(212, 175, 55, 0.25)') 
+                        : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.05)'),
                       color: isActive 
                         ? (isLight ? '#B8860B' : '#FDE68A') 
-                        : (isLight ? '#475569' : '#9CA3AF'),
+                        : (isLight ? '#334155' : '#D1D5DB'),
                       cursor: 'pointer',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    {tab.label} <span style={{ opacity: 0.65, fontSize: '0.74rem' }}>({tab.count})</span>
+                    {tab.label} <span style={{ opacity: 0.75, fontSize: '0.78rem' }}>({tab.count})</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Batch Add Button (Hiển thị khi tích chọn nhiều món) */}
+            {/* Batch Add Button */}
             {selectedItemIds.length > 0 && (
               <button
                 type="button"
@@ -459,19 +450,19 @@ export default function AddFromCatalogModal({
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '12px',
-                  padding: '8px 18px',
-                  fontSize: '0.84rem',
+                  padding: '9px 20px',
+                  fontSize: '0.88rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 4px 14px rgba(212, 175, 55, 0.35)',
+                  gap: '8px',
+                  boxShadow: '0 4px 16px rgba(212, 175, 55, 0.35)',
                   transition: 'transform 0.15s ease'
                 }}
               >
-                <Plus size={15} />
-                <span>{text(`Thêm ${selectedItemIds.length} Món Đã Chọn`, `Add ${selectedItemIds.length} Selected`)}</span>
+                <Plus size={16} strokeWidth={3} />
+                <span>{text(`Thêm ${selectedItemIds.length} Món Đã Chọn Vào Tủ`, `Add ${selectedItemIds.length} Selected to Wardrobe`)}</span>
               </button>
             )}
           </div>
@@ -479,12 +470,13 @@ export default function AddFromCatalogModal({
 
         {/* Items Grid Content */}
         <div style={{
-          padding: '24px 28px',
+          padding: '24px 30px',
           overflowY: 'auto',
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-          gap: '18px'
+          gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+          gap: '22px',
+          alignContent: 'start'
         }}>
           {filteredCatalog.length === 0 ? (
             <div style={{
@@ -494,13 +486,13 @@ export default function AddFromCatalogModal({
               color: 'var(--text-muted)'
             }}>
               <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔍</div>
-              <h4 style={{ margin: '0 0 6px', fontSize: '1.1rem', color: isLight ? '#0F172A' : '#FFFFFF' }}>
+              <h4 style={{ margin: '0 0 6px', fontSize: '1.15rem', color: isLight ? '#0F172A' : '#FFFFFF' }}>
                 {text('Không tìm thấy trang phục phù hợp', 'No matching items found')}
               </h4>
-              <p style={{ margin: 0, fontSize: '0.86rem' }}>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
                 {text(
                   `Thử tìm kiếm với từ khóa khác như "sơ mi", "quần", "jeans", "hoodie", "sneaker"...`,
-                  `Try searching with terms like "shirt", "pants", "jeans", "hoodie", "sneaker"...`
+                  `Try searching with other terms like "shirt", "pants", "jeans", "hoodie", "sneaker"...`
                 )}
               </p>
             </div>
@@ -514,19 +506,20 @@ export default function AddFromCatalogModal({
                 <div
                   key={item.id}
                   style={{
-                    background: isLight ? '#FFFFFF' : '#141721',
+                    background: isLight ? '#FFFFFF' : '#141824',
                     border: inWardrobe 
-                      ? '1.5px solid rgba(16, 185, 129, 0.4)' 
+                      ? '1.5px solid rgba(16, 185, 129, 0.5)' 
                       : isSelected 
-                      ? '1.5px solid #D4AF37' 
-                      : (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)'),
-                    borderRadius: '16px',
+                      ? '2px solid #D4AF37' 
+                      : (isLight ? '1.5px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.1)'),
+                    borderRadius: '18px',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isLight ? '0 2px 8px rgba(0,0,0,0.04)' : '0 4px 14px rgba(0,0,0,0.2)',
-                    position: 'relative'
+                    minHeight: '340px',
+                    boxShadow: isLight ? '0 4px 12px rgba(0,0,0,0.06)' : '0 6px 20px rgba(0,0,0,0.3)',
+                    position: 'relative',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                   }}
                 >
                   {/* Select Checkbox (nếu chưa có trong tủ) */}
@@ -537,14 +530,14 @@ export default function AddFromCatalogModal({
                       title={isSelected ? text('Bỏ chọn', 'Deselect') : text('Chọn món này', 'Select item')}
                       style={{
                         position: 'absolute',
-                        top: '10px',
-                        left: '10px',
+                        top: '12px',
+                        left: '12px',
                         zIndex: 10,
-                        background: isSelected ? '#D4AF37' : 'rgba(0, 0, 0, 0.55)',
-                        border: isSelected ? 'none' : '1px solid rgba(255, 255, 255, 0.3)',
-                        borderRadius: '6px',
-                        width: '24px',
-                        height: '24px',
+                        background: isSelected ? '#D4AF37' : 'rgba(0, 0, 0, 0.65)',
+                        border: isSelected ? 'none' : '1.5px solid rgba(255, 255, 255, 0.4)',
+                        borderRadius: '7px',
+                        width: '26px',
+                        height: '26px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -554,39 +547,43 @@ export default function AddFromCatalogModal({
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      {isSelected ? <Check size={14} strokeWidth={3} /> : null}
+                      {isSelected ? <Check size={16} strokeWidth={3} /> : null}
                     </button>
                   )}
 
                   {/* Brand & Category Badge */}
                   <div style={{
                     position: 'absolute',
-                    top: '10px',
-                    right: '10px',
+                    top: '12px',
+                    right: '12px',
                     zIndex: 10,
-                    background: 'rgba(0, 0, 0, 0.65)',
+                    background: 'rgba(0, 0, 0, 0.72)',
                     backdropFilter: 'blur(6px)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(212, 175, 55, 0.35)',
                     color: '#FDE68A',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '4px 9px',
+                    borderRadius: '7px',
                     textTransform: 'uppercase',
                     letterSpacing: '0.04em'
                   }}>
                     {item.brand || item.categoryName}
                   </div>
 
-                  {/* Image Container */}
+                  {/* Image Container với chiều cao cố định rõ ràng */}
                   <div style={{
                     width: '100%',
-                    aspectRatio: '1 / 1.1',
-                    background: isLight ? '#F1F5F9' : '#0B0D13',
+                    height: '190px',
+                    minHeight: '190px',
+                    background: isLight 
+                      ? '#F1F5F9' 
+                      : 'linear-gradient(145deg, #1A1F2C 0%, #0E1119 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    overflow: 'hidden',
+                    padding: '14px',
+                    boxSizing: 'border-box',
                     position: 'relative'
                   }}>
                     <img
@@ -594,13 +591,21 @@ export default function AddFromCatalogModal({
                       alt={item.name}
                       loading="lazy"
                       onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/assets/clothes/shirt_white.svg';
+                        const img = e.currentTarget;
+                        if (img.dataset.fallbackApplied) return;
+                        img.dataset.fallbackApplied = 'true';
+                        const catId = Number(item.categoryId);
+                        img.src = catId === 2 || catId === 3 
+                          ? '/assets/clothes/jeans_blue.svg' 
+                          : (catId === 5 ? '/assets/clothes/shoes_sneaker.svg' : '/assets/clothes/shirt_white.svg');
                       }}
                       style={{
-                        width: '88%',
-                        height: '88%',
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
                         objectFit: 'contain',
+                        filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
                         transition: 'transform 0.3s ease'
                       }}
                     />
@@ -608,57 +613,65 @@ export default function AddFromCatalogModal({
 
                   {/* Item Details */}
                   <div style={{
-                    padding: '12px 14px 14px',
+                    padding: '14px 16px',
                     display: 'flex',
                     flexDirection: 'column',
                     flex: 1,
                     justifyContent: 'space-between',
-                    gap: '10px'
+                    gap: '12px'
                   }}>
                     <div>
-                      <h5 style={{
-                        margin: '0 0 4px',
-                        fontSize: '0.88rem',
+                      <h4 style={{
+                        margin: '0 0 6px',
+                        fontSize: '0.94rem',
                         fontWeight: 700,
-                        lineHeight: 1.35,
+                        lineHeight: 1.4,
                         color: isLight ? '#0F172A' : '#FFFFFF',
+                        minHeight: '2.6em',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden'
                       }}>
                         {item.name}
-                      </h5>
+                      </h4>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        fontSize: '0.74rem',
+                        fontSize: '0.78rem',
                         color: 'var(--text-muted)'
                       }}>
-                        <span>• {item.color}</span>
+                        <span style={{
+                          display: 'inline-block',
+                          width: '7px',
+                          height: '7px',
+                          borderRadius: '50%',
+                          backgroundColor: '#D4AF37'
+                        }} />
+                        <span>{item.color}</span>
                         {item.style && <span>• {item.style}</span>}
                       </div>
                     </div>
 
                     {/* Action Button: Thêm hoặc Đã Có */}
-                    <div>
+                    <div style={{ marginTop: 'auto' }}>
                       {inWardrobe ? (
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '6px',
-                          background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.16)',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          background: isLight ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.18)',
+                          border: '1.5px solid rgba(16, 185, 129, 0.45)',
                           color: '#10B981',
-                          borderRadius: '10px',
-                          padding: '7px 10px',
-                          fontSize: '0.78rem',
-                          fontWeight: 700
+                          borderRadius: '12px',
+                          padding: '9px 12px',
+                          fontSize: '0.84rem',
+                          fontWeight: 800
                         }}>
-                          <CheckCheck size={14} />
-                          <span>{text('Đã Có Trong Tủ', 'In Wardrobe')}</span>
+                          <CheckCheck size={16} />
+                          <span>{text('✓ Đã Có Trong Tủ Đồ', '✓ In Your Wardrobe')}</span>
                         </div>
                       ) : (
                         <button
@@ -674,18 +687,18 @@ export default function AddFromCatalogModal({
                             background: 'linear-gradient(135deg, #D4AF37 0%, #C27D5E 100%)',
                             color: '#FFFFFF',
                             border: 'none',
-                            borderRadius: '10px',
-                            padding: '8px 12px',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
+                            borderRadius: '12px',
+                            padding: '9px 14px',
+                            fontSize: '0.86rem',
+                            fontWeight: 800,
                             cursor: isAdding ? 'wait' : 'pointer',
-                            boxShadow: '0 3px 10px rgba(212, 175, 55, 0.25)',
-                            transition: 'all 0.2s ease',
+                            boxShadow: '0 4px 14px rgba(212, 175, 55, 0.3)',
+                            transition: 'all 0.15s ease',
                             opacity: isAdding ? 0.7 : 1
                           }}
                         >
-                          <Plus size={14} />
-                          <span>{isAdding ? text('Đang thêm...', 'Adding...') : text('+ Thêm Vào Tủ', '+ Add to Wardrobe')}</span>
+                          <Plus size={16} strokeWidth={2.5} />
+                          <span>{isAdding ? text('Đang lưu...', 'Saving...') : text('+ Thêm Vào Tủ Đồ', '+ Add to Wardrobe')}</span>
                         </button>
                       )}
                     </div>
@@ -698,19 +711,19 @@ export default function AddFromCatalogModal({
 
         {/* Modal Footer */}
         <div style={{
-          padding: '14px 28px',
+          padding: '16px 30px',
           borderTop: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
-          background: isLight ? '#F8FAFC' : 'rgba(0, 0, 0, 0.3)',
+          background: isLight ? '#F8FAFC' : 'rgba(0, 0, 0, 0.35)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '12px'
+          gap: '14px'
         }}>
-          <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            ✦ {text(`Hiện có ${filteredCatalog.length} món đồ sẵn sàng`, `Showing ${filteredCatalog.length} ready-made items`)}
+          <div style={{ fontSize: '0.86rem', color: 'var(--text-muted)' }}>
+            ✦ {text(`Đang hiển thị ${filteredCatalog.length} món đồ chuẩn có sẵn`, `Showing ${filteredCatalog.length} ready-made items`)}
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {selectedItemIds.length > 0 && (
               <button
                 type="button"
@@ -719,17 +732,18 @@ export default function AddFromCatalogModal({
                   background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
                   color: '#FFFFFF',
                   border: 'none',
-                  borderRadius: '10px',
-                  padding: '9px 20px',
-                  fontSize: '0.86rem',
+                  borderRadius: '12px',
+                  padding: '10px 22px',
+                  fontSize: '0.88rem',
                   fontWeight: 800,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(212, 175, 55, 0.3)'
                 }}
               >
-                <Plus size={15} />
+                <Plus size={16} strokeWidth={3} />
                 <span>{text(`Thêm ${selectedItemIds.length} món vào tủ`, `Add ${selectedItemIds.length} to wardrobe`)}</span>
               </button>
             )}
@@ -737,17 +751,17 @@ export default function AddFromCatalogModal({
               type="button"
               onClick={onClose}
               style={{
-                background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.1)',
+                background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.12)',
                 border: 'none',
-                borderRadius: '10px',
-                padding: '9px 20px',
-                fontSize: '0.86rem',
+                borderRadius: '12px',
+                padding: '10px 24px',
+                fontSize: '0.88rem',
                 fontWeight: 700,
                 color: isLight ? '#334155' : '#E5E7EB',
                 cursor: 'pointer'
               }}
             >
-              {text('Hoàn Tất', 'Done')}
+              {text('Đóng', 'Close')}
             </button>
           </div>
         </div>
