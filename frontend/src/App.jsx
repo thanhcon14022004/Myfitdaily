@@ -975,6 +975,8 @@ export default function App() {
               onDeleteClothing={handleDeleteClothing}
               onNavigate={setCurrentTab}
               user={user}
+              onAddClothing={handleAddClothing}
+              onBatchAddClothing={handleBatchAddClothing}
             />
           )}
 

@@ -16,6 +16,8 @@ import {
 import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
 import AddFromCatalogModal from '../components/AddFromCatalogModal';
+import ColorVariantModal from '../components/ColorVariantModal';
+import { Palette } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { sanitizeClothesForGender } from '../data/initialWardrobe';
@@ -71,6 +73,8 @@ export default function WardrobePage({
 
   // Modal duyệt và thêm đồ có sẵn từ database
   const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [colorModalItem, setColorModalItem] = useState(null);
 
   const colorOptions = [
     { label: text("Tất Cả", "All"), value: "all" },
@@ -265,6 +269,34 @@ export default function WardrobePage({
           >
             <Sparkles size={16} />
             <span>{text('Nhờ AI Phối Đồ', 'Ask AI to Style')}</span>
+          </button>
+
+          {/* Nút Gen Biến Thể Màu Cho Tủ Đồ */}
+          <button
+            type="button"
+            onClick={() => {
+              setColorModalItem(effectiveClothes[0] || null);
+              setIsColorModalOpen(true);
+            }}
+            id="btn-open-color-variant-modal"
+            style={{
+              padding: '11px 20px',
+              fontSize: '0.88rem',
+              borderRadius: 'var(--radius-full)',
+              background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.15), rgba(200, 149, 54, 0.15))',
+              border: '1.5px solid #f6cf70',
+              color: '#f6cf70',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(246, 207, 112, 0.2)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Palette size={16} />
+            <span>{text('Gen Biến Thể Màu', 'Gen Color Variants')}</span>
           </button>
 
           {/* Nút Chọn Đồ Có Sẵn Trong Database */}
@@ -727,6 +759,10 @@ export default function WardrobePage({
               isSelectionMode={isSelectionMode}
               isChecked={selectedIds.includes(item.id)}
               onToggleSelect={handleToggleSelect}
+              onOpenColorVariants={(item) => {
+                setColorModalItem(item);
+                setIsColorModalOpen(true);
+              }}
             />
           ))}
         </div>

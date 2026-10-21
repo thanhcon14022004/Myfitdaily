@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Check, RotateCcw, Save, Sparkles, UserRound } from 'lucide-react';
+import { Check, RotateCcw, Save, Sparkles, UserRound, Palette } from 'lucide-react';
+import ColorVariantModal, { FASHION_COLOR_PALETTE, resolveVariantImage } from '../components/ColorVariantModal';
 import VirtualMannequin from '../components/VirtualMannequin';
 import { getInitialClothesForGender, isDemoUser } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
@@ -26,11 +27,91 @@ function getItemSlot(item) {
   return 'top';
 }
 
-export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, onToggleFavorite, onDeleteOutfit, user }) {
+export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, onToggleFavorite, onDeleteOutfit, onDeleteClothing, onNavigate, user, onAddClothing, onBatchAddClothing }) {
   const { text } = useLanguage();
   const { isLight } = useTheme();
   const isDemo = isDemoUser(user) || !user;
-  const inventory = clothes?.length ? clothes : (isDemo ? getInitialClothesForGender(user?.gender) : []);
+  const [extraClothes, setExtraClothes] = useState([]);
+  const baseInventory = clothes?.length ? clothes : (isDemo ? getInitialClothesForGender(user?.gender) : []);
+  const inventory = useMemo(() => {
+    return [...extraClothes, ...baseInventory];
+  }, [extraClothes, baseInventory]);
+
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [colorModalSourceItem, setColorModalSourceItem] = useState(null);
+
+  const handleAddColorVariants = async (newVariants) => {
+    setExtraClothes(prev => [...newVariants, ...prev]);
+    if (onBatchAddClothing) {
+      await onBatchAddClothing(newVariants);
+    } else if (onAddClothing) {
+      for (const v of newVariants) {
+        await onAddClothing(v);
+      }
+    }
+    if (newVariants.length > 0) {
+      const first = newVariants[0];
+      const slot = getItemSlot(first);
+      if (slot) {
+        setSelection(prev => ({ ...prev, [slot]: first }));
+      }
+    }
+  };
+
+  const handleQuickSwitchColor = async (slotKey, colorPalette) => {
+    const currentItem = selection[slotKey];
+    if (!currentItem) return;
+
+    const targetColorName = colorPalette.name;
+    const targetNorm = targetColorName.toLowerCase();
+
+    const existingVariant = inventory.find(item => {
+      if (Number(item.categoryId) !== Number(currentItem.categoryId)) return false;
+      const colorNorm = (item.color || '').toLowerCase();
+      const nameNorm = (item.name || '').toLowerCase();
+      return colorNorm.includes(targetNorm) || nameNorm.includes(targetNorm);
+    });
+
+    if (existingVariant) {
+      setSelection(prev => ({
+        ...prev,
+        [slotKey]: existingVariant
+      }));
+      return;
+    }
+
+    const baseCleanName = currentItem.name
+      .replace(/\s*\b(Đen|Trắng|Xanh Navy|Xanh Nhạt|Xám Ghi|Xám|Be Cát|Be|Kem|Nâu Tây|Nâu|Xanh Rêu|Black|White|Navy|Blue|Grey|Beige)\b\s*/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const resolvedImg = resolveVariantImage(currentItem.categoryId, targetColorName, currentItem.imageUrl);
+
+    const newItem = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name: `${baseCleanName} ${targetColorName}`,
+      categoryId: currentItem.categoryId,
+      categoryName: currentItem.categoryName || (currentItem.categoryId === 1 ? 'Tops' : currentItem.categoryId === 2 ? 'Bottoms' : 'Shoes'),
+      price: currentItem.price || 299000,
+      priceFormatted: currentItem.priceFormatted || '299K',
+      platform: currentItem.platform || 'MyFitDaily Studio',
+      isAffiliate: false,
+      color: targetColorName,
+      style: currentItem.style || 'Smart Casual',
+      season: currentItem.season || 'AllSeason',
+      brand: currentItem.brand || 'STUDIO EDIT',
+      imageUrl: resolvedImg,
+      description: `${baseCleanName} phiên bản màu ${targetColorName} cao cấp.`
+    };
+
+    setExtraClothes(prev => [newItem, ...prev]);
+    setSelection(prev => ({
+      ...prev,
+      [slotKey]: newItem
+    }));
+
+    onAddClothing?.(newItem);
+  };
 
   const defaults = useMemo(() => ({
     top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1) || null,
@@ -208,6 +289,77 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                 );
               })}
             </div>
+
+            {/* Thanh Đổi Màu Nhanh Cho Áo Đang Chọn */}
+            {selection.top && (
+              <div style={{
+                marginTop: 10,
+                padding: '8px 12px',
+                borderRadius: 10,
+                background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.04)',
+                border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255,255,255,0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <Palette size={13} color={isLight ? '#B8860B' : '#f6cf70'} />
+                  <span style={{ fontSize: 11, fontWeight: 800, color: isLight ? '#0F172A' : '#FFFFFF' }}>
+                    Đổi màu {selection.top.name?.split(' ')[0] || 'Áo'}:
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                  {FASHION_COLOR_PALETTE.map(pal => {
+                    const isCurrent = (selection.top.color || '').toLowerCase().includes(pal.name.toLowerCase()) ||
+                                      selection.top.name.toLowerCase().includes(pal.name.toLowerCase());
+                    return (
+                      <button
+                        key={pal.name}
+                        type="button"
+                        title={`Đổi sang màu ${pal.labelVi}`}
+                        onClick={() => handleQuickSwitchColor('top', pal)}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          background: pal.hex,
+                          border: isCurrent ? '2.5px solid #f6cf70' : `1.5px solid ${pal.border}`,
+                          cursor: 'pointer',
+                          boxShadow: isCurrent ? '0 0 7px rgba(246,207,112,0.9)' : '0 1px 3px rgba(0,0,0,0.15)',
+                          transform: isCurrent ? 'scale(1.2)' : 'scale(1)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setColorModalSourceItem(selection.top);
+                    setIsColorModalOpen(true);
+                  }}
+                  style={{
+                    border: 0,
+                    background: isLight ? '#FEF9C3' : 'rgba(246,207,112,0.15)',
+                    color: isLight ? '#92400E' : '#f6cf70',
+                    borderRadius: 6,
+                    padding: '3px 8px',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3
+                  }}
+                >
+                  <Sparkles size={11} />
+                  + Gen màu
+                </button>
+              </div>
+            )}
           </div>
         </section>
 
@@ -227,9 +379,35 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                 <div style={{ color: isLight ? '#B8860B' : '#f6cf70', fontSize: 11, fontWeight: 800, letterSpacing: '.12em' }}>TỦ ĐỒ CỦA BẠN</div>
                 <h2 style={{ fontSize: 20, margin: '4px 0 0', fontWeight: 800, color: 'var(--text-primary)' }}>Chọn món muốn thử</h2>
               </div>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {inventory.length} món có sẵn
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setColorModalSourceItem(selection.top || inventory[0]);
+                    setIsColorModalOpen(true);
+                  }}
+                  style={{
+                    border: 0,
+                    background: 'linear-gradient(135deg, #f6cf70, #c89536)',
+                    color: '#17130a',
+                    borderRadius: 8,
+                    padding: '5px 12px',
+                    fontSize: 11,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    boxShadow: '0 2px 8px rgba(246,207,112,0.2)'
+                  }}
+                >
+                  <Palette size={13} />
+                  Gen Biến Thể Màu
+                </button>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {inventory.length} món có sẵn
+                </span>
+              </div>
             </div>
 
             {/* Các tab phân loại đơn giản */}
@@ -313,6 +491,35 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
                           : (isLight ? '0 1px 3px rgba(0,0,0,0.06)' : 'none')
                       }}
                     >
+                      {/* Nút Gen màu cho món này */}
+                      <button
+                        type="button"
+                        title="Tạo thêm biến thể màu cho món đồ này"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setColorModalSourceItem(item);
+                          setIsColorModalOpen(true);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: 6,
+                          left: 6,
+                          background: isLight ? '#FFFFFF' : 'rgba(0,0,0,0.65)',
+                          border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
+                          width: 22,
+                          height: 22,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 3,
+                          color: isLight ? '#B8860B' : '#f6cf70'
+                        }}
+                      >
+                        <Palette size={11} />
+                      </button>
+
                       {/* Badge đã chọn */}
                       {isSelected && (
                         <div style={{
@@ -416,6 +623,15 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
           </div>
         </aside>
       </div>
+
+      {/* Modal Gen Biến Thể Màu Sắc */}
+      <ColorVariantModal
+        isOpen={isColorModalOpen}
+        onClose={() => setIsColorModalOpen(false)}
+        sourceItem={colorModalSourceItem}
+        existingClothes={inventory}
+        onAddVariants={handleAddColorVariants}
+      />
 
       <style>{`
         .model-stylist-grid {
