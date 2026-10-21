@@ -227,7 +227,7 @@ function analyzeImageProperties(imageUrl, filename = '', isMale = true) {
   });
 }
 
-export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
+export default function AddClothingModal({ isOpen, onClose, onAdd, user, onOpenCatalogModal }) {
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
   const categoryOptions = isMale ? CATEGORY_OPTIONS_MALE : CATEGORY_OPTIONS_FEMALE;
   const presetImages = isMale ? PRESET_IMAGES_MALE : PRESET_IMAGES_FEMALE;
@@ -586,6 +586,47 @@ export default function AddClothingModal({ isOpen, onClose, onAdd, user }) {
           borderRadius: 'var(--radius-lg)'
         }}
       >
+        {/* Gợi ý mở Kho Đồ Có Sẵn */}
+        {onOpenCatalogModal && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '12px 18px',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(194, 125, 94, 0.18))',
+            border: '1px solid rgba(212, 175, 55, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', color: '#FDE68A' }}>
+              <Sparkles size={16} color="#D4AF37" />
+              <span>Bạn muốn chọn nhanh trang phục có sẵn trong database của web?</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenCatalogModal();
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '7px 15px',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(212, 175, 55, 0.3)'
+              }}
+            >
+              Mở Kho Đồ Có Sẵn →
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{
           display: 'flex',

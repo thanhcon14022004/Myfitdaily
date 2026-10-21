@@ -4,6 +4,7 @@ import TopBar from './components/TopBar';
 import SearchModal from './components/SearchModal';
 import AuthModal from './components/AuthModal';
 import AddClothingModal from './components/AddClothingModal';
+import AddFromCatalogModal from './components/AddFromCatalogModal';
 import SettingsModal from './components/SettingsModal';
 
 import LandingPage from './pages/LandingPage';
@@ -212,6 +213,7 @@ export default function App() {
   const [pendingVerification, setPendingVerification] = useState(null);
   const [pendingOnboardingUser, setPendingOnboardingUser] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Clothing & Outfits state: User's own uploaded clothes (Starts empty for new users)
@@ -652,6 +654,37 @@ export default function App() {
     return true;
   };
 
+  const handleBatchAddClothing = async (items) => {
+    if (!items || items.length === 0) return true;
+    try {
+      const res = await apiRequest('/clothes/batch-create', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          items: items.map(item => ({
+            name: item.name,
+            categoryId: item.categoryId,
+            color: item.color,
+            style: item.style,
+            season: item.season,
+            imageUrl: item.imageUrl,
+            description: item.description,
+            brand: item.brand,
+            size: item.size
+          })) 
+        })
+      });
+      if (res.ok && res.data?.data && Array.isArray(res.data.data)) {
+        setClothes(prev => [...res.data.data, ...prev]);
+        return true;
+      }
+    } catch (err) {
+      console.warn("API batch add clothing error:", err);
+    }
+    const localItems = items.map((it, idx) => ({ ...it, id: Date.now() + idx }));
+    setClothes(prev => [...localItems, ...prev]);
+    return true;
+  };
+
   const handleDeleteClothing = async (id) => {
     try {
       await apiRequest(`/clothes/${id}`, { method: 'DELETE' });
@@ -926,6 +959,8 @@ export default function App() {
               onDeleteItem={handleDeleteClothing}
               onBulkDeleteClothes={handleBulkDeleteClothing}
               onOpenAddModal={() => setIsAddModalOpen(true)}
+              onAddClothing={handleAddClothing}
+              onBatchAddClothing={handleBatchAddClothing}
               onNavigate={setCurrentTab}
             />
           )}
@@ -1150,6 +1185,16 @@ export default function App() {
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddClothing}
         user={user}
+        onOpenCatalogModal={() => setIsCatalogModalOpen(true)}
+      />
+
+      <AddFromCatalogModal
+        isOpen={isCatalogModalOpen}
+        onClose={() => setIsCatalogModalOpen(false)}
+        user={user}
+        existingClothes={clothes}
+        onAddClothing={handleAddClothing}
+        onBatchAddClothing={handleBatchAddClothing}
       />
 
       <SearchModal

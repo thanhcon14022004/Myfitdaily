@@ -154,6 +154,48 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         /// <summary>
         /// Thêm một món đồ mới vào tủ đồ của người dùng
         /// </summary>
+        /// <summary>
+        /// Lấy danh mục các mẫu trang phục có sẵn trong hệ thống để người dùng chọn thêm vào tủ đồ
+        /// </summary>
+        [HttpGet("catalog")]
+        public async Task<IActionResult> GetCatalogClothes([FromQuery] string? gender = null)
+        {
+            try
+            {
+                var isMale = string.Equals(gender, "Nam", StringComparison.OrdinalIgnoreCase) ||
+                             string.Equals(gender, "Male", StringComparison.OrdinalIgnoreCase);
+
+                var seedItems = isMale ? DbSeeder.GetMaleSeedClothes(0) : DbSeeder.GetFemaleSeedClothes(0);
+                var categories = await _context.Categories.ToDictionaryAsync(c => c.Id, c => c.Name);
+
+                var dtoList = seedItems.Select(c => new ClothingItemDto
+                {
+                    Id = c.Id,
+                    UserId = 0,
+                    CategoryId = c.CategoryId,
+                    CategoryName = categories.GetValueOrDefault(c.CategoryId, c.CategoryId == 1 ? "Tops" : (c.CategoryId == 2 ? "Bottoms" : (c.CategoryId == 5 ? "Shoes" : "Outerwear"))),
+                    Name = c.Name,
+                    Color = c.Color,
+                    Style = c.Style,
+                    Season = c.Season,
+                    ImageUrl = c.ImageUrl,
+                    Description = c.Description,
+                    Brand = c.Brand,
+                    Size = c.Size,
+                    Price = c.Price,
+                    PriceFormatted = c.PriceFormatted,
+                    Platform = c.Platform,
+                    CreatedAt = c.CreatedAt
+                }).ToList();
+
+                return Ok(ApiResponse<List<ClothingItemDto>>.Ok(dtoList, "Lấy danh mục mẫu đồ có sẵn thành công"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse<object>.Fail("Lỗi khi tải danh mục đồ mẫu: " + ex.Message));
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddClothingItem([FromBody] CreateClothingItemDto request)
         {
