@@ -24,10 +24,19 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             string provider = "Email")
         {
             var normalizedEmail = email.Trim().ToLower();
+            var now = DateTime.UtcNow;
+
+            // Nếu đã có mã OTP đang còn hiệu lực cho email này (chưa hết 5 phút):
+            // Giữ nguyên mã OTP cũ và trả về thời gian còn lại, KHÔNG gửi lặp email làm phiền người dùng
+            if (_pendingStore.TryGetValue(normalizedEmail, out var existing) && now < existing.ExpiresAt)
+            {
+                var remainingSeconds = (int)Math.Max(1, (existing.ExpiresAt - now).TotalSeconds);
+                _logger.LogInformation("[EmailVerificationService]: Active pending registration exists for {Email}. Reusing OTP {Otp}, remaining {Remaining}s", normalizedEmail, existing.OtpCode, remainingSeconds);
+                return (existing.OtpCode, remainingSeconds);
+            }
             
             // Phát sinh mã OTP 6 chữ số ngẫu nhiên
             var otpCode = Random.Shared.Next(100000, 999999).ToString();
-            var now = DateTime.UtcNow;
             var expiresAt = now.AddMinutes(5); // Đúng 5 phút theo yêu cầu
 
             var pending = new PendingRegistration

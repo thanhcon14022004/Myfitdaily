@@ -327,13 +327,43 @@ export default function App() {
     };
   }, [user, clothes?.length, currentTab]);
 
+  // Refs để tránh gọi lặp lại xác thực/đồng bộ khi người dùng switch tab
+  const pendingVerificationRef = useRef(pendingVerification);
+  useEffect(() => {
+    pendingVerificationRef.current = pendingVerification;
+  }, [pendingVerification]);
+
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const syncedEmailRef = useRef(null);
+  const isSyncingRef = useRef(false);
+
   // Listen to Supabase OAuth Redirect Callback & Session synchronization
   useEffect(() => {
     let isMounted = true;
 
     const handleSocialSync = async (sessionUser, provider) => {
+      if (!sessionUser?.email || !isMounted) return;
+      const email = sessionUser.email.trim().toLowerCase();
+
+      // Bỏ qua nếu người dùng đã đăng nhập tài khoản này
+      if (userRef.current?.email?.toLowerCase() === email) return;
+
+      // Bỏ qua nếu đang chờ nhập OTP cho chính email này (tránh reset timer và spam email khi chuyển tab)
+      if (pendingVerificationRef.current?.verificationEmail?.toLowerCase() === email) return;
+
+      // Bỏ qua nếu email này vừa được đồng bộ
+      if (syncedEmailRef.current === email) return;
+
+      if (isSyncingRef.current) return;
+      isSyncingRef.current = true;
+      syncedEmailRef.current = email;
+
       try {
-        console.log("[MyFitDaily OAuth] Syncing user with backend:", sessionUser?.email);
+        console.log("[MyFitDaily OAuth] Syncing user with backend:", email);
         const synced = await syncSocialUserWithBackend(sessionUser, provider);
         if (!isMounted) return;
 
@@ -344,7 +374,7 @@ export default function App() {
           setAuthModalMode('verify-otp');
           setIsAuthModalOpen(true);
         } else if (synced?.isNewUser || synced?.needsProfileSetup) {
-          // Người dùng mới (đã xác thực qua link hoặc OAuth): Bắt buộc mở modal onboarding để nhập tên, giới tính, độ tuổi
+          // Người dùng mới: Bắt buộc mở modal onboarding để nhập tên, giới tính, độ tuổi
           setUser(synced);
           setPendingVerification(null);
           setPendingOnboardingUser(synced);
@@ -365,6 +395,9 @@ export default function App() {
         }
       } catch (e) {
         console.warn("[MyFitDaily OAuth] Could not sync OAuth session:", e);
+        syncedEmailRef.current = null;
+      } finally {
+        isSyncingRef.current = false;
       }
     };
 
@@ -376,35 +409,10 @@ export default function App() {
       }
     });
 
-    // 2. Fallback parser for URL hash if access_token was returned directly in URL
-    if (window.location.hash && window.location.hash.includes('access_token=')) {
-      try {
-        const params = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = params.get('access_token');
-        if (accessToken) {
-          const payloadBase64 = accessToken.split('.')[1];
-          if (payloadBase64) {
-            const tokenPayload = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
-            if (tokenPayload?.email) {
-              const syntheticUser = {
-                id: tokenPayload.sub || String(Date.now()),
-                email: tokenPayload.email,
-                user_metadata: tokenPayload.user_metadata || {},
-                app_metadata: tokenPayload.app_metadata || {}
-              };
-              handleSocialSync(syntheticUser, 'Google');
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Could not parse hash token:", err);
-      }
-    }
-
-    // 3. Auth listener for Supabase OAuth login events
+    // 2. Auth listener for Supabase OAuth login events (chỉ lắng nghe sự kiện đăng nhập mới SIGNED_IN)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("[MyFitDaily Supabase Auth Event]:", event, session?.user?.email);
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user && isMounted) {
+      if (event === 'SIGNED_IN' && session?.user && isMounted) {
         const provider = session.user.app_metadata?.provider === 'facebook' ? 'Facebook' : 'Google';
         await handleSocialSync(session.user, provider);
       }
@@ -575,6 +583,8 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    syncedEmailRef.current = null;
+    isSyncingRef.current = false;
     if (user) {
       recordUserActiveSession(user, 3, false);
     }

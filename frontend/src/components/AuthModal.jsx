@@ -82,29 +82,35 @@ export default function AuthModal({
   const [isOtpExpired, setIsOtpExpired] = useState(false);
   const [isWelcomeCelebrate, setIsWelcomeCelebrate] = useState(false);
   const timerRef = useRef(null);
+  const expireAtRef = useRef(null);
 
-  // Countdown timer logic for 5 minutes
+  // Countdown timer logic for 5 minutes (sử dụng mốc thời gian thực để không bị dừng hoặc nhảy lại khi chuyển tab)
   useEffect(() => {
-    if (mode === 'verify-otp' && otpTimeLeft > 0) {
+    if (mode === 'verify-otp') {
+      if (!expireAtRef.current) {
+        expireAtRef.current = Date.now() + (otpTimeLeft > 0 ? otpTimeLeft : 300) * 1000;
+      }
       setIsOtpExpired(false);
-      timerRef.current = setInterval(() => {
-        setOtpTimeLeft(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            setIsOtpExpired(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (otpTimeLeft === 0) {
-      setIsOtpExpired(true);
-    }
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [mode, otpTimeLeft]);
+      const updateTimer = () => {
+        const remaining = Math.max(0, Math.round((expireAtRef.current - Date.now()) / 1000));
+        setOtpTimeLeft(remaining);
+        if (remaining <= 0) {
+          setIsOtpExpired(true);
+          if (timerRef.current) clearInterval(timerRef.current);
+        }
+      };
+
+      updateTimer();
+      timerRef.current = setInterval(updateTimer, 1000);
+
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    } else {
+      expireAtRef.current = null;
+    }
+  }, [mode]);
 
   // Format seconds to mm:ss (e.g. 05:00)
   const formatTime = (seconds) => {
@@ -131,12 +137,21 @@ export default function AuthModal({
           weight: pendingOnboardingUser.weight || (pendingOnboardingUser.gender === 'Nữ' ? 52 : 68),
         });
       } else if (pendingVerification?.requiresVerification) {
+        const nextEmail = pendingVerification.verificationEmail || pendingVerification.email || '';
         setMode('verify-otp');
-        setOtpEmail(pendingVerification.verificationEmail || pendingVerification.email || '');
-        setOtpTimeLeft(pendingVerification.expiresInSeconds || 300);
-        setIsOtpExpired(false);
-        setOtpCode(''); // Luôn bắt đầu trống - người dùng phải vào email lấy mã thực tế!
-        if (pendingVerification.message) {
+        // Chỉ reset thời gian và xóa mã khi là một email hoàn toàn mới
+        setOtpEmail(prevEmail => {
+          if (prevEmail !== nextEmail) {
+            const initialSecs = pendingVerification.expiresInSeconds || 300;
+            expireAtRef.current = Date.now() + initialSecs * 1000;
+            setOtpTimeLeft(initialSecs);
+            setIsOtpExpired(false);
+            setOtpCode('');
+            return nextEmail;
+          }
+          return prevEmail;
+        });
+        if (pendingVerification.message && !successMsg) {
           setSuccessMsg(pendingVerification.message);
         }
       } else {
@@ -420,7 +435,9 @@ export default function AuthModal({
     const result = await resendVerificationOtp(otpEmail);
     setLoading(false);
     if (result.success) {
-      setOtpTimeLeft(result.expiresInSeconds || 300);
+      const newSecs = result.expiresInSeconds || 300;
+      expireAtRef.current = Date.now() + newSecs * 1000;
+      setOtpTimeLeft(newSecs);
       setIsOtpExpired(false);
       setOtpCode(''); // Luôn giữ trống, đợi người dùng kiểm tra mail
       setSuccessMsg(text("Mã xác nhận mới đã được gửi về email của bạn (Hiệu lực 5 phút).", "New code sent (Valid for 5 mins)."));
