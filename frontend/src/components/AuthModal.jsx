@@ -512,23 +512,14 @@ export default function AuthModal({
             setDebugOtpCode(authData.debugOtpCode);
           }
           
-          // Gửi mã OTP xác thực thực tế về email người dùng
-          try {
-            await supabase.auth.signInWithOtp({
-              email: cleanEmail,
-              options: { shouldCreateUser: true }
-            });
-            console.log("[MyFitDaily] Real OTP email sent to:", cleanEmail);
-          } catch (otpErr) {
-            console.warn("[MyFitDaily] Supabase OTP send note:", otpErr);
-          }
-
-          // Chuyển sang màn hình xác thực OTP 5 phút
+          // Chuyển sang màn hình xác thực OTP 5 phút (mã đã được gửi tự động qua Gmail SMTP của MyFitDaily)
           setOtpEmail(cleanEmail);
-          setOtpTimeLeft(authData?.expiresInSeconds || 300);
+          const initialSecs = authData?.expiresInSeconds || 300;
+          expireAtRef.current = Date.now() + initialSecs * 1000;
+          setOtpTimeLeft(initialSecs);
           setIsOtpExpired(false);
           setMode('verify-otp');
-          setOtpCode(authData?.debugOtpCode || '');
+          setOtpCode(''); // Luôn để trống để người dùng nhập mã từ hộp thư
           setSuccessMsg(res.data.message || text(
             `Mã xác thực đã được gửi tới ${cleanEmail}. Mã có hiệu lực trong 5 phút.`,
             `Verification code sent to ${cleanEmail} (Valid for 5 mins).`

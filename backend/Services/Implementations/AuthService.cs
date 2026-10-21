@@ -54,7 +54,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                 RequiresVerification = true,
                 VerificationEmail = normalizedEmail,
                 ExpiresInSeconds = expiresInSeconds,
-                DebugOtpCode = otpCode,
+                DebugOtpCode = null,
                 User = new UserDto
                 {
                     Email = normalizedEmail,
