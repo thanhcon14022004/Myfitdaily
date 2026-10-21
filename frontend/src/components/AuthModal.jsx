@@ -136,6 +136,9 @@ export default function AuthModal({
         setOtpTimeLeft(pendingVerification.expiresInSeconds || 300);
         setIsOtpExpired(false);
         setOtpCode(''); // Luôn bắt đầu trống - người dùng phải vào email lấy mã thực tế!
+        if (pendingVerification.message) {
+          setSuccessMsg(pendingVerification.message);
+        }
       } else {
         setMode(initialMode || 'login');
         setOnboardingUser(null);

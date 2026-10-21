@@ -231,48 +231,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                     : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80";
             }
 
-            // Nếu email đã được xác nhận trực tiếp qua email link (hoặc OAuth verified email): Kích hoạt và yêu cầu cập nhật hồ sơ
-            if (request.IsEmailConfirmed)
-            {
-                var newUser = new User
-                {
-                    Email = normalizedEmail,
-                    FullName = cleanName,
-                    Gender = isMale ? "Nam" : "Nữ",
-                    AvatarUrl = defaultAvatar,
-                    Role = "User",
-                    SubscriptionType = "Free",
-                    Age = null, // Chưa điền thông tin tuổi ban đầu
-                    AgeGroup = null,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString("N")),
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                try
-                {
-                    _context.Users.Add(newUser);
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[AuthService SocialLogin Save DB Warning]: {ex.Message}");
-                    newUser.Id = Math.Abs(normalizedEmail.GetHashCode()) % 10000 + 10;
-                }
-
-                var (token, expiresAt) = _tokenService.GenerateJwtToken(newUser);
-                return ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
-                {
-                    Token = token,
-                    TokenType = "Bearer",
-                    ExpiresAt = expiresAt,
-                    User = MapToUserDto(newUser, isNewUser: true),
-                    RequiresVerification = false,
-                    IsNewUser = true,
-                    NeedsProfileSetup = true
-                }, $"Đăng ký tài khoản thành công qua {request.Provider}. Vui lòng hoàn tất thông tin cá nhân.");
-            }
-
-            // NẾU CHƯA XÁC NHẬN: GỬI MÃ XÁC THỰC VỀ MAIL (HIỆU LỰC 5 PHÚT)
+            // Theo yêu cầu: Khi đăng ký hoặc đăng nhập lần đầu bằng Google/Facebook, luôn gửi email mã xác thực 6 số (5 phút) để kích hoạt tài khoản
             var (socialOtp, socialExpiresIn) = await _emailVerificationService.CreatePendingRegistrationAsync(
                 email: normalizedEmail,
                 fullName: cleanName,
@@ -295,7 +254,7 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
                     AvatarUrl = defaultAvatar,
                     Gender = isMale ? "Nam" : "Nữ"
                 }
-            }, $"Tài khoản chưa tồn tại. Mã xác nhận kích hoạt đã được gửi tới {normalizedEmail} (Hiệu lực trong 5 phút).");
+            }, $"Tài khoản chưa tồn tại hoặc đăng nhập lần đầu. Mã xác nhận kích hoạt đã được gửi tới {normalizedEmail} (Hiệu lực trong 5 phút).");
         }
 
         public async Task<ApiResponse<AuthResponseDto>> VerifyOtpAndRegisterAsync(VerifyOtpDto request)
