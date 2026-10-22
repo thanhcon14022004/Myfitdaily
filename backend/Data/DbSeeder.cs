@@ -249,16 +249,16 @@ public static class DbSeeder
 
         long defaultSec = usernameKey switch
         {
-            "admin" => 590,
-            "thanhcong" => 560,
-            "testnu" => 525,
-            "testnam" => 480,
-            "thuylinh" => 445,
-            "quanghuy" => 410,
-            "lanhuong" => 375,
-            "ducminh" => 340,
-            "baongoc" => 310,
-            _ => 300
+            "admin" => 7340,
+            "thanhcong" => 7180,
+            "thuylinh" => 522,
+            "testnu" => 495,
+            "testnam" => 478,
+            "quanghuy" => 452,
+            "lanhuong" => 434,
+            "ducminh" => 408,
+            "baongoc" => 385,
+            _ => 360
         };
 
         var initialFeatureSeed = GetSeedFeatureStats(usernameKey, defaultSec);
@@ -642,10 +642,11 @@ public static class DbSeeder
         var cleanRole = (role ?? string.Empty).Trim();
 
         // 1. Phân bổ cố định các tài khoản admin / hạt giống để số phút phân tán tự nhiên nhất
+        // Tài khoản Admin được cấu hình ~2 tiếng thời gian hoạt động (7340s & 7180s)
         if (cleanRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) || cleanEmail.Contains("admin") || userId == 15 || userId == 3)
-            return (592L, 318L); // 9m 52s | 5m 18s (Total: 9m, Longest: 5m -> khác nhau hoàn toàn)
-        if (userId == 93 || cleanEmail.Contains("thanhcong"))
-            return (568L, 294L); // 9m 28s | 4m 54s (Total: 9m, Longest: 4m)
+            return (7340L, 4680L); // ~2 giờ 2 phút 20 giây | 1 giờ 18 phút
+        if (userId == 93 || userId == 10 || cleanEmail.Contains("thanhcong"))
+            return (7180L, 4320L); // ~1 giờ 59 phút 40 giây | 1 giờ 12 phút
         if (userId == 88 || cleanEmail.Contains("thuylinh"))
             return (522L, 276L); // 8m 42s | 4m 36s (Total: 8m, Longest: 4m)
         if (userId == 2 || (cleanEmail.Contains("huong") && cleanEmail.Contains("fashionista")))

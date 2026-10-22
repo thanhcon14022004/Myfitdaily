@@ -41,6 +41,11 @@ CREATE TABLE IF NOT EXISTS "Users" (
     "AgeGroup" character varying(50),
     "SubscriptionExpiresAt" timestamp with time zone,
     "SubscriptionPeriod" character varying(20),
+    "TotalUsageSeconds" bigint DEFAULT 0,
+    "LongestSessionSeconds" bigint DEFAULT 0,
+    "PrimaryFeature" character varying(100),
+    "FeatureUsageJson" text,
+    "LastActiveAt" timestamp with time zone,
     "CreatedAt" timestamp with time zone NOT NULL DEFAULT NOW(),
     "UpdatedAt" timestamp with time zone,
     CONSTRAINT "PK_Users" PRIMARY KEY ("Id")
@@ -146,14 +151,34 @@ VALUES
     (6, NOW(), 'Túi xách, thắt lưng, mũ nón, kính', 6, TRUE, 'Accessories', NULL)
 ON CONFLICT ("Id") DO NOTHING;
 
--- 9. SEED ACCOUNTS (testnam, testnu, admin)
--- Passwords: 'testnam', 'testnu', 'admin'
-INSERT INTO "Users" ("Id", "Email", "PasswordHash", "FullName", "Gender", "Role", "SubscriptionType", "Height", "Weight", "Chest", "Waist", "Hips", "BodyShape", "Age", "AgeGroup", "CreatedAt")
+-- 9. SEED ACCOUNTS (Admin, Lead Tech, Demo, Stylists, Community)
+-- Passwords: 'admin', '123456', 'testnam', 'testnu' (BCrypt encoded)
+-- Tài khoản Admin được cấu hình ~2 tiếng thời gian hoạt động (7340s & 7180s)
+INSERT INTO "Users" ("Id", "Email", "PasswordHash", "FullName", "Gender", "Role", "SubscriptionType", "Height", "Weight", "Chest", "Waist", "Hips", "BodyShape", "Age", "AgeGroup", "TotalUsageSeconds", "LongestSessionSeconds", "PrimaryFeature", "FeatureUsageJson", "LastActiveAt", "CreatedAt")
 VALUES 
-    (1, 'nam.gentleman@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Gentleman (Test Nam)', 'Nam', 'User', 'Premium', 178, 70, 98, 78, 95, 'Tam giác ngược', 24, 'GenZ', NOW()),
-    (2, 'huong.fashionista@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Fashionista (Test Nữ)', 'Nữ', 'User', 'Premium', 165, 52, 88, 64, 92, 'Đồng hồ cát', 22, 'GenZ', NOW()),
-    (3, 'admin', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Ban Quản Trị Hệ Thống', 'Nam', 'Admin', 'PremiumPlus', 175, 68, 96, 76, 94, 'Cân đối', 26, 'Millennial', NOW())
-ON CONFLICT ("Id") DO NOTHING;
+    (3, 'admin@myfitdaily.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Ban Quản Trị Hệ Thống', 'Nam', 'Admin', 'PremiumPlus', 175, 68, 96, 76, 94, 'Cân đối', 26, 'Millennial', 7340, 4680, 'Quản trị hệ thống', '{"admin":4250,"ai-stylist":1620,"wardrobe":880,"outfits":590}', NOW(), NOW() - INTERVAL '45 days'),
+    (10, 'thanhcong.dev@myfitdaily.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Thành Công (Lead Tech Admin)', 'Nam', 'Admin', 'PremiumPlus', 172, 65, 92, 74, 92, 'Cân đối', 24, 'GenZ', 7180, 4320, 'AI Stylist Studio', '{"ai-stylist":3730,"admin":2010,"wardrobe":860,"outfits":580}', NOW() - INTERVAL '5 minutes', NOW() - INTERVAL '40 days'),
+    (4, 'thuylinh.vintage@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Hoàng Thùy Linh (Stylist Lookbook)', 'Nữ', 'User', 'Premium', 163, 49, 84, 62, 89, 'Đồng hồ cát', 23, 'GenZ', 522, 276, 'Phòng phối Lookbook', '{"outfits":260,"wardrobe":140,"ai-stylist":70,"dashboard":52}', NOW() - INTERVAL '2 minutes', NOW() - INTERVAL '30 days'),
+    (2, 'huong.fashionista@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Fashionista (Test Nữ)', 'Nữ', 'User', 'Premium', 165, 52, 88, 64, 92, 'Đồng hồ cát', 22, 'GenZ', 495, 252, 'AI Stylist Studio', '{"ai-stylist":300,"wardrobe":110,"outfits":55,"dashboard":30}', NOW() - INTERVAL '1 minute', NOW() - INTERVAL '20 days'),
+    (1, 'nam.gentleman@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Gentleman (Test Nam)', 'Nam', 'User', 'Premium', 178, 70, 98, 78, 95, 'Tam giác ngược', 24, 'GenZ', 478, 236, 'Tủ đồ số cá nhân', '{"wardrobe":260,"ai-stylist":135,"outfits":55,"dashboard":28}', NOW() - INTERVAL '12 minutes', NOW() - INTERVAL '25 days'),
+    (5, 'quanghuy.streetwear@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Nguyễn Quang Huy (KOL Thời Trang)', 'Nam', 'User', 'PremiumPlus', 176, 68, 95, 76, 94, 'Cân đối', 23, 'GenZ', 452, 224, 'AI Stylist Studio', '{"ai-stylist":240,"outfits":110,"wardrobe":70,"dashboard":32}', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '22 days'),
+    (6, 'lanhuong.chic@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Đặng Lan Hương (Fashion Blogger)', 'Nữ', 'User', 'Premium', 167, 51, 86, 63, 91, 'Cân đối', 24, 'GenZ', 434, 218, 'Tủ đồ số cá nhân', '{"wardrobe":240,"ai-stylist":105,"outfits":55,"dashboard":34}', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '25 days'),
+    (7, 'ducminh.minimal@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Lê Đức Minh (Minimalist Enthusiast)', 'Nam', 'User', 'Free', 174, 66, 93, 75, 93, 'Chữ nhật', 25, 'Millennial', 408, 202, 'AI Stylist Studio', '{"ai-stylist":220,"wardrobe":110,"outfits":50,"dashboard":28}', NOW() - INTERVAL '3 hours', NOW() - INTERVAL '28 days'),
+    (8, 'baongoc.genz@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Trần Bảo Ngọc (GenZ Lookbooker)', 'Nữ', 'User', 'Free', 160, 47, 82, 60, 88, 'Quả lê', 20, 'GenZ', 385, 190, 'Phòng phối Lookbook', '{"outfits":210,"ai-stylist":105,"wardrobe":45,"dashboard":25}', NOW() - INTERVAL '4 hours', NOW() - INTERVAL '15 days'),
+    (9, 'demo@myfitdaily.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Tài Khoản Trải Nghiệm Demo', 'Nam', 'User', 'Premium', 175, 68, 96, 76, 94, 'Cân đối', 24, 'GenZ', 360, 180, 'Tủ đồ số cá nhân', '{"wardrobe":180,"ai-stylist":110,"outfits":45,"dashboard":25}', NOW() - INTERVAL '30 minutes', NOW() - INTERVAL '35 days'),
+    (11, 'khanhhoang.classic@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Hoàng Quốc Khánh (Old Money Style)', 'Nam', 'User', 'Premium', 177, 72, 97, 77, 95, 'Tam giác ngược', 25, 'Millennial', 342, 172, 'Tủ đồ số cá nhân', '{"wardrobe":190,"ai-stylist":100,"outfits":35,"dashboard":17}', NOW() - INTERVAL '5 hours', NOW() - INTERVAL '17 days'),
+    (12, 'nguyenhoanglong@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Nguyễn Hoàng Long', 'Nam', 'User', 'Free', 173, 67, 94, 75, 93, 'Cân đối', 23, 'GenZ', 325, 160, 'AI Stylist Studio', '{"ai-stylist":180,"wardrobe":85,"outfits":35,"dashboard":25}', NOW() - INTERVAL '6 hours', NOW() - INTERVAL '14 days'),
+    (13, 'tranmaichi@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Trần Mai Chi', 'Nữ', 'User', 'Premium', 162, 48, 83, 61, 88, 'Đồng hồ cát', 21, 'GenZ', 338, 168, 'AI Stylist Studio', '{"ai-stylist":190,"wardrobe":90,"outfits":35,"dashboard":23}', NOW() - INTERVAL '7 hours', NOW() - INTERVAL '12 days'),
+    (14, 'letuankiet@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Lê Tuấn Kiệt', 'Nam', 'User', 'Free', 175, 69, 95, 76, 94, 'Tam giác ngược', 24, 'GenZ', 315, 155, 'Tủ đồ số cá nhân', '{"wardrobe":170,"ai-stylist":90,"outfits":35,"dashboard":20}', NOW() - INTERVAL '8 hours', NOW() - INTERVAL '10 days'),
+    (15, 'vuphuongthao@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Vũ Phương Thảo', 'Nữ', 'User', 'Premium', 164, 50, 85, 62, 90, 'Đồng hồ cát', 22, 'GenZ', 350, 175, 'Phòng phối Lookbook', '{"outfits":190,"ai-stylist":95,"wardrobe":45,"dashboard":20}', NOW() - INTERVAL '9 hours', NOW() - INTERVAL '8 days'),
+    (16, 'phamquocbao@gmail.com', '$2a$11$GgT/l9d2P4P0qZkWaP6G6eHh40a1j9eM0y5sS2fR5q8tZ1v3k7g0u', 'Phạm Quốc Bảo', 'Nam', 'User', 'Free', 176, 71, 96, 77, 95, 'Cân đối', 23, 'GenZ', 330, 165, 'AI Stylist Studio', '{"ai-stylist":180,"wardrobe":90,"outfits":35,"dashboard":25}', NOW() - INTERVAL '10 hours', NOW() - INTERVAL '6 days')
+ON CONFLICT ("Id") DO UPDATE SET 
+    "TotalUsageSeconds" = EXCLUDED."TotalUsageSeconds",
+    "LongestSessionSeconds" = EXCLUDED."LongestSessionSeconds",
+    "PrimaryFeature" = EXCLUDED."PrimaryFeature",
+    "FeatureUsageJson" = EXCLUDED."FeatureUsageJson",
+    "Role" = EXCLUDED."Role",
+    "SubscriptionType" = EXCLUDED."SubscriptionType";
 
 -- 10. SEED CLOTHING INVENTORY (TOPS, BOTTOMS, SHOES)
 INSERT INTO "ClothingItems" ("Id", "UserId", "CategoryId", "Name", "Color", "Style", "Season", "ImageUrl", "Description", "Brand", "Size", "Price", "PriceFormatted", "Platform", "IsAffiliate", "CreatedAt")

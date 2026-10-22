@@ -11,5 +11,10 @@ namespace MYFITDAILY_EXE201_Group6.Services.Interfaces
         /// Gửi email thông báo chào mừng sau khi người dùng nhấn Hoàn tất hồ sơ cá nhân
         /// </summary>
         Task<bool> SendWelcomeEmailAsync(string toEmail, string fullName, string? gender = null, int? age = null);
+
+        /// <summary>
+        /// Gửi email thông báo chung/quảng bá từ Admin Portal tới người dùng
+        /// </summary>
+        Task<bool> SendBroadcastNotificationAsync(string toEmail, string fullName, string subject, string content);
     }
 }

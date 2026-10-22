@@ -154,6 +154,73 @@ namespace MYFITDAILY_EXE201_Group6.Services.Implementations
             return await SendEmailInternalAsync(toEmail, subject, bodyHtml, "WELCOME");
         }
 
+        public async Task<bool> SendBroadcastNotificationAsync(string toEmail, string fullName, string subject, string content)
+        {
+            var emailSubject = string.IsNullOrWhiteSpace(subject) ? "[MyFitDaily] Thông báo từ ban quản trị hệ thống" : subject;
+            var recipientName = string.IsNullOrWhiteSpace(fullName) ? "Quý Thành Viên" : fullName;
+            
+            // Xử lý nội dung văn bản thành thẻ đoạn văn an toàn
+            var rawContent = content ?? "";
+            var normalized = rawContent.Replace("\r\n", "\n").Replace("\r", "\n");
+            var paragraphs = normalized.Split('\n');
+            var contentHtml = string.Join("", paragraphs.Select(p => 
+                string.IsNullOrWhiteSpace(p) 
+                    ? "<div style='height: 10px;'></div>" 
+                    : $"<p style='margin: 0 0 10px 0; font-size: 14px; line-height: 1.7; color: #E5E7EB;'>{WebUtility.HtmlEncode(p)}</p>"));
+
+            var appUrl = _config["AppUrl"] ?? "http://localhost:5173";
+
+            var bodyHtml = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <style>
+        body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0F121A; margin: 0; padding: 24px; color: #E5E7EB; }}
+        .container {{ max-width: 600px; margin: 0 auto; background: #181C26; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.4); padding: 36px 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }}
+        .header {{ text-align: center; margin-bottom: 24px; }}
+        .logo-text {{ font-size: 26px; font-weight: 800; color: #D4AF37; letter-spacing: -0.5px; text-transform: uppercase; }}
+        .tagline {{ font-size: 13px; color: #9CA3AF; margin-top: 4px; }}
+        .broadcast-badge {{ font-size: 13px; color: #F3D98A; font-weight: 700; background: rgba(212, 175, 55, 0.15); border: 1px solid rgba(212, 175, 55, 0.4); padding: 6px 16px; border-radius: 20px; display: inline-block; margin-top: 10px; }}
+        .title {{ font-size: 21px; font-weight: 700; color: #FFFFFF; text-align: center; margin: 24px 0 16px; line-height: 1.4; }}
+        .greeting {{ font-size: 15px; color: #D1D5DB; margin-bottom: 20px; line-height: 1.6; }}
+        .content-card {{ background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-left: 4px solid #D4AF37; border-radius: 12px; padding: 20px 24px; margin-bottom: 26px; }}
+        .cta-btn {{ display: block; text-align: center; background: linear-gradient(135deg, #D4AF37, #C27D5E); color: #FFFFFF; font-weight: 700; text-decoration: none; padding: 14px 20px; border-radius: 12px; font-size: 15px; margin: 24px 0 20px; box-shadow: 0 4px 18px rgba(212, 175, 55, 0.35); }}
+        .footer {{ border-top: 1px solid rgba(255,255,255,0.08); padding-top: 18px; text-align: center; font-size: 11px; color: #6B7280; line-height: 1.5; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <div class='logo-text'>MYFITDAILY</div>
+            <div class='tagline'>Smart Fashion & AI Stylist Platform</div>
+            <div class='broadcast-badge'>📢 THÔNG BÁO TỪ BAN QUẢN TRỊ HỆ THỐNG</div>
+        </div>
+        
+        <div class='title'>{WebUtility.HtmlEncode(emailSubject)}</div>
+        
+        <div class='greeting'>
+            Kính gửi <strong>{WebUtility.HtmlEncode(recipientName)}</strong>,
+        </div>
+        
+        <div class='content-card'>
+            {contentHtml}
+        </div>
+        
+        <a href='{appUrl}' class='cta-btn'>Mở MyFitDaily Ngay</a>
+        
+        <div class='footer'>
+            Bạn nhận được email này vì tài khoản của bạn được đăng ký trên nền tảng MyFitDaily.<br>
+            © 2026 MyFitDaily Ecosystem. Bảo mật dữ liệu chuẩn 256-bit SSL.<br>
+            Email liên hệ hỗ trợ: cskh@myfitdaily.com
+        </div>
+    </div>
+</body>
+</html>";
+
+            return await SendEmailInternalAsync(toEmail, emailSubject, bodyHtml, "BROADCAST");
+        }
+
         private async Task<bool> SendEmailInternalAsync(string toEmail, string subject, string bodyHtml, string contextTag)
         {
             var smtpHost = _config["EmailSettings:SmtpHost"] ?? "smtp.gmail.com";
