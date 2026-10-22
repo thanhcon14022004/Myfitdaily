@@ -15,6 +15,9 @@ import {
 } from 'lucide-react';
 import ClothingCard from '../components/ClothingCard';
 import DeleteConfirmModal from '../components/DeleteConfirmModal';
+import AddFromCatalogModal from '../components/AddFromCatalogModal';
+import ColorVariantModal from '../components/ColorVariantModal';
+import { Palette } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { sanitizeClothesForGender } from '../data/initialWardrobe';
@@ -28,6 +31,8 @@ export default function WardrobePage({
   onDeleteClothing,
   onDeleteItem,
   onBulkDeleteClothes,
+  onAddClothing,
+  onBatchAddClothing,
   onNavigate 
 }) {
   const { text, isEnglish } = useLanguage();
@@ -65,6 +70,11 @@ export default function WardrobePage({
     isOpen: false,
     items: [],
   });
+
+  // Modal duyệt và thêm đồ có sẵn từ database
+  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
+  const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  const [colorModalItem, setColorModalItem] = useState(null);
 
   const colorOptions = [
     { label: text("Tất Cả", "All"), value: "all" },
@@ -261,6 +271,59 @@ export default function WardrobePage({
             <span>{text('Nhờ AI Phối Đồ', 'Ask AI to Style')}</span>
           </button>
 
+          {/* Nút Gen Biến Thể Màu Cho Tủ Đồ */}
+          <button
+            type="button"
+            onClick={() => {
+              setColorModalItem(effectiveClothes[0] || null);
+              setIsColorModalOpen(true);
+            }}
+            id="btn-open-color-variant-modal"
+            style={{
+              padding: '11px 20px',
+              fontSize: '0.88rem',
+              borderRadius: 'var(--radius-full)',
+              background: 'linear-gradient(135deg, rgba(246, 207, 112, 0.15), rgba(200, 149, 54, 0.15))',
+              border: '1.5px solid #f6cf70',
+              color: '#f6cf70',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(246, 207, 112, 0.2)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Palette size={16} />
+            <span>{text('Gen Biến Thể Màu', 'Gen Color Variants')}</span>
+          </button>
+
+          {/* Nút Chọn Đồ Có Sẵn Trong Database */}
+          <button
+            type="button"
+            onClick={() => setIsCatalogModalOpen(true)}
+            id="btn-open-catalog-modal"
+            style={{
+              padding: '11px 20px',
+              fontSize: '0.88rem',
+              borderRadius: 'var(--radius-full)',
+              background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(194, 125, 94, 0.18))',
+              border: '1.5px solid #D4AF37',
+              color: '#FDE68A',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(212, 175, 55, 0.2)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Sparkles size={16} color="#D4AF37" />
+            <span>{text('Kho Đồ Có Sẵn', 'Ready-Made Catalog')}</span>
+          </button>
+
           <button
             onClick={() => {
               const subType = getSubscriptionType(user);
@@ -282,7 +345,7 @@ export default function WardrobePage({
             style={{ padding: '11px 22px', fontSize: '0.88rem' }}
           >
             <Plus size={16} />
-            <span>{text('Thêm Món Đồ', 'Add Clothing')}</span>
+            <span>{text('Tự Chụp / Tải Lên', 'Upload / Take Photo')}</span>
           </button>
         </div>
       </div>
@@ -640,14 +703,47 @@ export default function WardrobePage({
               'Welcome to MyFitDaily! You have not uploaded any clothes yet. Start digitizing your wardrobe by uploading or taking photos of your shirts, pants, dresses, blazers, and shoes so the AI Stylist can coordinate real outfits for you!'
             )}
           </p>
-          <button
-            onClick={onOpenAddModal}
-            className="btn-primary"
-            style={{ padding: '14px 36px', fontSize: '1rem' }}
-          >
-            <Plus size={18} />
-            <span>{text('Tải Lên Món Đồ Đầu Tiên Của Bạn', 'Upload Your First Clothing Item')}</span>
-          </button>
+          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setIsCatalogModalOpen(true)}
+              style={{
+                padding: '14px 28px',
+                fontSize: '0.98rem',
+                borderRadius: 'var(--radius-full)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #C27D5E 100%)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.35)',
+                transition: 'transform 0.15s ease'
+              }}
+            >
+              <Sparkles size={18} />
+              <span>{text('✨ Chọn Món Đồ Có Sẵn Trong Kho', '✨ Pick Ready-Made Clothes from Catalog')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenAddModal}
+              className="btn-secondary"
+              style={{
+                padding: '14px 28px',
+                fontSize: '0.98rem',
+                borderRadius: 'var(--radius-full)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Plus size={18} />
+              <span>{text('Tự Chụp / Tải Lên Món Đồ', 'Take Photo / Upload')}</span>
+            </button>
+          </div>
         </div>
       ) : filteredClothes.length > 0 ? (
         <div style={{
@@ -663,6 +759,10 @@ export default function WardrobePage({
               isSelectionMode={isSelectionMode}
               isChecked={selectedIds.includes(item.id)}
               onToggleSelect={handleToggleSelect}
+              onOpenColorVariants={(item) => {
+                setColorModalItem(item);
+                setIsColorModalOpen(true);
+              }}
             />
           ))}
         </div>
@@ -757,6 +857,16 @@ export default function WardrobePage({
           </div>
         </div>
       )}
+
+      {/* Modal duyệt và thêm đồ có sẵn từ database / catalog */}
+      <AddFromCatalogModal
+        isOpen={isCatalogModalOpen}
+        onClose={() => setIsCatalogModalOpen(false)}
+        user={user}
+        existingClothes={clothes}
+        onAddClothing={onAddClothing}
+        onBatchAddClothing={onBatchAddClothing}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal 

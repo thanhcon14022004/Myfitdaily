@@ -100,7 +100,7 @@ export async function syncSocialUserWithBackend(supabaseUser, provider = 'Google
     avatarUrl: avatarUrl,
     gender: inferredGender,
     providerKey: supabaseUser.id,
-    isEmailConfirmed: Boolean(supabaseUser.email_confirmed_at),
+    isEmailConfirmed: false,
   };
 
   const res = await apiRequest('/auth/social-login', {
@@ -111,19 +111,8 @@ export async function syncSocialUserWithBackend(supabaseUser, provider = 'Google
   if (res.ok && res.data?.success) {
     const authData = res.data.data;
     
-    // Nếu là người dùng mới: yêu cầu xác nhận email trong 5 phút
+    // Nếu là người dùng mới: yêu cầu xác nhận email trong 5 phút qua mã OTP Gmail SMTP của Backend
     if (authData?.requiresVerification) {
-      // Gửi mã OTP thực tế qua Supabase Auth tới hòm thư người dùng
-      try {
-        await supabase.auth.signInWithOtp({
-          email: supabaseUser.email.trim().toLowerCase(),
-          options: { shouldCreateUser: true }
-        });
-        console.log("[MyFitDaily] Real OTP email dispatched via Supabase to:", supabaseUser.email);
-      } catch (err) {
-        console.warn("[MyFitDaily] Supabase signInWithOtp notice:", err);
-      }
-
       return {
         requiresVerification: true,
         verificationEmail: authData.verificationEmail || supabaseUser.email,
@@ -211,16 +200,7 @@ export async function verifyRegistrationOtp(email, otpCode) {
 export async function resendVerificationOtp(email) {
   const cleanEmail = (email || '').trim().toLowerCase();
 
-  // Gửi lại mã thực tế vào email
-  try {
-    await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: { shouldCreateUser: true }
-    });
-  } catch (err) {
-    console.warn("[MyFitDaily] Supabase resend signInWithOtp notice:", err);
-  }
-
+  // Gửi lại mã xác thực qua Gmail SMTP của backend
   const res = await apiRequest('/auth/resend-verification-otp', {
     method: 'POST',
     body: JSON.stringify({ email: cleanEmail }),

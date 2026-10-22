@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Plus, Sparkles, Check, Heart, ExternalLink, Tag } from 'lucide-react';
+import { Trash2, Plus, Sparkles, Check, Heart, ExternalLink, Tag, Palette } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -11,6 +11,7 @@ export default function ClothingCard({
   isSelectionMode = false,
   isChecked = false,
   onToggleSelect,
+  onOpenColorVariants,
 }) {
   const { text } = useLanguage();
   const { theme } = useTheme();
@@ -233,6 +234,38 @@ export default function ClothingCard({
         </div>
 
         {/* Action button: Delete Single Item */}
+        {onOpenColorVariants && !isSelectionMode && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenColorVariants(item);
+            }}
+            title={text('Gen thêm màu cho món này', 'Generate color variants')}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: onDelete && !isSelectionMode ? '50px' : '12px',
+              background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(8px)',
+              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(246, 207, 112, 0.4)',
+              color: isLight ? '#B8860B' : '#F6CF70',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Palette size={15} />
+          </button>
+        )}
+
         {onDelete && !isSelectionMode && (
           <button
             type="button"

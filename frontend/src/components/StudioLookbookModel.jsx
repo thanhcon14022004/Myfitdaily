@@ -331,7 +331,7 @@ export const STUDIO_TEMPLATES = [
     topType: 'polo',
     bottomType: 'pants_wide',
     shoesType: 'sneaker',
-    modelImage: '/assets/templates/model_polo_cream_trousers.jpg',
+    modelImage: '/assets/templates/model_polo_cream_full.jpg',
     cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
     topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
     botBoxImage: '/assets/templates/set_2_bot_box.jpg',
@@ -339,7 +339,7 @@ export const STUDIO_TEMPLATES = [
     topName: 'Áo polo cộc tay (navy/trắng/be)',
     bottomName: 'Quần vải suông dài (cream/beige/đen)',
     shoesName: 'Giày sneaker / Derby da',
-    itemIds: [211, 205, 251, 252, 203, 264]
+    itemIds: [252, 203]
   },
   {
     id: 20,
@@ -351,7 +351,7 @@ export const STUDIO_TEMPLATES = [
     topType: 'polo',
     bottomType: 'shorts',
     shoesType: 'sneaker',
-    modelImage: '/assets/templates/model_polo_navy.jpg',
+    modelImage: '/assets/templates/model_polo_navy_full.jpg',
     cardImage: '/assets/templates/card_4_polo_shorts.jpg',
     topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
     botBoxImage: '/assets/templates/set_1_bot_box.jpg',
@@ -359,7 +359,47 @@ export const STUDIO_TEMPLATES = [
     topName: 'Áo polo cộc tay (navy)',
     bottomName: 'Quần short (beige/đen)',
     shoesName: 'Giày sneaker (trắng)',
-    itemIds: [220, 221]
+        itemIds: [205, 220, 221]
+  },
+  {
+    id: 21,
+    key: 'set_21',
+    setNumber: 'SET 21',
+    name: 'Áo polo pique đen + Quần tây đen',
+    shortName: 'Polo pique đen + Quần tây đen',
+    category: 'Dark Smart Casual',
+    topType: 'polo',
+    bottomType: 'trousers',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/model_polo_black_full.jpg',
+    cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
+    topBoxImage: '/assets/templates/model_polo_black_trousers.jpg',
+    botBoxImage: '/assets/templates/set_1_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_3_shoes_box.jpg',
+    topName: 'Áo polo cộc tay (đen)',
+    bottomName: 'Quần tây (đen)',
+    shoesName: 'Giày sneaker / Derby da',
+    itemIds: [211, 261]
+  },
+  {
+    id: 22,
+    key: 'set_22',
+    setNumber: 'SET 22',
+    name: 'Áo polo dệt kim trắng + Quần tây',
+    shortName: 'Polo trắng + Quần tây',
+    category: 'Old Money',
+    topType: 'polo',
+    bottomType: 'trousers',
+    shoesType: 'sneaker',
+    modelImage: '/assets/templates/model_polo_white_full.jpg',
+    cardImage: '/assets/templates/tpl_19_polo_trousers.jpg',
+    topBoxImage: '/assets/templates/model_polo_white_trousers.jpg',
+    botBoxImage: '/assets/templates/set_1_bot_box.jpg',
+    shoesBoxImage: '/assets/templates/set_1_shoes_box.jpg',
+    topName: 'Áo polo dệt kim (trắng)',
+    bottomName: 'Quần tây (đen)',
+    shoesName: 'Giày sneaker trắng',
+    itemIds: [251, 261]
   }
 ];
 
@@ -559,6 +599,65 @@ export const FEMALE_STUDIO_TEMPLATES = [
   }
 ];
 
+// Color Family Classifier
+export function getColorFamily(item, fallbackHex = '') {
+  if (!item && !fallbackHex) return 'other';
+  const text = `${item?.color || ''} ${item?.name || ''} ${item?.description || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+
+  if (/den|black|dark|than|toi|charcoal/.test(text)) return 'black';
+  if (/trang|white|kem|be\b|beige|sang|ivory|cream/.test(text)) return 'white';
+  if (/navy|xanh navy|xanh den|xanh than/.test(text)) return 'navy';
+  if (/jean|denim|bo/.test(text)) return 'denim';
+  if (/xanh pastel|xanh nhat|xanh bien|xanh duong|light blue/.test(text)) return 'light_blue';
+  if (/xam|ghi|grey|gray/.test(text)) return 'grey';
+  if (/reu|olive|xanh la|green/.test(text)) return 'green';
+  if (/nau|brown|taupe|mocha/.test(text)) return 'brown';
+  if (/do|hong|burgundy|wine|red|pink/.test(text)) return 'red_pink';
+
+  if (fallbackHex) {
+    const hex = fallbackHex.toLowerCase();
+    if (['#0f172a', '#000000', '#111827', '#17130a', '#1e293b'].includes(hex)) return 'black';
+    if (['#ffffff', '#f8fafc', '#f1f5f9', '#fde68a'].includes(hex)) return 'white';
+  }
+  return 'other';
+}
+
+function getTemplateTopColor(template) {
+  const text = `${template?.topName || ''} ${template?.name || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+
+  if (/den|black|dark|than/.test(text)) return 'black';
+  if (/trang|white|kem|be\b|beige|linen|sang/.test(text)) return 'white';
+  if (/navy/.test(text)) return 'navy';
+  if (/soc|denim|jean|xanh nhat|pastel|xanh duong/.test(text)) return 'light_blue';
+  if (/xam|ghi|grey/.test(text)) return 'grey';
+  if (/hong|pink|do/.test(text)) return 'red_pink';
+  return 'other';
+}
+
+function getTemplateBottomColor(template) {
+  const text = `${template?.bottomName || ''} ${template?.name || ''}`
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+
+  if (/den|black|dark/.test(text)) return 'black';
+  if (/trang|white|kem|be\b|beige|cream/.test(text)) return 'white';
+  if (/navy/.test(text)) return 'navy';
+  if (/jean|denim|xanh nhat|blue/.test(text)) return 'light_blue';
+  if (/xam|ghi|grey/.test(text)) return 'grey';
+  if (/reu|olive|green/.test(text)) return 'green';
+  return 'other';
+}
+
 export default function StudioLookbookModel({
   gender = 'Nam',
   templateId = null,
@@ -584,12 +683,84 @@ export default function StudioLookbookModel({
       if (match) return match;
     }
 
-    // 2. KHỚP NGUYÊN BẢN THEO BỘ (FULL SET MATCH): Cả Áo VÀ Quần đều thuộc cùng 1 SET
+        // 2. KHỚP NGUYÊN BẢN THEO BỘ (FULL SET MATCH): Cả Áo VÀ Quần đều thuộc cùng 1 SET
     if (topItem?.id && bottomItem?.id) {
       const exactSet = templates.find(t => 
         t.itemIds && t.itemIds.includes(topItem.id) && t.itemIds.includes(bottomItem.id)
       );
       if (exactSet) return exactSet;
+    }
+
+    // 2b. TÍNH ĐIỂM THÔNG MINH CHO CÁC MẪU TEMPLATE (COLOR & SILHOUETTE WEIGHTED SCORING)
+    // Đảm bảo TUYỆT ĐỐI không bao giờ hiển thị áo trắng khi chọn áo đen hoặc ngược lại!
+    if (topItem || bottomItem) {
+      const topColorFamily = getColorFamily(topItem, topColor);
+      const botColorFamily = getColorFamily(bottomItem, bottomColor);
+
+      let bestTemplate = null;
+      let highestScore = -99999;
+
+      for (const t of templates) {
+        let score = 0;
+        const topMatchesId = topItem?.id && t.itemIds?.includes(topItem.id);
+        const botMatchesId = bottomItem?.id && t.itemIds?.includes(bottomItem.id);
+
+        if (topMatchesId) score += 95;
+        if (botMatchesId) score += 65;
+
+        // Điểm màu áo (Trọng số cao nhất để không bị lệch màu trực quan)
+        const tTopColor = getTemplateTopColor(t);
+        if (topItem && topColorFamily !== 'other') {
+          if (topColorFamily === tTopColor) {
+            score += 70;
+          } else if (
+            (topColorFamily === 'black' && (tTopColor === 'white' || tTopColor === 'light_blue')) ||
+            (topColorFamily === 'white' && (tTopColor === 'black' || tTopColor === 'navy'))
+          ) {
+            score -= 160; // PHẠT RẤT NẶNG khi đảo ngược màu sáng/tối
+          } else {
+            score -= 25;
+          }
+        }
+
+        // Điểm màu quần
+        const tBotColor = getTemplateBottomColor(t);
+        if (bottomItem && botColorFamily !== 'other') {
+          if (botColorFamily === tBotColor) {
+            score += 45;
+          } else if (
+            (botColorFamily === 'black' && tBotColor === 'white') ||
+            (botColorFamily === 'white' && tBotColor === 'black')
+          ) {
+            score -= 90;
+          } else {
+            score -= 15;
+          }
+        }
+
+        // Điểm phom dáng áo
+        if (topType && t.topType) {
+          if (topType === t.topType) {
+            score += 35;
+          }
+        }
+
+        // Điểm phom dáng quần
+        if (bottomType && t.bottomType) {
+          if (bottomType === t.bottomType) {
+            score += 30;
+          }
+        }
+
+        if (score > highestScore) {
+          highestScore = score;
+          bestTemplate = t;
+        }
+      }
+
+      if (bestTemplate && highestScore > -100) {
+        return bestTemplate;
+      }
     }
 
     // 3. Nếu chỉ mới chọn Áo (chưa chọn Quần) -> Khớp set của Áo
