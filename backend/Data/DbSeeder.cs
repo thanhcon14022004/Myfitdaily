@@ -29,7 +29,7 @@ public static class DbSeeder
         await context.SaveChangesAsync();
 
         // Tự động kiểm tra, chuẩn hóa email và buff thời gian sử dụng 5-10 phút cho toàn bộ tài khoản
-        await FixAndSanitizeUserEmailsAsync(context);
+        // await FixAndSanitizeUserEmailsAsync(context); // Disabled to prevent duplicate email constraint collision
 
         var userTestNam = await GetOrCreateUser(context, "testnam", "nam.gentleman@gmail.com", "testnam", "Gentleman (Test Nam)", "Nam", "User", "Premium", 178, 70, 98, 78, 95, "Tam giác ngược", now);
         var userTestNu = await GetOrCreateUser(context, "testnu", "huong.fashionista@gmail.com", "testnu", "Fashionista (Test Nữ)", "Nữ", "User", "Premium", 165, 52, 88, 64, 92, "Đồng hồ cát", now);
@@ -109,6 +109,52 @@ public static class DbSeeder
         var existingClothes = await context.ClothingItems.Where(c => c.UserId == userId).ToListAsync();
         var editItems = isMale ? CreateMaleStylistEdit(userId, now) : CreateFemaleStylistEdit(userId, now);
 
+        if (!isMale)
+        {
+            var userOutfits = await context.Outfits.Where(o => o.UserId == userId).ToListAsync();
+            if (userOutfits.Any(o => !o.Name.StartsWith("SET ")))
+            {
+                var userOutfitIds = userOutfits.Select(o => o.Id).ToList();
+                var userOutfitItems = await context.OutfitItems.Where(oi => userOutfitIds.Contains(oi.OutfitId)).ToListAsync();
+                if (userOutfitItems.Any()) context.OutfitItems.RemoveRange(userOutfitItems);
+                context.Outfits.RemoveRange(userOutfits);
+                await context.SaveChangesAsync();
+            }
+
+            // Remove male clothes incorrectly assigned to female demo user
+            var maleItems = existingClothes.Where(c => 
+                c.Name.Contains("Coolmate") || 
+                c.Name.Contains("Sweatshirt") || 
+                c.Name.Contains("Oxford Navy") ||
+                c.Name.Contains("Cable Knit") ||
+                c.Name.Contains("Pazzin") ||
+                c.Name.Contains("Quần Short Jean") ||
+                c.Name.Contains("Quần Tây Xếp Ly Dáng Suông Xám Than") ||
+                c.Name.Contains("Quần suông dây rút Cream")
+            ).ToList();
+            if (maleItems.Any())
+            {
+                var maleItemIds = maleItems.Select(m => m.Id).ToList();
+                var danglingOutfitItems = await context.OutfitItems.Where(oi => maleItemIds.Contains(oi.ClothingItemId)).ToListAsync();
+                if (danglingOutfitItems.Any()) context.OutfitItems.RemoveRange(danglingOutfitItems);
+
+                context.ClothingItems.RemoveRange(maleItems);
+                existingClothes.RemoveAll(c => maleItems.Contains(c));
+                await context.SaveChangesAsync();
+            }
+
+            // Fix image URLs for existing female clothes if they had placeholder images
+            foreach (var item in existingClothes)
+            {
+                var match = editItems.FirstOrDefault(e => e.Name == item.Name);
+                if (match != null && item.ImageUrl != match.ImageUrl)
+                {
+                    item.ImageUrl = match.ImageUrl;
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+
         foreach (var item in editItems)
         {
             if (!existingClothes.Any(c => c.Name == item.Name))
@@ -118,8 +164,25 @@ public static class DbSeeder
         }
         await context.SaveChangesAsync();
 
-        if (!await context.Outfits.AnyAsync(o => o.UserId == userId))
+        bool needRefreshOutfits = !isMale 
+            ? !await context.Outfits.AnyAsync(o => o.UserId == userId && o.Name.StartsWith("SET "))
+            : !await context.Outfits.AnyAsync(o => o.UserId == userId);
+
+        if (needRefreshOutfits)
         {
+            if (!isMale)
+            {
+                var oldOutfits = await context.Outfits.Where(o => o.UserId == userId).ToListAsync();
+                if (oldOutfits.Any())
+                {
+                    var oldIds = oldOutfits.Select(o => o.Id).ToList();
+                    var oldItems = await context.OutfitItems.Where(oi => oldIds.Contains(oi.OutfitId)).ToListAsync();
+                    context.OutfitItems.RemoveRange(oldItems);
+                    context.Outfits.RemoveRange(oldOutfits);
+                    await context.SaveChangesAsync();
+                }
+            }
+
             var userClothes = await context.ClothingItems.Where(c => c.UserId == userId).ToListAsync();
             if (isMale)
             {
@@ -155,22 +218,48 @@ public static class DbSeeder
             }
             else
             {
-                var cami = userClothes.FirstOrDefault(c => c.Name.Contains("2 Dây") || c.Name.Contains("Camisole"));
-                var crop = userClothes.FirstOrDefault(c => c.Name.Contains("Croptop"));
-                var skirt = userClothes.FirstOrDefault(c => c.Name.Contains("Váy"));
-                var jeans = userClothes.FirstOrDefault(c => c.Name.Contains("Quần"));
-                var shoes = userClothes.FirstOrDefault(c => c.Name.Contains("Sneaker"));
-
-                if (skirt != null && shoes != null)
+                var sets = new[]
                 {
-                    var outfit1 = new Outfit { UserId = userId, Name = "Chic Camisole & Pleated Skirt", Occasion = "Casual", Season = "Summer", IsFavorite = true, CreatedByAi = false, Description = "Áo hai dây lụa đen kết hợp chân váy xếp ly chữ A màu be thanh lịch.", CreatedAt = now };
-                    context.Outfits.Add(outfit1);
-                    await context.SaveChangesAsync();
+                    ("SET 1: Thun Oversize + Jeans Ống Rộng", "Áo Thun Oversize Trắng Họa Tiết Nữ", "Quần Jeans Ống Rộng Nữ Xanh Nhạt", "Giày Sneaker Nữ Trắng Xám Basic", "Áo thun oversize trắng phối quần jeans ống rộng xanh nhạt năng động chuẩn Y2K.", "Casual"),
+                    ("SET 2: Cardigan Pastel + Chân Váy Ngắn", "Áo Cardigan Len Mỏng Hồng Pastel", "Chân Váy Ngắn Xếp Ly Trắng", "Giày Thể Thao Nữ Trắng Hồng", "Cardigan len mỏng hồng pastel phối chân váy tennis trắng ngọt ngào.", "Casual"),
+                    ("SET 3: Khoác Denim + Quần Ống Suông Đen", "Áo Khoác Denim Nữ Phối Tank Top", "Quần Vải Ống Suông Nữ Đen", "Giày Platform Nữ Trắng", "Áo khoác denim xanh nhạt phối tank top và quần suông đen cá tính.", "Casual"),
+                    ("SET 4: Áo Trễ Vai + Jeans Ống Rộng", "Áo Trễ Vai Xanh Pastel Phối 2 Dây", "Quần Jeans Ống Rộng Xanh Nhạt Tôn Dáng", "Giày Sneaker Nữ Viền Trắng Xám", "Áo trễ vai điệu đà phối quần jeans ống rộng tôn eo.", "Party"),
+                    ("SET 5: Blazer Navy + Chân Váy Xếp Ly", "Áo Khoác Blazer Nữ Oversize Navy", "Chân Váy Xếp Ly Trắng Năng Động", "Giày Thể Thao Nữ Active Trắng Xám", "Blazer navy phối chân váy xếp ly trắng phong cách Cool Girl.", "Work"),
+                    ("SET 6: Cardigan Kem + Jeans Suông Xám", "Áo Cardigan Len Màu Kem Dáng Rộng", "Quần Jeans Ống Suông Xám Đậm Nữ", "Giày Sneaker Nữ Cổ Thấp Trắng Xám", "Cardigan kem ấm áp phối jeans xám đậm phong cách Minimal Chic.", "Casual"),
+                    ("SET 7: Thun + Cardigan Xanh + Quần Rộng", "Áo Cardigan Len Xanh Pastel Nữ", "Quần Vải Ống Rộng Xanh Pastel Nữ", "Giày Sneaker Nữ Trắng Tinh Khôi", "Cardigan xanh pastel tươi mát phối quần suông đồng điệu.", "Casual"),
+                    ("SET 8: Sơ Mi + Gile Len + Chân Váy Xếp Ly", "Áo Sơ Mi Trắng Phối Gile Len Navy Nữ", "Chân Váy Ngắn Xếp Ly Xám Than", "Giày Loafer Nữ Da Đen Preppy", "Sơ mi trắng phối gile len navy và chân váy xám chuẩn Preppy Academy.", "Work"),
+                    ("SET 9: Áo Hai Dây + Khoác Denim + Jeans Suông", "Áo Hai Dây Đen Phối Khoác Denim Nữ", "Quần Jeans Ống Suông Nữ Wash Xanh", "Giày Sneaker Nữ Trắng Chunky Basic", "Áo 2 dây đen phối áo khoác lửng denim bụi bặm cá tính.", "Streetwear"),
+                    ("Chic Camisole & Pleated Skirt", "Áo 2 Dây Lụa Satin Đen", "Chân Váy Xếp Ly Chữ A Màu Be", "Giày Sneaker Nữ Trắng Xám Basic", "Áo hai dây lụa đen kết hợp chân váy xếp ly chữ A màu be thanh lịch.", "Casual"),
+                    ("Trendy Croptop & Vintage Jeans", "Áo Croptop Baby Tee Trắng", "Quần Jeans Ống Suông Vintage Xanh Denim", "Giày Sneaker Nữ Trắng Xám Basic", "Áo croptop baby tee trắng phối cùng quần jeans cạp cao tôn dáng.", "Casual")
+                };
 
-                    if (cami != null) context.OutfitItems.Add(new OutfitItem { OutfitId = outfit1.Id, ClothingItemId = cami.Id, CreatedAt = now });
-                    context.OutfitItems.Add(new OutfitItem { OutfitId = outfit1.Id, ClothingItemId = skirt.Id, CreatedAt = now });
-                    context.OutfitItems.Add(new OutfitItem { OutfitId = outfit1.Id, ClothingItemId = shoes.Id, CreatedAt = now });
-                    await context.SaveChangesAsync();
+                foreach (var (setName, topName, botName, shoeName, desc, occ) in sets)
+                {
+                    var top = userClothes.FirstOrDefault(c => c.Name == topName);
+                    var bot = userClothes.FirstOrDefault(c => c.Name == botName);
+                    var shoe = userClothes.FirstOrDefault(c => c.Name == shoeName);
+
+                    if (top != null && bot != null && shoe != null)
+                    {
+                        var newOutfit = new Outfit
+                        {
+                            UserId = userId,
+                            Name = setName,
+                            Occasion = occ,
+                            Season = "AllSeason",
+                            IsFavorite = true,
+                            CreatedByAi = false,
+                            Description = desc,
+                            CreatedAt = now
+                        };
+                        context.Outfits.Add(newOutfit);
+                        await context.SaveChangesAsync();
+
+                        context.OutfitItems.Add(new OutfitItem { OutfitId = newOutfit.Id, ClothingItemId = top.Id, CreatedAt = now });
+                        context.OutfitItems.Add(new OutfitItem { OutfitId = newOutfit.Id, ClothingItemId = bot.Id, CreatedAt = now });
+                        context.OutfitItems.Add(new OutfitItem { OutfitId = newOutfit.Id, ClothingItemId = shoe.Id, CreatedAt = now });
+                        await context.SaveChangesAsync();
+                    }
                 }
             }
         }
@@ -398,18 +487,61 @@ public static class DbSeeder
         new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Tây Derby Da Đen Đế Răng Cưa", Color = "Đen", Style = "Sartorial", Season = "AllSeason", Brand = "CRAFT DERBY", Size = "42", Price = 590000, PriceFormatted = "590K", Platform = "Craft Derby", ImageUrl = "/assets/clothes/derby_leather_black.png", Description = "Giày tây Derby da bò đen bóng đế răng cưa chunky thời thượng, phù hợp phối quần âu hoặc jeans.", CreatedAt = now }
     ];
 
-    private static List<ClothingItem> CreateFemaleStylistEdit(int userId, DateTime now) =>
+        private static List<ClothingItem> CreateFemaleStylistEdit(int userId, DateTime now) =>
     [
-        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Croptop Baby Tee Trắng", Color = "Trắng", Style = "Y2K Minimal", Season = "Summer", Brand = "UNIQLO", Size = "S", Price = 159000, PriceFormatted = "159K", Platform = "Uniqlo", ImageUrl = "/assets/clothes/shirt_white_formal.jpg", Description = "Áo croptop baby tee dáng ôm khoe eo thon năng động.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo 2 Dây Lụa Satin Đen", Color = "Đen", Style = "Chic Minimal", Season = "Summer", Brand = "ZARA", Size = "S", Price = 179000, PriceFormatted = "179K", Platform = "Zara", ImageUrl = "/assets/clothes/shirt_black_formal.jpg", Description = "Áo hai dây lụa satin đen quyến rũ, quai mảnh tôn vai.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Sơ Mi Trắng Cổ Đức Basic", Color = "Trắng", Style = "Smart Casual", Season = "AllSeason", Brand = "UNIQLO", Size = "S", Price = 320000, PriceFormatted = "320K", Platform = "Uniqlo", ImageUrl = "/assets/clothes/shirt_white_formal.jpg", Description = "Áo sơ mi trắng dài tay cổ Đức phom dáng công sở chuẩn mực.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Sơ Mi Xanh Nhạt Dài Tay", Color = "Xanh Nhạt", Style = "Korean Minimal", Season = "AllSeason", Brand = "DAILY EDIT", Size = "M", Price = 340000, PriceFormatted = "340K", Platform = "Daily Edit", ImageUrl = "/assets/clothes/shirt_oxford_light_blue.jpg", Description = "Áo sơ mi dài tay màu xanh pastel nhã nhặn tôn da.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Chân Váy Xếp Ly Chữ A Màu Be", Color = "Be Cát", Style = "Preppy Chic", Season = "Summer", Brand = "ZARA", Size = "S", Price = 250000, PriceFormatted = "250K", Platform = "Zara", ImageUrl = "/assets/clothes/pants_wide_beige.jpg", Description = "Chân váy ngắn xếp ly chữ A màu be thanh lịch, cạp cao tôn dáng.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 3, Name = "Váy Suông Lụa 2 Dây Đen Minimalist", Color = "Đen", Style = "Elegance", Season = "Summer", Brand = "MANGO", Size = "S", Price = 350000, PriceFormatted = "350K", Platform = "Mango", ImageUrl = "/assets/clothes/pants_wide_black.jpg", Description = "Đầm suông hai dây lụa đen rủ nhẹ sang trọng qua gối.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Vải Suông Ống Rộng Beige", Color = "Beige", Style = "Korean Minimal", Season = "AllSeason", Brand = "DAILY EDIT", Size = "M", Price = 380000, PriceFormatted = "380K", Platform = "Daily Edit", ImageUrl = "/assets/clothes/pants_wide_beige.jpg", Description = "Quần vải suông ống rộng màu beige rủ tự nhiên, thoải mái và hợp thời trang.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Suông Vintage Xanh Denim", Color = "Xanh Denim", Style = "Vintage Denim", Season = "AllSeason", Brand = "LEVIS", Size = "M", Price = 420000, PriceFormatted = "420K", Platform = "Levis", ImageUrl = "/assets/clothes/jeans_wide_light_blue.jpg", Description = "Quần jeans dài ống suông thẳng đứng màu xanh denim wash nhẹ tôn dáng.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Trắng Tối Giản Basic", Color = "Trắng", Style = "Smart Casual", Season = "AllSeason", Brand = "ADIDAS", Size = "38", Price = 490000, PriceFormatted = "490K", Platform = "Adidas", ImageUrl = "/assets/clothes/shoes_sneaker_white_real.jpg", Description = "Sneaker da trắng đế bằng tối giản thanh lịch, phù hợp mọi outfit.", CreatedAt = now },
-        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Retro Xám Trắng", Color = "Xám / Trắng", Style = "Denim Casual", Season = "AllSeason", Brand = "NEW BALANCE", Size = "38", Price = 530000, PriceFormatted = "530K", Platform = "New Balance", ImageUrl = "/assets/clothes/shoes_sneaker_grey_white.jpg", Description = "Sneaker retro running phối xám trắng thời thượng và tôn dáng.", CreatedAt = now }
+        // SET 1: Y2K Street
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Thun Oversize Trắng Họa Tiết Nữ", Color = "Trắng", Style = "Y2K Street", Season = "Summer", Brand = "STYLIST EDIT", Size = "M", Price = 220000, PriceFormatted = "220K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_1_top_box.jpg", Description = "Áo thun oversize trắng in họa tiết cá tính năng động chuẩn Y2K.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Rộng Nữ Xanh Nhạt", Color = "Xanh Nhạt", Style = "Y2K Street", Season = "AllSeason", Brand = "DENIM CO", Size = "S", Price = 380000, PriceFormatted = "380K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_1_bot_box.jpg", Description = "Quần jeans nữ cạp cao ống rộng suông thẳng tôn chiều cao.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Nữ Trắng Xám Basic", Color = "Trắng / Xám", Style = "Streetwear", Season = "AllSeason", Brand = "RETRO CLUB", Size = "37", Price = 450000, PriceFormatted = "450K", Platform = "Retro Club", ImageUrl = "/assets/templates/set_female_1_shoes_box.jpg", Description = "Sneaker nữ thể thao phối màu trắng xám nhẹ nhàng, êm chân.", CreatedAt = now },
+
+        // SET 2: Soft Girl
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Cardigan Len Mỏng Hồng Pastel", Color = "Hồng Pastel", Style = "Soft Girl", Season = "Spring", Brand = "STYLIST EDIT", Size = "S", Price = 290000, PriceFormatted = "290K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_2_top_box.jpg", Description = "Cardigan len mỏng màu hồng pastel dịu dàng kèm áo thun basic.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Chân Váy Ngắn Xếp Ly Trắng", Color = "Trắng", Style = "Soft Girl", Season = "Summer", Brand = "STYLIST EDIT", Size = "S", Price = 240000, PriceFormatted = "240K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_2_bot_box.jpg", Description = "Chân váy ngắn xếp ly tennis trắng trẻ trung, cạp cao.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Thể Thao Nữ Trắng Hồng", Color = "Trắng / Hồng", Style = "Soft Girl", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "37", Price = 420000, PriceFormatted = "420K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_2_shoes_box.jpg", Description = "Giày thể thao nữ viền hồng pastel nữ tính, phom dáng gọn gàng.", CreatedAt = now },
+
+        // SET 3: Chic Modern
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Khoác Denim Nữ Phối Tank Top", Color = "Xanh Nhạt / Trắng", Style = "Chic Modern", Season = "AllSeason", Brand = "DENIM CO", Size = "M", Price = 390000, PriceFormatted = "390K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_3_top_box.jpg", Description = "Áo khoác denim xanh nhạt kết hợp tank top ôm trắng thời thượng.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Vải Ống Suông Nữ Đen", Color = "Đen", Style = "Chic Modern", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "M", Price = 340000, PriceFormatted = "340K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_3_bot_box.jpg", Description = "Quần vải suông ống rộng màu đen tôn dáng đôi chân thon dài.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Platform Nữ Trắng", Color = "Trắng", Style = "Chic Modern", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "37", Price = 480000, PriceFormatted = "480K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_3_shoes_box.jpg", Description = "Giày sneaker platform đế bánh mì tôn dáng thanh thoát.", CreatedAt = now },
+
+        // SET 4: Soft Girl Vibes
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Trễ Vai Xanh Pastel Phối 2 Dây", Color = "Xanh Pastel", Style = "Soft Girl Vibes", Season = "Summer", Brand = "STYLIST EDIT", Size = "S", Price = 260000, PriceFormatted = "260K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_4_top_box.jpg", Description = "Áo trễ vai điệu đà màu xanh pastel kèm dây áo trắng tinh tế.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Rộng Xanh Nhạt Tôn Dáng", Color = "Xanh Nhạt", Style = "Soft Girl Vibes", Season = "AllSeason", Brand = "DENIM CO", Size = "S", Price = 380000, PriceFormatted = "380K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_4_bot_box.jpg", Description = "Quần jeans baggy cạp cao tôn eo và che khuyết điểm hoàn hảo.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Nữ Viền Trắng Xám", Color = "Trắng / Xám", Style = "Soft Girl Vibes", Season = "AllSeason", Brand = "RETRO CLUB", Size = "37", Price = 450000, PriceFormatted = "450K", Platform = "Retro Club", ImageUrl = "/assets/templates/set_female_4_shoes_box.jpg", Description = "Sneaker thể thao nữ phối trắng xám thanh lịch, dễ phối đồ.", CreatedAt = now },
+
+        // SET 5: Cool Girl
+        new ClothingItem { UserId = userId, CategoryId = 4, Name = "Áo Khoác Blazer Nữ Oversize Navy", Color = "Xanh Navy", Style = "Cool Girl", Season = "Fall / Winter", Brand = "TAILOR LAB", Size = "M", Price = 490000, PriceFormatted = "490K", Platform = "Tailor Lab", ImageUrl = "/assets/templates/set_female_5_top_box.jpg", Description = "Blazer form rộng cá tính màu navy phối thun trắng phong cách Cool Girl.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Chân Váy Xếp Ly Trắng Năng Động", Color = "Trắng", Style = "Cool Girl", Season = "Summer", Brand = "STYLIST EDIT", Size = "S", Price = 240000, PriceFormatted = "240K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_5_bot_box.jpg", Description = "Chân váy xếp ly màu trắng phom dáng tennis năng động.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Thể Thao Nữ Active Trắng Xám", Color = "Trắng / Xám", Style = "Cool Girl", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "37", Price = 460000, PriceFormatted = "460K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_5_shoes_box.jpg", Description = "Giày sneaker active hiện đại, khỏe khoắn.", CreatedAt = now },
+
+        // SET 6: Minimal Chic
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Cardigan Len Màu Kem Dáng Rộng", Color = "Kem", Style = "Minimal Chic", Season = "Fall", Brand = "STYLIST EDIT", Size = "M", Price = 320000, PriceFormatted = "320K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_6_top_box.jpg", Description = "Cardigan dệt kim màu kem ấm áp phối tank top trắng phong cách tối giản.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Suông Xám Đậm Nữ", Color = "Xám Đậm", Style = "Minimal Chic", Season = "AllSeason", Brand = "DENIM CO", Size = "M", Price = 390000, PriceFormatted = "390K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_6_bot_box.jpg", Description = "Quần jeans ống suông màu xám khói đậm lạ mắt và cuốn hút.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Nữ Cổ Thấp Trắng Xám", Color = "Trắng / Xám", Style = "Minimal Chic", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "37", Price = 450000, PriceFormatted = "450K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_6_shoes_box.jpg", Description = "Sneaker cổ thấp màu trung tính thanh lịch cho phong cách Minimal.", CreatedAt = now },
+
+        // SET 7: Daily Casual
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Cardigan Len Xanh Pastel Nữ", Color = "Xanh Pastel", Style = "Daily Casual", Season = "Spring", Brand = "STYLIST EDIT", Size = "M", Price = 310000, PriceFormatted = "310K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_7_top_box.jpg", Description = "Cardigan xanh pastel tươi mát phối áo thun trắng năng động mỗi ngày.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Vải Ống Rộng Xanh Pastel Nữ", Color = "Xanh Pastel", Style = "Daily Casual", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "M", Price = 350000, PriceFormatted = "350K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_7_bot_box.jpg", Description = "Quần vải ống suông rộng màu xanh pastel đồng điệu thanh nhã.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Nữ Trắng Tinh Khôi", Color = "Trắng", Style = "Daily Casual", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "37", Price = 430000, PriceFormatted = "430K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_7_shoes_box.jpg", Description = "Sneaker trắng trơn nhẹ nhàng, phối được với mọi trang phục.", CreatedAt = now },
+
+        // SET 8: Preppy Academy
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Sơ Mi Trắng Phối Gile Len Navy Nữ", Color = "Trắng / Navy", Style = "Preppy Academy", Season = "AllSeason", Brand = "TAILOR LAB", Size = "S", Price = 360000, PriceFormatted = "360K", Platform = "Tailor Lab", ImageUrl = "/assets/templates/set_female_8_top_box.jpg", Description = "Combo áo sơ mi trắng cổ bẻ phối gile len vặn thừng xanh navy chuẩn nữ sinh thanh lịch.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Chân Váy Ngắn Xếp Ly Xám Than", Color = "Xám Than", Style = "Preppy Academy", Season = "AllSeason", Brand = "STYLIST EDIT", Size = "S", Price = 260000, PriceFormatted = "260K", Platform = "Stylist Edit", ImageUrl = "/assets/templates/set_female_8_bot_box.jpg", Description = "Chân váy xếp ly cạp cao xám than chuẩn phong cách Preppy Academy.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Loafer Nữ Da Đen Preppy", Color = "Đen", Style = "Preppy Academy", Season = "AllSeason", Brand = "CRAFT DERBY", Size = "37", Price = 520000, PriceFormatted = "520K", Platform = "Craft Derby", ImageUrl = "/assets/templates/set_female_8_shoes_box.jpg", Description = "Giày da loafer nữ bóng mờ cổ điển sang trọng.", CreatedAt = now },
+
+        // SET 9: Trendy Street
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Hai Dây Đen Phối Khoác Denim Nữ", Color = "Đen / Xanh Jean", Style = "Trendy Street", Season = "Summer", Brand = "DENIM CO", Size = "S", Price = 380000, PriceFormatted = "380K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_9_top_box.jpg", Description = "Áo 2 dây đen phối áo khoác lửng denim bụi bặm cá tính.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Suông Nữ Wash Xanh", Color = "Xanh Denim", Style = "Trendy Street", Season = "AllSeason", Brand = "DENIM CO", Size = "S", Price = 410000, PriceFormatted = "410K", Platform = "Denim Co", ImageUrl = "/assets/templates/set_female_9_bot_box.jpg", Description = "Quần jeans wash màu xanh cổ điển ống suông đứng phom.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Sneaker Nữ Trắng Chunky Basic", Color = "Trắng", Style = "Trendy Street", Season = "AllSeason", Brand = "RETRO CLUB", Size = "37", Price = 470000, PriceFormatted = "470K", Platform = "Retro Club", ImageUrl = "/assets/templates/set_female_9_shoes_box.jpg", Description = "Sneaker trắng đế độn nhẹ cá tính.", CreatedAt = now },
+
+        // Đồ Nữ Signature cơ bản
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo Croptop Baby Tee Trắng", Color = "Trắng", Style = "Y2K Minimal", Season = "Summer", Brand = "UNIQLO", Size = "S", Price = 159000, PriceFormatted = "159K", Platform = "Uniqlo", ImageUrl = "/assets/clothes/croptop_baby_tee_white.jpg", Description = "Áo croptop baby tee dáng ôm khoe eo thon năng động.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 1, Name = "Áo 2 Dây Lụa Satin Đen", Color = "Đen", Style = "Chic Minimal", Season = "Summer", Brand = "ZARA", Size = "S", Price = 179000, PriceFormatted = "179K", Platform = "Zara", ImageUrl = "/assets/clothes/camisole_silk_black.jpg", Description = "Áo hai dây lụa satin đen quyến rũ, quai mảnh tôn vai.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Chân Váy Xếp Ly Chữ A Màu Be", Color = "Be Cát", Style = "Preppy Chic", Season = "Summer", Brand = "ZARA", Size = "S", Price = 250000, PriceFormatted = "250K", Platform = "Zara", ImageUrl = "/assets/clothes/skirt_pleated_beige.jpg", Description = "Chân váy ngắn xếp ly chữ A màu be thanh lịch, cạp cao tôn dáng.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 3, Name = "Váy Suông Lụa 2 Dây Đen Minimalist", Color = "Đen", Style = "Elegance", Season = "Summer", Brand = "MANGO", Size = "S", Price = 350000, PriceFormatted = "350K", Platform = "Mango", ImageUrl = "/assets/clothes/dress_slip_silk_black.jpg", Description = "Đầm suông hai dây lụa đen rủ nhẹ sang trọng qua gối.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Jeans Ống Suông Vintage Xanh Denim", Color = "Xanh Denim", Style = "Vintage Denim", Season = "AllSeason", Brand = "LEVIS", Size = "M", Price = 420000, PriceFormatted = "420K", Platform = "Levis", ImageUrl = "/assets/clothes/jeans_vintage_blue.jpg", Description = "Quần jeans dài ống suông thẳng đứng màu xanh denim wash nhẹ tôn dáng.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 2, Name = "Quần Short Đen Năng Động Nữ", Color = "Đen", Style = "Sporty Chic", Season = "Summer", Brand = "NIKE", Size = "S", Price = 210000, PriceFormatted = "210K", Platform = "Nike", ImageUrl = "/assets/clothes/shorts_athletic_black.jpg", Description = "Quần short thể thao đen năng động tôn đôi chân thon.", CreatedAt = now },
+        new ClothingItem { UserId = userId, CategoryId = 5, Name = "Giày Tây Penny Loafer Da Đen Nữ", Color = "Đen", Style = "Preppy Chic", Season = "AllSeason", Brand = "CRAFT DERBY", Size = "37", Price = 490000, PriceFormatted = "490K", Platform = "Craft Derby", ImageUrl = "/assets/clothes/shoes_penny_loafer_black.jpg", Description = "Giày loafer penny da thật màu đen bóng nhẹ quý phái.", CreatedAt = now }
     ];
 
     public static bool IsDemoUser(User? user)

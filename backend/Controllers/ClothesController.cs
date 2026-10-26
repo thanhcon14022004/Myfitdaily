@@ -33,17 +33,21 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         /// Lấy toàn bộ danh sách quần áo trong tủ đồ của người dùng hiện tại
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetMyClothes()
+        public async Task<IActionResult> GetMyClothes([FromQuery] string? gender = null)
         {
             try
             {
                 var userId = GetCurrentUserId();
 
-                // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo
+                // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo theo giới tính
                 if (!userId.HasValue)
                 {
-                    var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnam" || u.Email.ToLower() == "demo@myfitdaily.com")
-                                   ?? await _context.Users.FirstOrDefaultAsync();
+                    bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female"));
+                    var demoUser = isReqFemale
+                        ? (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower().Contains("huong.fashionista"))
+                           ?? await _context.Users.FirstOrDefaultAsync(u => u.Gender == "Nữ"))
+                        : (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnam" || u.Email.ToLower() == "demo@myfitdaily.com")
+                           ?? await _context.Users.FirstOrDefaultAsync());
                     if (demoUser != null)
                     {
                         userId = demoUser.Id;

@@ -47,14 +47,18 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
         /// Lß║Ñy to├án bß╗Ö danh s├ích outfit ─æ├ú l╞░u trong database cß╗ºa ng╞░ß╗¥i d├╣ng
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetOutfits()
+        public async Task<IActionResult> GetOutfits([FromQuery] string? gender = null)
         {
             var userId = GetCurrentUserId();
 
             if (!userId.HasValue)
             {
-                var demoUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower() == "demo@myfitdaily.com")
-                               ?? await _context.Users.FirstOrDefaultAsync();
+                bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female"));
+                var demoUser = isReqFemale
+                    ? (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower().Contains("huong.fashionista"))
+                       ?? await _context.Users.FirstOrDefaultAsync(u => u.Gender == "Nữ"))
+                    : (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnam" || u.Email.ToLower() == "demo@myfitdaily.com")
+                       ?? await _context.Users.FirstOrDefaultAsync());
                 if (demoUser != null)
                 {
                     userId = demoUser.Id;
