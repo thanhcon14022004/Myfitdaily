@@ -205,9 +205,13 @@ public static class DbSeeder
             var isAdmin = (user.Role != null && user.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase)) 
                           || user.Email.ToLower().Contains("admin") 
                           || usernameKey == "admin";
-            if (!isAdmin && user.Email != email)
+            if (!isAdmin && !user.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
             {
-                user.Email = email;
+                var emailTaken = await context.Users.AnyAsync(u => u.Id != user.Id && u.Email.ToLower() == email.ToLower());
+                if (!emailTaken)
+                {
+                    user.Email = email;
+                }
             }
             // Ensure password hash matches username and role is up to date
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
@@ -481,9 +485,12 @@ public static class DbSeeder
                 {
                     if (user.FullName != fakeProfile.fullName || !currentEmail.Equals(fakeProfile.email, StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine($"[User Profile Sanitizer]: Updating User ID {user.Id} ('{user.FullName}' / '{currentEmail}') -> ('{fakeProfile.fullName}' / '{fakeProfile.email}')");
                         user.FullName = fakeProfile.fullName;
-                        user.Email = fakeProfile.email;
+                        var isEmailAlreadyTaken = users.Any(u => u.Id != user.Id && (u.Email ?? "").Equals(fakeProfile.email, StringComparison.OrdinalIgnoreCase));
+                        if (!isEmailAlreadyTaken)
+                        {
+                            user.Email = fakeProfile.email;
+                        }
                         hasChanges = true;
                     }
                 }
