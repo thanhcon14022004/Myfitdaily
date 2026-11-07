@@ -53,7 +53,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
 
             if (!userId.HasValue)
             {
-                bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female"));
+                bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female") || gender.ToLower() == "nu");
                 var demoUser = isReqFemale
                     ? (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower().Contains("huong.fashionista"))
                        ?? await _context.Users.FirstOrDefaultAsync(u => u.Gender == "Nữ"))

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Check, RotateCcw, Save, Sparkles, UserRound, Palette } from 'lucide-react';
 import ColorVariantModal, { FASHION_COLOR_PALETTE, resolveVariantImage } from '../components/ColorVariantModal';
 import VirtualMannequin from '../components/VirtualMannequin';
-import { getInitialClothesForGender, isDemoUser } from '../data/initialWardrobe';
+import { getInitialClothesForGender, sanitizeClothesForGender, isDemoUser } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -31,8 +31,12 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
   const { text } = useLanguage();
   const { isLight } = useTheme();
   const isDemo = isDemoUser(user) || !user;
+  const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
   const [extraClothes, setExtraClothes] = useState([]);
-  const baseInventory = clothes?.length ? clothes : (isDemo ? getInitialClothesForGender(user?.gender) : []);
+  const rawInventory = clothes?.length ? clothes : (isDemo ? getInitialClothesForGender(user?.gender) : []);
+  const baseInventory = useMemo(() => {
+    return sanitizeClothesForGender(rawInventory, user?.gender);
+  }, [rawInventory, user?.gender]);
   const inventory = useMemo(() => {
     return [...extraClothes, ...baseInventory];
   }, [extraClothes, baseInventory]);
@@ -113,11 +117,20 @@ export default function OutfitStudioPage({ clothes, outfits = [], onSaveOutfit, 
     onAddClothing?.(newItem);
   };
 
-  const defaults = useMemo(() => ({
-    top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1) || null,
-    bottom: inventory.find(item => item.id === 261) || inventory.find(item => item.id === 220) || inventory.find(item => item.categoryId === 2) || null,
-    shoes: inventory.find(item => item.id === 262) || inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5) || null
-  }), [inventory]);
+  const defaults = useMemo(() => {
+    if (isMale) {
+      return {
+        top: inventory.find(item => item.id === 260) || inventory.find(item => item.id === 210) || inventory.find(item => item.categoryId === 1) || null,
+        bottom: inventory.find(item => item.id === 261) || inventory.find(item => item.id === 220) || inventory.find(item => item.categoryId === 2) || null,
+        shoes: inventory.find(item => item.id === 262) || inventory.find(item => item.id === 204) || inventory.find(item => item.categoryId === 5) || null
+      };
+    }
+    return {
+      top: inventory.find(item => item.id === 240) || inventory.find(item => item.id === 501) || inventory.find(item => item.categoryId === 1) || null,
+      bottom: inventory.find(item => item.id === 242) || inventory.find(item => item.id === 502) || inventory.find(item => item.categoryId === 2) || null,
+      shoes: inventory.find(item => item.id === 503) || inventory.find(item => item.categoryId === 5) || null
+    };
+  }, [inventory, isMale]);
 
   const [selection, setSelection] = useState(defaults);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'top', 'bottom', 'shoes'

@@ -447,7 +447,7 @@ export default function App() {
         try {
           const res = await apiRequest('/clothes');
           if (res.ok && res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
-            const items = isMale ? sanitizeClothesForGender(res.data.data, user?.gender) : res.data.data;
+            const items = sanitizeClothesForGender(res.data.data, user?.gender);
             setClothes(items);
             localStorage.setItem('myfitdaily_user_clothes', JSON.stringify(items));
           } else {
@@ -941,7 +941,7 @@ export default function App() {
           {currentTab === 'dashboard' && (
             <DashboardPage
               user={user}
-              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
+              clothes={sanitizeClothesForGender(clothes, user?.gender)}
               outfits={outfits}
               onNavigate={setCurrentTab}
               onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -952,7 +952,7 @@ export default function App() {
 
           {currentTab === 'wardrobe' && (
             <WardrobePage
-              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
+              clothes={sanitizeClothesForGender(clothes, user?.gender)}
               categories={categories}
               user={user}
               onDeleteClothing={handleDeleteClothing}
@@ -967,7 +967,7 @@ export default function App() {
 
           {currentTab === 'outfits' && (
             <OutfitStudioPage
-              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
+              clothes={sanitizeClothesForGender(clothes, user?.gender)}
               outfits={outfits}
               onSaveOutfit={handleSaveOutfit}
               onToggleFavorite={handleToggleFavoriteOutfit}
@@ -982,7 +982,7 @@ export default function App() {
 
           {currentTab === 'ai-stylist' && (
             <AiStylistPage
-              clothes={isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes}
+              clothes={sanitizeClothesForGender(clothes, user?.gender)}
               outfits={outfits}
               onToggleFavoriteAiOutfit={handleToggleFavoriteAiOutfit}
               onSaveAiOutfit={handleSaveAiOutfit}

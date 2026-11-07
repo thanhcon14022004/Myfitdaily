@@ -40,15 +40,18 @@ export default function WardrobePage({
   const isLight = theme === 'light';
   const isMale = user?.gender?.toLowerCase() === 'nam' || user?.gender?.toLowerCase() === 'male';
 
-  // Lọc sạch toàn bộ đồ phụ nữ (Đầm, Chân váy, v.v.) nếu tài khoản là Nam
-  const effectiveClothes = isMale ? sanitizeClothesForGender(clothes, user?.gender) : clothes;
+  // Lọc đồ chuẩn xác theo giới tính tài khoản (Nam chỉ thấy đồ nam, Nữ chỉ thấy đồ nữ)
+  const effectiveClothes = sanitizeClothesForGender(clothes, user?.gender);
 
-  // Lọc sạch danh mục Đầm (Dresses) nếu tài khoản là Nam và đổi nhãn Quần & Váy thành Quần
+  const isFemale = user?.gender && (user.gender.toLowerCase().includes('nữ') || user.gender.toLowerCase().includes('female') || user.gender.toLowerCase() === 'nu');
   const visibleCategories = categories
     .filter(cat => !(isMale && (cat.id === 3 || cat.name?.toLowerCase() === 'dresses')))
     .map(cat => {
       if (isMale && cat.id === 2) {
-        return { ...cat, label: text("Quần", "Bottoms"), name: "Bottoms" };
+        return { ...cat, label: text("Quần", "Pants"), name: "Bottoms" };
+      }
+      if (isFemale && cat.id === 2) {
+        return { ...cat, label: text("Quần & Chân Váy", "Pants & Skirts"), name: "Bottoms" };
       }
       return cat;
     });
@@ -200,7 +203,7 @@ export default function WardrobePage({
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span className="badge badge-rose">{text('Kho Lưu Trữ Kỹ Thuật Số', 'Digital Archive')}</span>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              ✦ {clothes.length} {text('món đồ sẵn sàng', 'items ready')}
+              ✦ {effectiveClothes.length} {text('món đồ sẵn sàng', 'items ready')}
             </span>
           </div>
           <h2 style={{ fontSize: '2.4rem', fontWeight: 800 }}>

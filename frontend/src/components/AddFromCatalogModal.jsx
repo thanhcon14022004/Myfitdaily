@@ -11,7 +11,7 @@ import {
   Layers, 
   Tag
 } from 'lucide-react';
-import { STYLIST_CLOTHES } from '../data/initialWardrobe';
+import { getInitialClothesForGender } from '../data/initialWardrobe';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -46,18 +46,8 @@ export default function AddFromCatalogModal({
 
   // Danh sách đồ mẫu phù hợp theo giới tính của người dùng
   const catalogList = useMemo(() => {
-    return STYLIST_CLOTHES.filter(item => {
-      if (isMale) {
-        // Loại bỏ đầm, váy, áo hai dây nữ cho tài khoản Nam
-        if (item.categoryId === 3) return false;
-        const lowerName = item.name.toLowerCase();
-        if (lowerName.includes('váy') || lowerName.includes('đầm') || lowerName.includes('2 dây') || lowerName.includes('croptop')) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [isMale]);
+    return getInitialClothesForGender(user?.gender);
+  }, [user?.gender]);
 
   // Kiểm tra xem món đồ đã có trong tủ đồ của người dùng chưa
   const existingNamesSet = useMemo(() => {

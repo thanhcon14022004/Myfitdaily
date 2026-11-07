@@ -42,7 +42,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                 // Nếu người dùng chưa đăng nhập, trả về danh sách quần áo của tài khoản Demo theo giới tính
                 if (!userId.HasValue)
                 {
-                    bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female"));
+                    bool isReqFemale = !string.IsNullOrEmpty(gender) && (gender.ToLower().Contains("nữ") || gender.ToLower().Contains("female") || gender.ToLower() == "nu");
                     var demoUser = isReqFemale
                         ? (await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == "testnu" || u.Email.ToLower().Contains("huong.fashionista"))
                            ?? await _context.Users.FirstOrDefaultAsync(u => u.Gender == "Nữ"))
@@ -75,7 +75,7 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                     .Include(c => c.Category)
                     .Where(c => c.UserId == (userId ?? 0));
 
-                // Nếu người dùng là Nam, lọc bỏ hoàn toàn các loại trang phục phụ nữ (Đầm, Chân váy, v.v.)
+                // Phân loại đồ theo giới tính của người dùng: Chỉ hiện đồ của giới tính đó
                 if (isMale)
                 {
                     query = query.Where(c => 
@@ -89,6 +89,24 @@ namespace MYFITDAILY_EXE201_Group6.Controllers
                         !c.Name.ToLower().Contains("dress") &&
                         !c.Name.ToLower().Contains("skirt") &&
                         !c.Name.ToLower().Contains("heels")
+                    );
+                }
+                else
+                {
+                    query = query.Where(c => 
+                        !c.Name.ToLower().Contains("zara man") &&
+                        !c.Name.ToLower().Contains("coolmate") &&
+                        !c.Name.ToLower().Contains("tailor lab") &&
+                        !c.Name.ToLower().Contains("polo club") &&
+                        !c.Name.ToLower().Contains("pazzin") &&
+                        !c.Name.ToLower().Contains("áo polo") &&
+                        !c.Name.ToLower().Contains("quần đùi") &&
+                        !c.Name.ToLower().Contains("quý ông") &&
+                        !c.Name.ToLower().Contains("sơ mi trắng cổ đức") &&
+                        !c.Name.ToLower().Contains("sơ mi xanh nhạt dài tay") &&
+                        !c.Name.ToLower().Contains("quần tây đen xếp ly") &&
+                        !c.Name.ToLower().Contains("quần tây xám") &&
+                        !c.Name.ToLower().Contains("quần tây xanh navy")
                     );
                 }
 

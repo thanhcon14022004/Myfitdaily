@@ -116,15 +116,43 @@ export const STYLIST_CLOTHES = [
 
 ];
 
-export const INITIAL_CLOTHING_ITEMS_MALE = STYLIST_CLOTHES;
-export const INITIAL_CLOTHING_ITEMS_FEMALE = STYLIST_CLOTHES;
-export const INITIAL_CLOTHING_ITEMS = STYLIST_CLOTHES;
+// BỘ SƯU TẬP QUẦN ÁO DÀNH RIÊNG CHO NỮ (CHỈ HIỂN THỊ ĐỒ NỮ)
+export const INITIAL_CLOTHING_ITEMS_FEMALE = STYLIST_CLOTHES.filter(item => {
+  const name = (item.name || '').toLowerCase();
+  const desc = (item.description || '').toLowerCase();
+  if (item.id >= 501 && item.id <= 529) return true;
+  if ([240, 241, 242, 243, 222].includes(item.id)) return true;
+  if (name.includes('nữ') || desc.includes('nữ')) return true;
+  if (name.includes('váy') || name.includes('đầm') || name.includes('2 dây') || name.includes('croptop') || name.includes('trễ vai')) return true;
+  return false;
+});
+
+// BỘ SƯU TẬP QUẦN ÁO DÀNH RIÊNG CHO NAM (CHỈ HIỂN THỊ ĐỒ NAM)
+export const INITIAL_CLOTHING_ITEMS_MALE = STYLIST_CLOTHES.filter(item => {
+  const name = (item.name || '').toLowerCase();
+  const desc = (item.description || '').toLowerCase();
+  if (item.id >= 501 && item.id <= 529) return false;
+  if ([240, 241, 242, 243].includes(item.id)) return false;
+  if (name.includes('nữ') || desc.includes('nữ')) return false;
+  if (name.includes('váy') || name.includes('đầm') || name.includes('2 dây') || name.includes('croptop') || name.includes('trễ vai')) return false;
+  return true;
+});
+
+export const INITIAL_CLOTHING_ITEMS = INITIAL_CLOTHING_ITEMS_MALE;
+
 export const INITIAL_CATEGORIES_MALE = [
   { id: 1, name: 'Tops', label: 'Áo', count: 20, icon: 'Shirt' },
-  { id: 2, name: 'Bottoms', label: 'Quần & Váy', count: 19, icon: 'Scissors' },
-  { id: 5, name: 'Shoes', label: 'Giày', count: 11, icon: 'Footprints' }
+  { id: 2, name: 'Bottoms', label: 'Quần', count: 18, icon: 'Scissors' },
+  { id: 5, name: 'Shoes', label: 'Giày', count: 13, icon: 'Footprints' }
 ];
-export const INITIAL_CATEGORIES_FEMALE = INITIAL_CATEGORIES_MALE;
+
+export const INITIAL_CATEGORIES_FEMALE = [
+  { id: 1, name: 'Tops', label: 'Áo', count: 11, icon: 'Shirt' },
+  { id: 2, name: 'Bottoms', label: 'Quần & Chân Váy', count: 13, icon: 'Scissors' },
+  { id: 3, name: 'Dresses', label: 'Đầm & Váy Liền', count: 1, icon: 'Sparkles' },
+  { id: 5, name: 'Shoes', label: 'Giày', count: 10, icon: 'Footprints' }
+];
+
 export const INITIAL_CATEGORIES = INITIAL_CATEGORIES_MALE;
 
 export const INITIAL_OUTFITS_MALE = [
@@ -165,55 +193,87 @@ export const INITIAL_OUTFITS_FEMALE = [
 
 export const INITIAL_OUTFITS = INITIAL_OUTFITS_MALE;
 
-export function getCategoriesForGender() { return INITIAL_CATEGORIES_MALE; }
+export function getCategoriesForGender(gender) {
+  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female') || gender.toLowerCase() === 'nu');
+  return isFemale ? INITIAL_CATEGORIES_FEMALE : INITIAL_CATEGORIES_MALE;
+}
 
 export function getInitialClothesForGender(gender) {
-  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female'));
-  return STYLIST_CLOTHES.filter(item => {
-    if (!isFemale) {
-      // Nam: loại bỏ đồ nữ
-      return !(item.name.includes('2 Dây') || item.name.includes('Croptop') || item.name.includes('Váy') || item.name.includes('Đầm'));
-    }
-    // Nữ: loại bỏ đồ nam đặc thù
-    return !(item.name.includes('Coolmate') || item.name.includes('ZARA MAN') || item.name.includes('Đùi Năng Động'));
-  });
+  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female') || gender.toLowerCase() === 'nu');
+  return isFemale ? INITIAL_CLOTHING_ITEMS_FEMALE : INITIAL_CLOTHING_ITEMS_MALE;
 }
 
 export function getInitialOutfitsForGender(gender) {
-  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female'));
+  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female') || gender.toLowerCase() === 'nu');
   return isFemale ? INITIAL_OUTFITS_FEMALE : INITIAL_OUTFITS_MALE;
 }
 
 export function sanitizeClothesForGender(items, gender) {
   if (!Array.isArray(items)) return [];
-  const isMale = !gender || gender.toLowerCase() === 'nam' || gender.toLowerCase() === 'male';
-  if (!isMale) return items;
-  return items.filter(item => {
-    if (item.categoryId === 3) return false;
-    const name = (item.name || '').toLowerCase();
-    return !(
-      name.includes('váy') ||
-      name.includes('đầm') ||
-      name.includes('croptop') ||
-      name.includes('2 dây') ||
-      name.includes('tiểu thư') ||
-      name.includes('cao gót') ||
-      name.includes('chân váy') ||
-      name.includes('dress') ||
-      name.includes('skirt') ||
-      name.includes('heels')
-    );
-  });
+  const isFemale = gender && (gender.toLowerCase().includes('nữ') || gender.toLowerCase().includes('female') || gender.toLowerCase() === 'nu');
+
+  if (isFemale) {
+    // Với tài khoản NỮ: Chỉ giữ lại đồ nữ, loại bỏ sạch đồ nam đặc thù
+    return items.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      const brand = (item.brand || '').toLowerCase();
+
+      if (item.id >= 501 && item.id <= 529) return true;
+      if ([240, 241, 242, 243, 222].includes(item.id)) return true;
+      if (name.includes('nữ') || desc.includes('nữ')) return true;
+      if (name.includes('váy') || name.includes('đầm') || name.includes('2 dây') || name.includes('croptop') || name.includes('trễ vai')) return true;
+
+      if (brand.includes('zara man') || brand.includes('coolmate') || brand.includes('tailor lab') || brand.includes('polo club') || brand.includes('pazzin')) return false;
+      if (name.includes('polo') || name.includes('quý ông') || name.includes('nam') || name.includes('đùi năng động') || name.includes('công sở basic')) return false;
+      if (name.includes('sơ mi nam') || name.includes('quần tây nam') || name.includes('sơ mi trắng cổ đức basic')) return false;
+      if (item.categoryId === 2 && (name.includes('quần tây đen xếp ly') || name.includes('quần tây xám trung tính') || name.includes('quần tây xanh navy'))) return false;
+      if (item.categoryId === 5 && (name.includes('giày tây derby') || name.includes('giày da loafer đen lịch lãm'))) return false;
+
+      return true;
+    });
+  } else {
+    // Với tài khoản NAM: Loại bỏ hoàn toàn các loại trang phục phụ nữ
+    return items.filter(item => {
+      if (item.categoryId === 3) return false;
+      if (item.id >= 501 && item.id <= 529) return false;
+      if ([240, 241, 242, 243].includes(item.id)) return false;
+      const name = (item.name || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      return !(
+        name.includes('nữ') ||
+        desc.includes('nữ') ||
+        name.includes('váy') ||
+        name.includes('đầm') ||
+        name.includes('croptop') ||
+        name.includes('2 dây') ||
+        name.includes('hai dây') ||
+        name.includes('tiểu thư') ||
+        name.includes('trễ vai') ||
+        name.includes('cao gót') ||
+        name.includes('chân váy') ||
+        name.includes('platform nữ') ||
+        name.includes('dress') ||
+        name.includes('skirt') ||
+        name.includes('heels')
+      );
+    });
+  }
 }
 
 export function isDemoUser(user) {
   if (!user) return false;
   const email = (user.email || '').trim().toLowerCase();
+  const fullName = (user.fullName || '').trim().toLowerCase();
   return email === 'demo@myfitdaily.com' 
       || email === 'demo'
       || email === 'testnam' 
       || email === 'testnam@myfitdaily.com' 
+      || email === 'nam.gentleman@gmail.com'
       || email === 'testnu' 
-      || email === 'testnu@myfitdaily.com';
+      || email === 'testnu@myfitdaily.com'
+      || email === 'huong.fashionista@gmail.com'
+      || fullName.includes('fashionista')
+      || fullName.includes('gentleman');
 }
 
