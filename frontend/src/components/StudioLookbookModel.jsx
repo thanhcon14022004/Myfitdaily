@@ -268,7 +268,7 @@ export const STUDIO_TEMPLATES = [
     name: 'Áo thun tay dài + Quần ống suông + Giày',
     shortName: 'Thun dài sọc + Quần suông navy',
     category: 'Retro Street',
-    topType: 'shirt_long',
+    topType: 'tshirt_long',
     bottomType: 'pants_wide',
     shoesType: 'sneaker',
     modelImage: '/assets/templates/set_13_model.jpg',
@@ -671,6 +671,7 @@ export function getColorFamily(item, fallbackHex = '') {
     .replace(/đ/g, 'd');
 
   if (!/\bdenim\b/.test(text) && (/\bden\b/.test(text) || /black|dark|\bthan\b|toi|charcoal/.test(text))) return 'black';
+  if (/soc|ke soc|stripe/.test(text)) return 'stripe';
   if (/trang|white|kem|be\b|beige|sang|ivory|cream/.test(text)) return 'white';
   if (/navy|xanh navy|xanh den|xanh than/.test(text)) return 'navy';
   if (/jean|denim|bo/.test(text)) return 'denim';
@@ -696,6 +697,7 @@ function getTemplateTopColor(template) {
     .replace(/đ/g, 'd');
 
   if (!/\bdenim\b/.test(text) && (/\bden\b/.test(text) || /black|dark|\bthan\b/.test(text))) return 'black';
+  if (/soc|ke soc|stripe/.test(text)) return 'stripe';
   if (/trang|white|kem|be\b|beige|linen|sang/.test(text)) return 'white';
   if (/navy/.test(text)) return 'navy';
   if (/soc|denim|jean|xanh nhat|pastel|xanh duong/.test(text)) return 'light_blue';
@@ -773,8 +775,8 @@ export default function StudioLookbookModel({
         const topMatchesId = topItem?.id && t.itemIds?.includes(topItem.id);
         const botMatchesId = bottomItem?.id && t.itemIds?.includes(bottomItem.id);
 
-        if (topMatchesId) score += 95;
-        if (botMatchesId) score += 65;
+        if (topMatchesId) score += 200;
+        if (botMatchesId) score += 120;
 
         const tBotName = normalizeStr(`${t.bottomName || ''} ${t.name || ''}`);
         const templateIsSkirtOrDress = ['skirt_mini', 'skirt_midi', 'dress'].includes(t.bottomType) || 
@@ -1019,7 +1021,13 @@ export default function StudioLookbookModel({
       return STUDIO_TEMPLATES.find(t => t.id === 1) || STUDIO_TEMPLATES[0];
     }
 
-    // 3. ÁO THUN / OVERSIZE (T-SHIRT)
+    // 3. ÁO THUN DÀI TAY (LONG SLEEVE T-SHIRT)
+    const isLongsleeve = topType === 'tshirt_long' || /dai tay|tay dai|longsleeve/.test(topName);
+    if (isLongsleeve || isLongsleeveStripe) {
+      return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[0]; // Set 13: Áo thun dài tay + Quần ống suông
+    }
+
+    // 4. ÁO THUN / OVERSIZE (T-SHIRT)
     if (isTshirt) {
       // Thun + Quần Cargo -> SET 10 (Áo thun + Quần cargo túi hộp)
       if (isCargo) {
@@ -1037,13 +1045,13 @@ export default function StudioLookbookModel({
       return STUDIO_TEMPLATES.find(t => t.id === 7) || STUDIO_TEMPLATES[0];
     }
 
-    // 4. HOODIE / ÁO NỈ CÓ MŨ
+    // 5. HOODIE / ÁO NỈ CÓ MŨ
     if (isHoodie) {
       // Hoodie + Quần Jogger / Quần dài -> SET 8 (Áo hoodie + Quần jogger)
       return STUDIO_TEMPLATES.find(t => t.id === 8) || STUDIO_TEMPLATES.find(t => t.id === 14);
     }
 
-    // 5. ÁO KHOÁC (BOMBER / GIÓ / JACKET)
+    // 6. ÁO KHOÁC (BOMBER / GIÓ / JACKET)
     if (isBomber) {
       return STUDIO_TEMPLATES.find(t => t.id === 11) || STUDIO_TEMPLATES.find(t => t.id === 9); // Set 11: Áo khoác bomber + Quần jeans
     }
@@ -1054,14 +1062,9 @@ export default function StudioLookbookModel({
       return STUDIO_TEMPLATES.find(t => t.id === 11) || STUDIO_TEMPLATES.find(t => t.id === 9);
     }
 
-    // 6. ÁO LEN (SWEATER)
+    // 7. ÁO LEN (SWEATER)
     if (isSweater) {
       return STUDIO_TEMPLATES.find(t => t.id === 12) || STUDIO_TEMPLATES[0]; // Set 12: Áo len cổ tròn + Quần tây
-    }
-
-    // 7. ÁO THUN DÀI TAY SỌC
-    if (isLongsleeveStripe) {
-      return STUDIO_TEMPLATES.find(t => t.id === 13) || STUDIO_TEMPLATES[0]; // Set 13: Áo thun dài tay + Quần ống suông
     }
 
     // 8. KHI CHƯA CHỌN ÁO (CHỈ CHỌN QUẦN)

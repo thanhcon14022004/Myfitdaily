@@ -14,6 +14,15 @@ export const GARMENT_TEMPLATES = {
     defaultColor: '#E2E8F0',
     gender: 'All'
   },
+  tshirt_long: {
+    id: 'tshirt_long',
+    category: 'Tops',
+    name: 'Áo Thun Dài Tay',
+    nameEn: 'Long Sleeve T-shirt',
+    description: 'Áo thun cổ tròn dài tay phom regular hoặc kẻ sọc retro',
+    defaultColor: '#E2E8F0',
+    gender: 'All'
+  },
   polo: {
     id: 'polo',
     category: 'Tops',
@@ -505,7 +514,19 @@ export function detectGarmentType(item, fallbackCategory = 'Tops') {
     return 'shirt_long';
   }
 
-  // 3.8 Áo Thun Tay Ngắn (Mặc định phổ thông nhất)
+  // 3.8 Áo Thun Dài Tay
+  if (
+    text.includes('dai tay') ||
+    text.includes('tay dai') ||
+    text.includes('long sleeve') ||
+    text.includes('longsleeve') ||
+    text.includes('tay dai thun') ||
+    text.includes('thun dai')
+  ) {
+    return 'tshirt_long';
+  }
+
+  // 3.9 Áo Thun Tay Ngắn (Mặc định phổ thông nhất)
   return 'tshirt_short';
 }
 
