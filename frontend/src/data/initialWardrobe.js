@@ -158,9 +158,9 @@ export const INITIAL_OUTFITS_FEMALE = [
   { id: 407, name: 'SET 7: Thun + Cardigan Xanh + Quần Rộng', occasion: 'Casual', season: 'Spring', isFavorite: true, createdByAi: false, itemIds: [519, 520, 521], templateId: 7, description: 'Cardigan xanh pastel tươi mát phối quần suông đồng điệu.' },
   { id: 408, name: 'SET 8: Sơ Mi + Gile Len + Chân Váy Xếp Ly', occasion: 'Formal', season: 'AllSeason', isFavorite: true, createdByAi: false, itemIds: [522, 523, 524], templateId: 8, description: 'Sơ mi trắng phối gile len navy và chân váy xám chuẩn Preppy Academy.' },
   { id: 409, name: 'SET 9: Áo Hai Dây + Khoác Denim + Jeans Suông', occasion: 'Casual', season: 'Summer', isFavorite: true, createdByAi: false, itemIds: [525, 526, 527], templateId: 9, description: 'Áo 2 dây đen phối áo khoác lửng denim bụi bặm cá tính.' },
-  { id: 410, name: 'Chic Camisole & Pleated Skirt', occasion: 'Casual', season: 'Summer', isFavorite: true, createdByAi: false, itemIds: [240, 242, 503], description: 'Áo hai dây lụa đen kết hợp chân váy xếp ly chữ A màu be thanh lịch.' },
-  { id: 411, name: 'Trendy Croptop & Vintage Jeans', occasion: 'Casual', season: 'AllSeason', isFavorite: true, createdByAi: false, itemIds: [241, 222, 503], description: 'Áo croptop baby tee trắng phối cùng quần jeans cạp cao tôn dáng.' },
-  { id: 412, name: 'Minimalist Black Slip Dress', occasion: 'Party', season: 'AllSeason', isFavorite: true, createdByAi: false, itemIds: [243, 503], description: 'Váy suông hai dây lụa đen thướt tha, phối cùng sneaker retro cá tính.' }
+  { id: 410, name: 'Chic Camisole & Pleated Skirt', occasion: 'Casual', season: 'Summer', isFavorite: true, createdByAi: false, itemIds: [240, 242, 503], templateId: 10, description: 'Áo hai dây lụa đen kết hợp chân váy xếp ly chữ A màu be thanh lịch.' },
+  { id: 411, name: 'Trendy Croptop & Vintage Jeans', occasion: 'Casual', season: 'AllSeason', isFavorite: true, createdByAi: false, itemIds: [241, 222, 503], templateId: 11, description: 'Áo croptop baby tee trắng phối cùng quần jeans cạp cao tôn dáng.' },
+  { id: 412, name: 'Minimalist Black Slip Dress', occasion: 'Party', season: 'AllSeason', isFavorite: true, createdByAi: false, itemIds: [243, 503], templateId: 12, description: 'Váy suông hai dây lụa đen thướt tha, phối cùng sneaker retro cá tính.' }
 ];
 
 export const INITIAL_OUTFITS = INITIAL_OUTFITS_MALE;

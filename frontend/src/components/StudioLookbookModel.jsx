@@ -595,9 +595,71 @@ export const FEMALE_STUDIO_TEMPLATES = [
     topName: 'Áo hai dây (trắng) + Áo khoác denim (xanh nhạt)',
     bottomName: 'Quần jeans ống suông (xanh nhạt)',
     shoesName: 'Giày sneaker (trắng)',
-    itemIds: [240, 212]
+    itemIds: [525, 526, 527]
+  },
+  {
+    id: 10,
+    key: 'female_set_10',
+    setNumber: 'SET 10',
+    name: 'Áo hai dây + Chân váy xếp ly chữ A + Giày sneaker',
+    shortName: 'Áo 2 dây + Chân váy xếp ly',
+    category: 'Chic Camisole',
+    topType: 'camisole',
+    bottomType: 'skirt_mini',
+    shoesType: 'sneaker',
+    modelImage: '/assets/fits/model_female_cami_skirt.jpg',
+    cardImage: '/assets/fits/model_female_cami_skirt.jpg',
+    topBoxImage: '/assets/clothes/camisole_silk_black.jpg',
+    botBoxImage: '/assets/clothes/skirt_pleated_beige.jpg',
+    shoesBoxImage: '/assets/templates/set_female_9_shoes_box.jpg',
+    topName: 'Áo hai dây lụa satin (đen)',
+    bottomName: 'Chân váy xếp ly chữ A (be)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [240, 242, 503, 767, 770]
+  },
+  {
+    id: 11,
+    key: 'female_set_11',
+    setNumber: 'SET 11',
+    name: 'Áo croptop baby tee + Quần jeans vintage + Giày sneaker',
+    shortName: 'Croptop baby tee + Jeans vintage',
+    category: 'Trendy Croptop',
+    topType: 'croptop',
+    bottomType: 'jeans_straight',
+    shoesType: 'sneaker',
+    modelImage: '/assets/fits/model_female_croptop_jeans.jpg',
+    cardImage: '/assets/fits/model_female_croptop_jeans.jpg',
+    topBoxImage: '/assets/clothes/croptop_baby_tee_white.jpg',
+    botBoxImage: '/assets/clothes/jeans_vintage_blue.jpg',
+    shoesBoxImage: '/assets/templates/set_female_9_shoes_box.jpg',
+    topName: 'Áo croptop baby tee (trắng)',
+    bottomName: 'Quần jeans ống suông vintage (xanh denim)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [241, 222, 503, 766, 773]
+  },
+  {
+    id: 12,
+    key: 'female_set_12',
+    setNumber: 'SET 12',
+    name: 'Váy suông lụa 2 dây Minimalist + Giày sneaker',
+    shortName: 'Váy suông lụa 2 dây',
+    category: 'Minimalist Elegance',
+    topType: 'camisole',
+    bottomType: 'dress',
+    shoesType: 'sneaker',
+    modelImage: '/assets/fits/model_female_dress.jpg',
+    cardImage: '/assets/fits/model_female_dress.jpg',
+    topBoxImage: '/assets/clothes/dress_slip_silk_black.jpg',
+    botBoxImage: '/assets/clothes/dress_slip_silk_black.jpg',
+    shoesBoxImage: '/assets/templates/set_female_9_shoes_box.jpg',
+    topName: 'Váy suông lụa hai dây (đen)',
+    bottomName: 'Váy suông lụa hai dây (đen)',
+    shoesName: 'Giày sneaker (trắng/xám)',
+    itemIds: [243, 503, 771]
   }
 ];
+
+export const normalizeStr = (v = '') => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
 
 // Color Family Classifier
 export function getColorFamily(item, fallbackHex = '') {
@@ -608,7 +670,7 @@ export function getColorFamily(item, fallbackHex = '') {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd');
 
-  if (/den|black|dark|than|toi|charcoal/.test(text)) return 'black';
+  if (!/\bdenim\b/.test(text) && (/\bden\b/.test(text) || /black|dark|\bthan\b|toi|charcoal/.test(text))) return 'black';
   if (/trang|white|kem|be\b|beige|sang|ivory|cream/.test(text)) return 'white';
   if (/navy|xanh navy|xanh den|xanh than/.test(text)) return 'navy';
   if (/jean|denim|bo/.test(text)) return 'denim';
@@ -633,7 +695,7 @@ function getTemplateTopColor(template) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd');
 
-  if (/den|black|dark|than/.test(text)) return 'black';
+  if (!/\bdenim\b/.test(text) && (/\bden\b/.test(text) || /black|dark|\bthan\b/.test(text))) return 'black';
   if (/trang|white|kem|be\b|beige|linen|sang/.test(text)) return 'white';
   if (/navy/.test(text)) return 'navy';
   if (/soc|denim|jean|xanh nhat|pastel|xanh duong/.test(text)) return 'light_blue';
@@ -649,7 +711,7 @@ function getTemplateBottomColor(template) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd');
 
-  if (/den|black|dark/.test(text)) return 'black';
+  if (!/\bdenim\b/.test(text) && (/\bden\b/.test(text) || /black|dark/.test(text))) return 'black';
   if (/trang|white|kem|be\b|beige|cream/.test(text)) return 'white';
   if (/navy/.test(text)) return 'navy';
   if (/jean|denim|xanh nhat|blue/.test(text)) return 'light_blue';
@@ -700,6 +762,12 @@ export default function StudioLookbookModel({
       let bestTemplate = null;
       let highestScore = -99999;
 
+      const botItemName = normalizeStr(`${bottomItem?.name || ''} ${bottomItem?.description || ''}`);
+      const userWantsSkirtOrDress = ['skirt_mini', 'skirt_midi', 'dress'].includes(bottomType) || 
+        /chan vay|vay|skirt|xep ly|chu a|dam/.test(botItemName);
+      const userWantsShorts = ['shorts', 'shorts_denim'].includes(bottomType) ||
+        /short|dui|ngan|lung/.test(botItemName);
+
       for (const t of templates) {
         let score = 0;
         const topMatchesId = topItem?.id && t.itemIds?.includes(topItem.id);
@@ -707,6 +775,26 @@ export default function StudioLookbookModel({
 
         if (topMatchesId) score += 95;
         if (botMatchesId) score += 65;
+
+        const tBotName = normalizeStr(`${t.bottomName || ''} ${t.name || ''}`);
+        const templateIsSkirtOrDress = ['skirt_mini', 'skirt_midi', 'dress'].includes(t.bottomType) || 
+          /chan vay|vay|skirt|dam/.test(tBotName);
+        const templateIsShorts = ['shorts', 'shorts_denim'].includes(t.bottomType) || 
+          /short|dui/.test(tBotName);
+
+        // QUY TẮC BẮT BUỘC: Chọn váy TUYỆT ĐỐI không bao giờ ra quần!
+        if (bottomItem) {
+          if (userWantsSkirtOrDress && !templateIsSkirtOrDress) {
+            score -= 500;
+          } else if (!userWantsSkirtOrDress && templateIsSkirtOrDress) {
+            score -= 500;
+          }
+          if (userWantsShorts && !templateIsShorts && !templateIsSkirtOrDress) {
+            score -= 100;
+          } else if (!userWantsShorts && templateIsShorts) {
+            score -= 100;
+          }
+        }
 
         // Điểm màu áo (Trọng số cao nhất để không bị lệch màu trực quan)
         const tTopColor = getTemplateTopColor(t);
@@ -987,7 +1075,7 @@ export default function StudioLookbookModel({
 
     // Mặc định tổng thể: SET 1
     return STUDIO_TEMPLATES[0];
-  }, [isMale, templates, templateId, topItem, bottomItem, shoesItem, topType, bottomType]);
+  }, [isMale, templates, templateId, topItem, bottomItem, shoesItem, topType, bottomType, topColor, bottomColor]);
 
   // Nguồn ảnh render
   const resolvedImage = useMemo(() => {
