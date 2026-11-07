@@ -865,7 +865,6 @@ export default function StudioLookbookModel({
 
     // 5. PHÂN TÍCH NHẬN DIỆN KIỂU DÁNG OUTFIT (SILHOUETTE / FORM DÁNG CHUẨN THỜI TRANG)
     // Nhận diện chuẩn xác theo KIỂU OUTFIT (Top Type + Bottom Type), KHÔNG phụ thuộc vào màu sắc!
-    const normalizeStr = (v = '') => String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd');
     const topName = normalizeStr(`${topItem?.name || ''} ${topItem?.description || ''}`);
     const botName = normalizeStr(`${bottomItem?.name || ''} ${bottomItem?.description || ''}`);
 
