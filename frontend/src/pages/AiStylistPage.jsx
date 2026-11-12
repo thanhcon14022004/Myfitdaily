@@ -28,7 +28,11 @@ import {
   Eye,
   SquarePen,
   Clock,
-  Plus
+  Plus,
+  HelpCircle,
+  MessageSquare,
+  TrendingUp,
+  ArrowRight
 } from 'lucide-react';
 
 import { apiRequest } from '../api/apiClient';
@@ -36,6 +40,8 @@ import VirtualMannequin from '../components/VirtualMannequin';
 import { useLanguage } from '../context/LanguageContext';
 import { getLiveWeather, ALL_LOCATIONS, setManualCity, clearManualCity } from '../services/weatherService';
 import { formatChatDate, formatChatFullDate } from '../utils/dateUtils';
+import PopularPromptsModal from '../components/PopularPromptsModal';
+import { POPULAR_PROMPT_CATEGORIES, getPopularPromptsByCategory, POPULAR_STYLIST_PROMPTS } from '../data/popularStylistPrompts';
 
 export default function AiStylistPage({ 
   clothes = [], 
@@ -84,6 +90,10 @@ export default function AiStylistPage({
   const [recEventDate, setRecEventDate] = useState('');
   const [selectedOutfitForDetail, setSelectedOutfitForDetail] = useState(null);
   const [showSessionsDrawer, setShowSessionsDrawer] = useState(false);
+
+  // Modal & Tabs Ngân Hàng Câu Hỏi Người Dùng Thường Hỏi Nhất
+  const [showPromptsModal, setShowPromptsModal] = useState(false);
+  const [activePromptCategory, setActivePromptCategory] = useState('all');
 
   // Live Weather State (Tự động nhận diện khu vực và thời tiết theo thời gian thực)
   const [weather, setWeather] = useState(null);
@@ -2026,6 +2036,192 @@ export default function AiStylistPage({
               );
             })}
 
+            {/* Hub Khám Phá: Người Dùng Thường Hỏi AI Stylist Những Gì? */}
+            {chatMessages.length <= 1 && !chatLoading && (
+              <div style={{
+                marginTop: '12px',
+                marginBottom: '20px',
+                padding: '20px',
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(18, 24, 38, 0.85) 100%)',
+                border: '1.5px solid rgba(212, 175, 55, 0.35)',
+                boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #D4AF37, #E11D48)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#FFF',
+                      boxShadow: '0 4px 12px rgba(212, 175, 55, 0.3)'
+                    }}>
+                      <Flame size={20} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {text('Mọi Người Thường Hỏi AI Stylist Những Gì?', 'What Do People Usually Ask AI Stylist?')}
+                        </h4>
+                        <span style={{
+                          background: 'rgba(212, 175, 55, 0.2)',
+                          color: '#D4AF37',
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          border: '1px solid rgba(212, 175, 55, 0.4)'
+                        }}>
+                          {text('TOP 10.000+ LƯỢT HỎI', '10K+ QUERIES')}
+                        </span>
+                      </div>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        {text(
+                          'Hơn 85% người dùng MyFitDaily bắt đầu bằng các câu hỏi phối đồ thực tế theo thời tiết, tôn dáng và đi làm dưới đây:',
+                          'Over 85% of MyFitDaily users start with these practical styling formulas for weather, body types, and work:'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPromptsModal(true)}
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.15)',
+                      border: '1px solid rgba(212, 175, 55, 0.4)',
+                      color: '#D4AF37',
+                      padding: '6px 14px',
+                      borderRadius: '16px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <Sparkles size={13} />
+                    <span>{text('Xem toàn bộ 30+ câu hỏi', 'View all 30+ prompts')}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+
+                {/* Grid 4 câu hỏi hot nhất */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: '10px'
+                }}>
+                  {[
+                    {
+                      category: 'Thời Tiết & Hôm Nay',
+                      tag: 'Thực Tế',
+                      vi: 'Thời tiết hôm nay ở khu vực của tôi nên phối đồ thế nào để vừa đẹp vừa thoải mái?',
+                      en: 'What should I wear today based on the current weather in my city to look chic and feel comfy?',
+                      asks: '8.4k'
+                    },
+                    {
+                      category: 'Công Sở Thanh Lịch',
+                      tag: 'Đi Làm',
+                      vi: 'Gợi ý set đồ đi làm công sở thanh lịch, trẻ trung và tôn dáng, không bị cứng nhắc',
+                      en: 'Recommend chic, youthful office outfits that flatter my silhouette without feeling stiff',
+                      asks: '9.2k'
+                    },
+                    {
+                      category: 'Tôn Dáng & Khuyết Điểm',
+                      tag: 'Body Shape',
+                      vi: 'Dáng người của tôi nên chọn quần, áo và chân váy thế nào để giấu khuyết điểm và tôn dáng?',
+                      en: 'Which clothes and skirt cuts flatter my specific body shape and elongate my legs?',
+                      asks: '7.8k'
+                    },
+                    {
+                      category: 'Hẹn Hò & Lãng Mạn',
+                      tag: 'Clean Fit',
+                      vi: 'Phối đồ đi hẹn hò buổi tối phong cách Clean Fit cuốn hút, tự nhiên và ghi điểm 10/10',
+                      en: 'Attractive, effortless Clean Fit date night outfit formulas to score a 10/10 impression',
+                      asks: '6.9k'
+                    }
+                  ].map((item, idx) => {
+                    const qText = isEnglish ? item.en : item.vi;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleSendMessage(qText)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '14px',
+                          padding: '12px 14px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.6)';
+                          e.currentTarget.style.background = 'rgba(212, 175, 55, 0.08)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            color: '#D4AF37',
+                            background: 'rgba(212, 175, 55, 0.15)',
+                            padding: '2px 7px',
+                            borderRadius: '8px'
+                          }}>
+                            {item.category}
+                          </span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                            <Flame size={11} color="#E11D48" /> {item.asks}
+                          </span>
+                        </div>
+                        <p style={{
+                          margin: 0,
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          lineHeight: '1.35',
+                          color: 'var(--text-primary)'
+                        }}>
+                          "{qText}"
+                        </p>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          gap: '4px',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          color: '#D4AF37'
+                        }}>
+                          <span>{text('Hỏi câu này', 'Ask this')}</span>
+                          <ArrowRight size={12} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {chatLoading && (
               <div style={{ display: 'flex', gap: '14px', alignItems: 'center', width: '100%' }}>
                 <div style={{
@@ -2129,9 +2325,10 @@ export default function AiStylistPage({
               ))}
             </div>
 
-            {/* Quick Suggestions Chips */}
+            {/* Quick Suggestions Chips with Category Filter & 30+ Prompts Hub */}
             <div style={{
               display: 'flex',
+              alignItems: 'center',
               gap: '6px',
               overflowX: 'auto',
               paddingBottom: '8px',
@@ -2161,40 +2358,102 @@ export default function AiStylistPage({
                 }}
               >
                 <Sparkles size={12} />
-                <span>{text('✨ Gợi Ý Phối Đồ AI (Bây giờ / Sự kiện)', '✨ AI Recommend (Now / Future Event)')}</span>
+                <span>{text('✨ Gợi Ý Phối Đồ AI', '✨ AI Recommend')}</span>
               </button>
 
-              {(isEnglish ? [
-                "Style with white shirt",
-                "Wide-leg jeans outfits",
-                "Chic office outfit",
-                "Layering with blazer"
-              ] : [
-                "Thời tiết hôm nay nên mặc gì?",
-                "Phối đồ với áo sơ mi trắng",
-                "Cách mix quần jeans ống suông",
-                "Set đồ công sở thanh lịch",
-                "Phối layer áo blazer dạ"
-              ]).map((p, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSendMessage(p)}
-                  style={{
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--border-subtle)',
-                    color: 'var(--text-secondary)',
-                    padding: '4px 10px',
-                    borderRadius: '16px',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  ✦ {p}
-                </button>
-              ))}
+              {/* Nút mở Modal 30+ Câu Hỏi Thường Hỏi Nhất */}
+              <button
+                type="button"
+                onClick={() => setShowPromptsModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #D4AF37, #C27D5E)',
+                  border: 'none',
+                  color: '#FFF',
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: '0 2px 8px rgba(212, 175, 55, 0.35)',
+                  transition: 'all 0.15s ease'
+                }}
+                title={text('Khám phá ngân hàng 30+ câu hỏi phối đồ được hỏi nhiều nhất', 'Browse 30+ top styling questions')}
+              >
+                <Flame size={12} />
+                <span>{text('🔥 30+ Câu Hỏi Hay Hỏi', '🔥 30+ Popular Prompts')}</span>
+              </button>
+
+              {/* Category selector pills */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 4px',
+                borderRadius: '16px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                flexShrink: 0
+              }}>
+                {POPULAR_PROMPT_CATEGORIES.map(cat => {
+                  const isActive = activePromptCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setActivePromptCategory(cat.id)}
+                      style={{
+                        background: isActive ? 'rgba(212, 175, 55, 0.25)' : 'transparent',
+                        border: isActive ? '1px solid #D4AF37' : 'none',
+                        color: isActive ? '#D4AF37' : 'var(--text-muted)',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.68rem',
+                        fontWeight: isActive ? 700 : 500,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {isEnglish ? cat.nameEn : cat.nameVi}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Dynamic question chips based on activePromptCategory */}
+              {getPopularPromptsByCategory(activePromptCategory).slice(0, 4).map((p, idx) => {
+                const promptText = isEnglish ? p.questionEn : p.questionVi;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendMessage(promptText)}
+                    style={{
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border-subtle)',
+                      color: 'var(--text-secondary)',
+                      padding: '4px 10px',
+                      borderRadius: '16px',
+                      fontSize: '0.72rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      transition: 'all 0.15s ease',
+                      maxWidth: '300px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                    title={promptText}
+                  >
+                    ✦ {promptText}
+                  </button>
+                );
+              })}
             </div>
 
             {/* ChatGPT Capsule Input Form */}
@@ -3375,6 +3634,16 @@ export default function AiStylistPage({
           </div>
         </div>
       )}
+
+      {/* Modal Ngân Hàng 30+ Câu Hỏi Phổ Biến Nhất Người Dùng Thường Hỏi AI Stylist */}
+      <PopularPromptsModal
+        isOpen={showPromptsModal}
+        onClose={() => setShowPromptsModal(false)}
+        onSelectPrompt={(promptText) => {
+          setShowPromptsModal(false);
+          handleSendMessage(promptText);
+        }}
+      />
     </div>
   );
 }
