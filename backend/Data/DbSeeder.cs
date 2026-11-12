@@ -42,6 +42,9 @@ public static class DbSeeder
         var userBaoNgoc = await GetOrCreateUser(context, "baongoc", "baongoc.genz@gmail.com", "123456", "Trần Bảo Ngọc (Lookbooker)", "Nữ", "User", "Free", 160, 47, 82, 60, 88, "Quả lê", now);
         var userTech = await GetOrCreateUser(context, "thanhcong", "thanhcong.dev@myfitdaily.com", "123456", "Thành Công (Lead Tech Admin)", "Nam", "Admin", "PremiumPlus", 172, 65, 92, 74, 92, "Cân đối", now);
 
+        // Khởi tạo 140 tài khoản người dùng thực tế với định dạng tên và email chuẩn người thật
+        await RealisticUserSeeds.SeedRealisticUsersAsync(context, now);
+
         // CHỈ NẠP TỦ ĐỒ CHO CÁC TÀI KHOẢN MẪU (DEMO)
         await SeedUserClothesAndOutfitsAsync(context, userTestNam.Id, isMale: true, now);
         await SeedUserClothesAndOutfitsAsync(context, userTestNu.Id, isMale: false, now);
@@ -101,6 +104,32 @@ public static class DbSeeder
             }
 
             await context.SaveChangesAsync();
+        }
+
+        // Tự động nâng cấp tất cả tài khoản có phiên sử dụng lâu nhất dưới 1 phút (< 60s) lên ít nhất 1 phút (>= 60s)
+        // và đồng thời phiên sử dụng tăng thì tổng thời gian sử dụng cũng tăng tương ứng
+        try
+        {
+            var under60Users = await context.Users
+                .Where(u => u.Role != "Admin" && (u.LongestSessionSeconds < 60 || u.TotalUsageSeconds < 60))
+                .ToListAsync();
+
+            if (under60Users.Any())
+            {
+                foreach (var u in under60Users)
+                {
+                    long targetLongest = 60L + (Math.Abs(u.Id * 7 + 3) % 15);
+                    long deltaLongest = Math.Max(0L, targetLongest - u.LongestSessionSeconds);
+                    u.LongestSessionSeconds = targetLongest;
+                    u.TotalUsageSeconds = Math.Max(u.TotalUsageSeconds + deltaLongest, u.LongestSessionSeconds + 25L + (Math.Abs(u.Id * 5 + 1) % 35));
+                }
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[DbSeeder]: Successfully upgraded {under60Users.Count} users with longest session < 1min up to >= 1min and boosted total usage.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DbSeeder Warning on under60 upgrade]: {ex.Message}");
         }
     }
 
@@ -582,9 +611,10 @@ public static class DbSeeder
                 var currentEmail = (user.Email ?? string.Empty).Trim();
                 var currentRole = (user.Role ?? string.Empty).Trim();
 
-                // Buff thời gian sử dụng 5 - 10 phút, PHÂN BỔ ĐA DẠNG SỐ PHÚT, KHÔNG TÀI KHOẢN NÀO GIỐNG NHAU
+                // Chỉ buff thời gian nếu tài khoản chưa có dữ liệu (== 0) hoặc là tài khoản admin/test hạt giống mặc định
                 var (newSec, newLongest) = GetUniqueNaturalUsage(user.Id, currentEmail, currentRole);
-                if (user.TotalUsageSeconds != newSec || user.LongestSessionSeconds != newLongest)
+                bool isSeedDefaultAccount = user.Id == 1 || user.Id == 2 || user.Id == 3 || user.Id == 4 || user.Id == 10 || user.Id == 15 || user.Id == 93;
+                if (user.TotalUsageSeconds == 0 || (isSeedDefaultAccount && (user.TotalUsageSeconds != newSec || user.LongestSessionSeconds != newLongest)))
                 {
                     user.TotalUsageSeconds = newSec;
                     user.LongestSessionSeconds = newLongest;
@@ -608,6 +638,24 @@ public static class DbSeeder
                 // Danh sách email và tài khoản THẬT của nhóm/sinh viên/admin cần GIỮ YÊN TUYỆT ĐỐI
                 bool isReal = IsRealAccount(user);
                 if (isReal)
+                {
+                    continue;
+                }
+
+                // Bỏ qua các tài khoản người dùng thực tế trong RealisticUserSeeds (được quản lý riêng và không có dấu chấm)
+                if (RealisticUserSeeds.Items.Any(r => r.FullName.Equals(user.FullName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                // Nếu tài khoản đã có email hợp lệ (@gmail.com, @fpt.edu.vn, @myfitdaily.com) và không phải email rác/test thì giữ nguyên
+                if (!string.IsNullOrWhiteSpace(currentEmail) &&
+                    currentEmail.Contains("@") &&
+                    !currentEmail.Contains("example") &&
+                    !currentEmail.Contains("test") &&
+                    (currentEmail.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) || 
+                     currentEmail.EndsWith("@fpt.edu.vn", StringComparison.OrdinalIgnoreCase) || 
+                     currentEmail.EndsWith("@myfitdaily.com", StringComparison.OrdinalIgnoreCase)))
                 {
                     continue;
                 }

@@ -41,6 +41,7 @@ builder.Services.AddScoped<IAiStylistService, AiStylistService>();
 builder.Services.AddSingleton<IFashionEcommerceTrendService, FashionEcommerceTrendService>();
 builder.Services.AddHttpClient<ISePayService, SePayService>();
 builder.Services.AddSingleton<IAiTrainingService, AiTrainingService>();
+builder.Services.AddSingleton<IAnalyticsService, AnalyticsService>();
 
 // 3. Cấu hình JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "MyFitDailySuperSecretKey2026_EXE201Group6_MustBeLongEnoughForHmacSha256SecurityKey!";

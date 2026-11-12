@@ -32,6 +32,7 @@ import { useLanguage } from './context/LanguageContext';
 import { getSubscriptionType, sanitizeUser, isPremiumUser, isPremiumPlusUser } from './utils/subscriptionUtils';
 import { supabase } from './api/supabaseClient';
 import { syncSocialUserWithBackend, signOutFromSupabase } from './services/supabaseAuthService';
+import { trackPageView } from './services/analyticsTracker';
 
 export const FEATURE_NAMES = {
   'ai-stylist': 'AI Stylist Studio',
@@ -283,6 +284,11 @@ export default function App() {
       }
     }
   }, []);
+
+  // Đo lường lượt xem trang nội bộ (Google Analytics Custom Tracker)
+  useEffect(() => {
+    trackPageView(currentTab, FEATURE_NAMES[currentTab] || currentTab, user);
+  }, [currentTab, user]);
 
   // Theo dõi và gửi Heartbeat định kỳ ghi nhận thời gian tài khoản đang sử dụng trang web
   useEffect(() => {
